@@ -8,6 +8,7 @@ setup(
     version='1.0',
     license='LICENSE',
     packages=[
+        'cloudify_boto3',
         'cloudify_boto3.common',
         'cloudify_boto3.rds',
         'cloudify_boto3.rds.resources',
