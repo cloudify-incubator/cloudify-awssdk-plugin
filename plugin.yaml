@@ -1,0 +1,761 @@
+plugins:
+  awssdk:
+    executor: central_deployment_agent
+    package_name: cloudify-boto3-plugin
+    package_version: '1.0'
+    source: https://github.com/cloudify-incubator/cloudify-boto3-plugin/archive/dev.zip
+
+
+data_types:
+  cloudify.datatypes.aws.ConnectionConfig:
+    properties:
+      aws_access_key_id:
+        description: >
+          The ID of your AWS ACCESS KEY ID.
+        type: string
+        required: false
+      aws_secret_access_key:
+        description: >
+          The ID of your AWS SECRET ACCESS KEY.
+        type: string
+        required: false
+      region_name:
+        description: >
+          The server region name, such as us-east-1.
+          (Not us-east-1b, which is an availability zone, or
+          US East, which is a Region.)
+        type: string
+        required: false
+        
+  cloudify.datatypes.aws.lambda.Function.config:
+    properties:
+      kwargs:
+        default: {}
+
+
+dsl_definitions:
+  use_external_resource_desc: &use_external_resource_desc >
+    Indicate whether the resource exists or if Cloudify should create the resource,
+    true if you are bringing an existing resource, false if you want cloudify to create it.
+
+  resource_id_desc: &resource_id_desc >
+    The AWS resource ID of the external resource, if
+    use_external_resource is true. Otherwise it is an empty string.
+
+
+node_types:
+  # Reference: https://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.create_db_instance
+  cloudify.nodes.aws.rds.Instance:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        description: *use_external_resource_desc
+        type: boolean
+        default: false
+      resource_id:
+        description: *resource_id_desc
+        type: string
+        default: ''
+      client_config:
+        description: >
+          A dictionary of values to pass to authenticate with the AWS API.
+        type: cloudify.datatypes.aws.ConnectionConfig
+        required: false
+      resource_config:
+        description: >
+          Configuration key-value data to be passed as-is to the corresponding
+          Boto3 method. Key names must match the case that Boto3 requires.
+        type: cloudify.datatypes.aws.lambda.Function.config
+        required: false
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: awssdk.cloudify_boto3.rds.resources.instance.create
+          inputs:
+            aws_resource_id:
+              description: >
+                This overrides the resource_id property (useful for setting the
+                resource ID of a node instance at runtime).
+              type: string
+              required: false
+              default: ~
+            runtime_properties:
+              description: >
+                This overrides any runtime property at runtime. This is a key-value
+                pair / dictionary that will be passed, as-is, to the runtime properties
+                of the running instance.
+              required: false
+              default: ~
+            force_operation:
+              description: >
+                Forces the current operation to be executed regardless
+                if the "use_external_resource" property is set or not.
+              required: false
+              default: false
+            resource_config:
+              description: >
+                Configuration key-value data to be passed as-is to the corresponding
+                Boto3 method. Key names must match the case that Boto3 requires.
+              required: false
+              default: {}
+        delete:
+          implementation: awssdk.cloudify_boto3.rds.resources.instance.delete
+          inputs:
+            aws_resource_id:
+              description: >
+                This overrides the resource_id property (useful for setting the
+                resource ID of a node instance at runtime).
+              type: string
+              required: false
+              default: ~
+            runtime_properties:
+              description: >
+                This overrides any runtime property at runtime. This is a key-value
+                pair / dictionary that will be passed, as-is, to the runtime properties
+                of the running instance.
+              required: false
+              default: ~
+            force_operation:
+              description: >
+                Forces the current operation to be executed regardless
+                if the "use_external_resource" property is set or not.
+              required: false
+              default: false
+            resource_config:
+              description: >
+                Configuration key-value data to be passed as-is to the corresponding
+                Boto3 method. Key names must match the case that Boto3 requires.
+              required: false
+              default: {}
+  
+  # Reference: https://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.create_db_instance_read_replica
+  cloudify.nodes.aws.rds.InstanceReadReplica:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        description: *use_external_resource_desc
+        type: boolean
+        default: false
+      resource_id:
+        description: *resource_id_desc
+        type: string
+        default: ''
+      client_config:
+        description: >
+          A dictionary of values to pass to authenticate with the AWS API.
+        type: cloudify.datatypes.aws.ConnectionConfig
+        required: false
+      resource_config:
+        description: >
+          Configuration key-value data to be passed as-is to the corresponding
+          Boto3 method. Key names must match the case that Boto3 requires.
+        type: cloudify.datatypes.aws.lambda.Function.config
+        required: false
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: awssdk.cloudify_boto3.rds.resources.instance_read_replica.create
+          inputs:
+            aws_resource_id:
+              description: >
+                This overrides the resource_id property (useful for setting the
+                resource ID of a node instance at runtime).
+              type: string
+              required: false
+              default: ~
+            runtime_properties:
+              description: >
+                This overrides any runtime property at runtime. This is a key-value
+                pair / dictionary that will be passed, as-is, to the runtime properties
+                of the running instance.
+              required: false
+              default: ~
+            force_operation:
+              description: >
+                Forces the current operation to be executed regardless
+                if the "use_external_resource" property is set or not.
+              required: false
+              default: false
+            resource_config:
+              description: >
+                Configuration key-value data to be passed as-is to the corresponding
+                Boto3 method. Key names must match the case that Boto3 requires.
+              required: false
+              default: {}
+        delete:
+          implementation: awssdk.cloudify_boto3.rds.resources.instance_read_replica.delete
+          inputs:
+            aws_resource_id:
+              description: >
+                This overrides the resource_id property (useful for setting the
+                resource ID of a node instance at runtime).
+              type: string
+              required: false
+              default: ~
+            runtime_properties:
+              description: >
+                This overrides any runtime property at runtime. This is a key-value
+                pair / dictionary that will be passed, as-is, to the runtime properties
+                of the running instance.
+              required: false
+              default: ~
+            force_operation:
+              description: >
+                Forces the current operation to be executed regardless
+                if the "use_external_resource" property is set or not.
+              required: false
+              default: false
+            resource_config:
+              description: >
+                Configuration key-value data to be passed as-is to the corresponding
+                Boto3 method. Key names must match the case that Boto3 requires.
+              required: false
+              default: {}
+  
+  # Reference: https://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.create_db_subnet_group
+  cloudify.nodes.aws.rds.SubnetGroup:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        description: *use_external_resource_desc
+        type: boolean
+        default: false
+      resource_id:
+        description: *resource_id_desc
+        type: string
+        default: ''
+      client_config:
+        description: >
+          A dictionary of values to pass to authenticate with the AWS API.
+        type: cloudify.datatypes.aws.ConnectionConfig
+        required: false
+      resource_config:
+        description: >
+          Configuration key-value data to be passed as-is to the corresponding
+          Boto3 method. Key names must match the case that Boto3 requires.
+        type: cloudify.datatypes.aws.lambda.Function.config
+        required: false
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: awssdk.cloudify_boto3.rds.resources.subnet_group.create
+          inputs:
+            aws_resource_id:
+              description: >
+                This overrides the resource_id property (useful for setting the
+                resource ID of a node instance at runtime).
+              type: string
+              required: false
+              default: ~
+            runtime_properties:
+              description: >
+                This overrides any runtime property at runtime. This is a key-value
+                pair / dictionary that will be passed, as-is, to the runtime properties
+                of the running instance.
+              required: false
+              default: ~
+            force_operation:
+              description: >
+                Forces the current operation to be executed regardless
+                if the "use_external_resource" property is set or not.
+              required: false
+              default: false
+            resource_config:
+              description: >
+                Configuration key-value data to be passed as-is to the corresponding
+                Boto3 method. Key names must match the case that Boto3 requires.
+              required: false
+              default: {}
+        delete:
+          implementation: awssdk.cloudify_boto3.rds.resources.subnet_group.delete
+          inputs:
+            aws_resource_id:
+              description: >
+                This overrides the resource_id property (useful for setting the
+                resource ID of a node instance at runtime).
+              type: string
+              required: false
+              default: ~
+            runtime_properties:
+              description: >
+                This overrides any runtime property at runtime. This is a key-value
+                pair / dictionary that will be passed, as-is, to the runtime properties
+                of the running instance.
+              required: false
+              default: ~
+            force_operation:
+              description: >
+                Forces the current operation to be executed regardless
+                if the "use_external_resource" property is set or not.
+              required: false
+              default: false
+            resource_config:
+              description: >
+                Configuration key-value data to be passed as-is to the corresponding
+                Boto3 method. Key names must match the case that Boto3 requires.
+              required: false
+              default: {}
+  
+  # Reference: https://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.create_option_group
+  cloudify.nodes.aws.rds.OptionGroup:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        description: *use_external_resource_desc
+        type: boolean
+        default: false
+      resource_id:
+        description: *resource_id_desc
+        type: string
+        default: ''
+      client_config:
+        description: >
+          A dictionary of values to pass to authenticate with the AWS API.
+        type: cloudify.datatypes.aws.ConnectionConfig
+        required: false
+      resource_config:
+        description: >
+          Configuration key-value data to be passed as-is to the corresponding
+          Boto3 method. Key names must match the case that Boto3 requires.
+        type: cloudify.datatypes.aws.lambda.Function.config
+        required: false
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: awssdk.cloudify_boto3.rds.resources.option_group.create
+          inputs:
+            aws_resource_id:
+              description: >
+                This overrides the resource_id property (useful for setting the
+                resource ID of a node instance at runtime).
+              type: string
+              required: false
+              default: ~
+            runtime_properties:
+              description: >
+                This overrides any runtime property at runtime. This is a key-value
+                pair / dictionary that will be passed, as-is, to the runtime properties
+                of the running instance.
+              required: false
+              default: ~
+            force_operation:
+              description: >
+                Forces the current operation to be executed regardless
+                if the "use_external_resource" property is set or not.
+              required: false
+              default: false
+            resource_config:
+              description: >
+                Configuration key-value data to be passed as-is to the corresponding
+                Boto3 method. Key names must match the case that Boto3 requires.
+              required: false
+              default: {}
+        delete:
+          implementation: awssdk.cloudify_boto3.rds.resources.option_group.delete
+          inputs:
+            aws_resource_id:
+              description: >
+                This overrides the resource_id property (useful for setting the
+                resource ID of a node instance at runtime).
+              type: string
+              required: false
+              default: ~
+            runtime_properties:
+              description: >
+                This overrides any runtime property at runtime. This is a key-value
+                pair / dictionary that will be passed, as-is, to the runtime properties
+                of the running instance.
+              required: false
+              default: ~
+            force_operation:
+              description: >
+                Forces the current operation to be executed regardless
+                if the "use_external_resource" property is set or not.
+              required: false
+              default: false
+            resource_config:
+              description: >
+                Configuration key-value data to be passed as-is to the corresponding
+                Boto3 method. Key names must match the case that Boto3 requires.
+              required: false
+              default: {}
+  
+  # Stores prepared Option in runtime property "resource_config"
+  cloudify.nodes.aws.rds.Option:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        description: *use_external_resource_desc
+        type: boolean
+        default: false
+      resource_id:
+        description: *resource_id_desc
+        type: string
+        default: ''
+      client_config:
+        description: >
+          A dictionary of values to pass to authenticate with the AWS API.
+        type: cloudify.datatypes.aws.ConnectionConfig
+        required: false
+      resource_config:
+        description: >
+          Configuration key-value data to be passed as-is to the corresponding
+          Boto3 method. Key names must match the case that Boto3 requires.
+        type: cloudify.datatypes.aws.lambda.Function.config
+        required: false
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure:
+          implementation: awssdk.cloudify_boto3.rds.resources.option.configure
+          inputs:
+            aws_resource_id:
+              description: >
+                This overrides the resource_id property (useful for setting the
+                resource ID of a node instance at runtime).
+              type: string
+              required: false
+              default: ~
+            runtime_properties:
+              description: >
+                This overrides any runtime property at runtime. This is a key-value
+                pair / dictionary that will be passed, as-is, to the runtime properties
+                of the running instance.
+              required: false
+              default: ~
+            force_operation:
+              description: >
+                Forces the current operation to be executed regardless
+                if the "use_external_resource" property is set or not.
+              required: false
+              default: false
+            resource_config:
+              description: >
+                Configuration key-value data to be passed as-is to the corresponding
+                Boto3 method. Key names must match the case that Boto3 requires.
+              required: false
+              default: {}
+            
+  # Reference: https://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.delete_db_parameter_group
+  cloudify.nodes.aws.rds.ParameterGroup:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        description: *use_external_resource_desc
+        type: boolean
+        default: false
+      resource_id:
+        description: *resource_id_desc
+        type: string
+        default: ''
+      client_config:
+        description: >
+          A dictionary of values to pass to authenticate with the AWS API.
+        type: cloudify.datatypes.aws.ConnectionConfig
+        required: false
+      resource_config:
+        description: >
+          Configuration key-value data to be passed as-is to the corresponding
+          Boto3 method. Key names must match the case that Boto3 requires.
+        type: cloudify.datatypes.aws.lambda.Function.config
+        required: false
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: awssdk.cloudify_boto3.rds.resources.parameter_group.create
+          inputs:
+            aws_resource_id:
+              description: >
+                This overrides the resource_id property (useful for setting the
+                resource ID of a node instance at runtime).
+              type: string
+              required: false
+              default: ~
+            runtime_properties:
+              description: >
+                This overrides any runtime property at runtime. This is a key-value
+                pair / dictionary that will be passed, as-is, to the runtime properties
+                of the running instance.
+              required: false
+              default: ~
+            force_operation:
+              description: >
+                Forces the current operation to be executed regardless
+                if the "use_external_resource" property is set or not.
+              required: false
+              default: false
+            resource_config:
+              description: >
+                Configuration key-value data to be passed as-is to the corresponding
+                Boto3 method. Key names must match the case that Boto3 requires.
+              required: false
+              default: {}
+        configure:
+          implementation: awssdk.cloudify_boto3.rds.resources.parameter_group.configure
+          inputs:
+            aws_resource_id:
+              description: >
+                This overrides the resource_id property (useful for setting the
+                resource ID of a node instance at runtime).
+              type: string
+              required: false
+              default: ~
+            runtime_properties:
+              description: >
+                This overrides any runtime property at runtime. This is a key-value
+                pair / dictionary that will be passed, as-is, to the runtime properties
+                of the running instance.
+              required: false
+              default: ~
+            force_operation:
+              description: >
+                Forces the current operation to be executed regardless
+                if the "use_external_resource" property is set or not.
+              required: false
+              default: false
+            resource_config:
+              description: >
+                Configuration key-value data to be passed as-is to the corresponding
+                Boto3 method. Key names must match the case that Boto3 requires.
+              required: false
+              default: {}
+        delete:
+          implementation: awssdk.cloudify_boto3.rds.resources.parameter_group.delete
+          inputs:
+            aws_resource_id:
+              description: >
+                This overrides the resource_id property (useful for setting the
+                resource ID of a node instance at runtime).
+              type: string
+              required: false
+              default: ~
+            runtime_properties:
+              description: >
+                This overrides any runtime property at runtime. This is a key-value
+                pair / dictionary that will be passed, as-is, to the runtime properties
+                of the running instance.
+              required: false
+              default: ~
+            force_operation:
+              description: >
+                Forces the current operation to be executed regardless
+                if the "use_external_resource" property is set or not.
+              required: false
+              default: false
+            resource_config:
+              description: >
+                Configuration key-value data to be passed as-is to the corresponding
+                Boto3 method. Key names must match the case that Boto3 requires.
+              required: false
+              default: {}
+  
+  # Stores prepared Parameter in runtime property "resource_config"
+  cloudify.nodes.aws.rds.Parameter:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        description: *use_external_resource_desc
+        type: boolean
+        default: false
+      resource_id:
+        description: *resource_id_desc
+        type: string
+        default: ''
+      client_config:
+        description: >
+          A dictionary of values to pass to authenticate with the AWS API.
+        type: cloudify.datatypes.aws.ConnectionConfig
+        required: false
+      resource_config:
+        description: >
+          Configuration key-value data to be passed as-is to the corresponding
+          Boto3 method. Key names must match the case that Boto3 requires.
+        type: cloudify.datatypes.aws.lambda.Function.config
+        required: false
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure:
+          implementation: awssdk.cloudify_boto3.rds.resources.parameter.configure
+          inputs:
+            aws_resource_id:
+              description: >
+                This overrides the resource_id property (useful for setting the
+                resource ID of a node instance at runtime).
+              type: string
+              required: false
+              default: ~
+            runtime_properties:
+              description: >
+                This overrides any runtime property at runtime. This is a key-value
+                pair / dictionary that will be passed, as-is, to the runtime properties
+                of the running instance.
+              required: false
+              default: ~
+            force_operation:
+              description: >
+                Forces the current operation to be executed regardless
+                if the "use_external_resource" property is set or not.
+              required: false
+              default: false
+            resource_config:
+              description: >
+                Configuration key-value data to be passed as-is to the corresponding
+                Boto3 method. Key names must match the case that Boto3 requires.
+              required: false
+              default: {}
+
+
+  # Reference: https://boto3.readthedocs.io/en/latest/reference/services/lambda.html#Lambda.Client.create_function
+  cloudify.nodes.aws.lambda.Function:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        description: *use_external_resource_desc
+        type: boolean
+        default: false
+      resource_id:
+        description: *resource_id_desc
+        type: string
+        default: ''
+      client_config:
+        description: >
+          A dictionary of values to pass to authenticate with the AWS API.
+        type: cloudify.datatypes.aws.ConnectionConfig
+        required: false
+      resource_config:
+        description: >
+          Configuration key-value data to be passed as-is to the corresponding
+          Boto3 method. Key names must match the case that Boto3 requires.
+        type: cloudify.datatypes.aws.lambda.Function.config
+        required: false
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: awssdk.cloudify_boto3.lambda_serverless.resources.function.create
+          inputs:
+            aws_resource_id:
+              description: >
+                This overrides the resource_id property (useful for setting the
+                resource ID of a node instance at runtime).
+              type: string
+              required: false
+              default: ~
+            runtime_properties:
+              description: >
+                This overrides any runtime property at runtime. This is a key-value
+                pair / dictionary that will be passed, as-is, to the runtime properties
+                of the running instance.
+              required: false
+              default: ~
+            force_operation:
+              description: >
+                Forces the current operation to be executed regardless
+                if the "use_external_resource" property is set or not.
+              required: false
+              default: false
+            resource_config:
+              description: >
+                Configuration key-value data to be passed as-is to the corresponding
+                Boto3 method. Key names must match the case that Boto3 requires.
+              required: false
+              default: {}
+        delete:
+          implementation: awssdk.cloudify_boto3.lambda_serverless.resources.function.delete
+          inputs:
+            aws_resource_id:
+              description: >
+                This overrides the resource_id property (useful for setting the
+                resource ID of a node instance at runtime).
+              type: string
+              required: false
+              default: ~
+            runtime_properties:
+              description: >
+                This overrides any runtime property at runtime. This is a key-value
+                pair / dictionary that will be passed, as-is, to the runtime properties
+                of the running instance.
+              required: false
+              default: ~
+            force_operation:
+              description: >
+                Forces the current operation to be executed regardless
+                if the "use_external_resource" property is set or not.
+              required: false
+              default: false
+            resource_config:
+              description: >
+                Configuration key-value data to be passed as-is to the corresponding
+                Boto3 method. Key names must match the case that Boto3 requires.
+              required: false
+              default: {}
+
+  # Reference: https://boto3.readthedocs.io/en/latest/reference/services/lambda.html#Lambda.Client.invoke
+  # Stores invocation output in runtime property "output".
+  cloudify.nodes.aws.lambda.Invoke:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        description: *use_external_resource_desc
+        type: boolean
+        default: false
+      resource_id:
+        description: *resource_id_desc
+        type: string
+        default: ''
+      client_config:
+        description: >
+          A dictionary of values to pass to authenticate with the AWS API.
+        type: cloudify.datatypes.aws.ConnectionConfig
+        required: false
+      resource_config:
+        description: >
+          Configuration key-value data to be passed as-is to the corresponding
+          Boto3 method. Key names must match the case that Boto3 requires.
+        type: cloudify.datatypes.aws.lambda.Function.config
+        required: false
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        start:
+          implementation: awssdk.cloudify_boto3.lambda_serverless.resources.invoke.start
+          inputs:
+            aws_resource_id:
+              description: >
+                This overrides the resource_id property (useful for setting the
+                resource ID of a node instance at runtime).
+              type: string
+              required: false
+              default: ~
+            runtime_properties:
+              description: >
+                This overrides any runtime property at runtime. This is a key-value
+                pair / dictionary that will be passed, as-is, to the runtime properties
+                of the running instance.
+              required: false
+              default: ~
+            force_operation:
+              description: >
+                Forces the current operation to be executed regardless
+                if the "use_external_resource" property is set or not.
+              required: false
+              default: false
+            resource_config:
+              description: >
+                Configuration key-value data to be passed as-is to the corresponding
+                Boto3 method. Key names must match the case that Boto3 requires.
+              required: false
+              default: {}
+
+relationships:
+  # Reference: https://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.modify_db_parameter_group
+  cloudify.relationships.aws.rds.parameter_group_connected_to_parameter:
+    derived_from: cloudify.relationships.connected_to
+    source_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        establish: awssdk.cloudify_boto3.rds.resources.parameter_group.update_parameter
+
+  # Reference: https://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.modify_option_group
+  cloudify.relationships.aws.rds.option_group_connected_to_option:
+    derived_from: cloudify.relationships.connected_to
+    source_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        establish: awssdk.cloudify_boto3.rds.resources.option_group.include_option
+        unlink: awssdk.cloudify_boto3.rds.resources.option_group.remove_option

@@ -1,0 +1,154 @@
+'''
+    Common.Utils
+    ~~~~~~~~~~~~
+    AWS helper utilities
+'''
+from cloudify import ctx
+from cloudify.exceptions import NonRecoverableError
+from cloudify_boto3.common import constants
+
+
+def get_resource_id(node=None, instance=None,
+                    raise_on_missing=False):
+    '''
+        Gets the (external) resource ID of a Cloudify node and/or instance.
+        depending on the environment available.
+    :param `cloudify.context.NodeContext` node:
+        Cloudify node.
+    :param `cloudify.context.NodeInstanceContext` instance:
+        Cloudify node instance.
+    :param boolean raise_on_missing: If True, causes this method to raise
+        an exception if the resource ID is not found.
+    :raises: :exc:`cloudify.exceptions.NonRecoverableError`
+    '''
+    node = node if node else ctx.node
+    instance = instance if instance else ctx.instance
+    props = node.properties if node else {}
+    runtime_props = instance.runtime_properties if instance else {}
+    # Search instance runtime properties first, then the node properties
+    resource_id = runtime_props.get(
+        constants.EXTERNAL_RESOURCE_ID, props.get('resource_id'))
+    if not resource_id and raise_on_missing:
+        raise NonRecoverableError(
+            'Missing resource ID! Node=%s, Instance=%s' % (
+                node.id if node else None,
+                instance.id if instance else None))
+    return str(resource_id) if resource_id else None
+
+
+def update_resource_id(instance, val):
+    '''Updates an instance's resource ID'''
+    instance.runtime_properties[constants.EXTERNAL_RESOURCE_ID] = str(val)
+
+
+def get_parent_resource_id(node_instance,
+                           rel_type=constants.REL_CONTAINED_IN,
+                           raise_on_missing=True):
+    '''Finds a relationship to a parent and gets its resource ID'''
+    rel = find_rel_by_type(node_instance, rel_type)
+    if not rel:
+        if raise_on_missing:
+            raise NonRecoverableError('Error locating parent resource ID')
+        return None
+    return get_resource_id(instance=rel.target.instance,
+                           raise_on_missing=raise_on_missing)
+
+
+def get_ancestor_resource_id(node_instance,
+                             node_type,
+                             raise_on_missing=True):
+    '''Finds an ancestor and gets its resource ID'''
+    ancestor = get_ancestor_by_type(node_instance, node_type)
+    if not ancestor:
+        if raise_on_missing:
+            raise NonRecoverableError('Error locating ancestor resource ID')
+        return None
+    return get_resource_id(instance=ancestor.instance,
+                           raise_on_missing=raise_on_missing)
+
+
+def filter_boto_params(args, filters, preserve_none=False):
+    '''
+        Takes in a dictionary, applies a "whitelist" of key names,
+        and removes keys which have associated values of None.
+
+    :param dict args: Original dictionary to filter
+    :param list filters: Whitelist list of keys
+    :param boolean preserve_none: If True, keeps key-value pairs even
+        if the value is None.
+    '''
+    return {
+        k: v for k, v in args.iteritems()
+        if k in filters and (preserve_none is True or v is not None)
+    }
+
+
+def find_rels_by_type(node_instance, rel_type):
+    '''
+        Finds all specified relationships of the Cloudify
+        instance.
+    :param `cloudify.context.NodeInstanceContext` node_instance:
+        Cloudify node instance.
+    :param str rel_type: Cloudify relationship type to search
+        node_instance.relationships for.
+    :returns: List of Cloudify relationships
+    '''
+    return [x for x in node_instance.relationships
+            if rel_type in x.type_hierarchy]
+
+
+def find_rel_by_type(node_instance, rel_type):
+    '''
+        Finds a single relationship of the Cloudify instance.
+    :param `cloudify.context.NodeInstanceContext` node_instance:
+        Cloudify node instance.
+    :param str rel_type: Cloudify relationship type to search
+        node_instance.relationships for.
+    :returns: A Cloudify relationship or None
+    '''
+    rels = find_rels_by_type(node_instance, rel_type)
+    return rels[0] if len(rels) > 0 else None
+
+
+def find_rels_by_node_type(node_instance, node_type):
+    '''
+        Finds all specified relationships of the Cloudify
+        instance where the related node type is of a specified type.
+    :param `cloudify.context.NodeInstanceContext` node_instance:
+        Cloudify node instance.
+    :param str node_type: Cloudify node type to search
+        node_instance.relationships for.
+    :returns: List of Cloudify relationships
+    '''
+    return [x for x in node_instance.relationships
+            if node_type in x.target.node.type_hierarchy]
+
+
+def find_rel_by_node_type(node_instance, node_type):
+    '''
+        Finds a single relationship of the Cloudify
+        instance where the related node type is of a specified type.
+    :param `cloudify.context.NodeInstanceContext` node_instance:
+        Cloudify node instance.
+    :param str rel_type: Cloudify relationship type to search
+        node_instance.relationships for.
+    :returns: A Cloudify relationship or None
+    '''
+    rels = find_rels_by_node_type(node_instance, node_type)
+    return rels[0] if len(rels) > 0 else None
+
+
+def get_ancestor_by_type(inst, node_type):
+    '''
+        Gets an ancestor context (recursive search)
+    :param `cloudify.context.NodeInstanceContext` inst: Cloudify instance
+    :param string node_type: Node type name
+    :returns: Ancestor context or None
+    '''
+    # Find a parent of a specific type
+    rel = find_rel_by_type(inst, 'cloudify.relationships.contained_in')
+    if not rel:
+        return None
+    if node_type in rel.target.node.type_hierarchy:
+        return rel.target
+    return get_ancestor_by_type(rel.target.instance, node_type)

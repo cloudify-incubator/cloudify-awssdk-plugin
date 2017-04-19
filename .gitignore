@@ -87,3 +87,8 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+# Cloudify
+inputs.yaml
+local-storage/
+.cloudify/

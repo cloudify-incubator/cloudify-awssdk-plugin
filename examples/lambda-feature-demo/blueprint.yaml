@@ -1,0 +1,127 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+
+description: >
+  Example blueprint showing AWS Lambda functionality.
+
+
+imports:
+- http://www.getcloudify.org/spec/cloudify/3.4.2/types.yaml
+- http://www.getcloudify.org/spec/aws-plugin/1.4.4/plugin.yaml
+- https://raw.githubusercontent.com/cloudify-incubator/cloudify-boto3-plugin/dev/plugin.yaml
+
+
+inputs:
+  aws_access_key_id:
+    type: string
+  
+  aws_secret_access_key:
+    type: string
+    
+  aws_region_name:
+    type: string
+    default: us-east-1
+
+  aws_vpc_id:
+    description: |
+      AWS VPC ID
+    type: string
+    
+  aws_security_group_id:
+    description: |
+      AWS VPC Security Group ID
+    type: string
+    
+  aws_vpc_subnet_1_id:
+    description: |
+      AWS VPC Subnet ID (Zone 1)
+    type: string
+    
+  aws_vpc_subnet_2_id:
+    description: |
+      AWS VPC Subnet ID (Zone 2)
+    type: string
+
+
+dsl_definitions:
+  client_config: &client_config
+    aws_access_key_id: { get_input: aws_access_key_id }
+    aws_secret_access_key: { get_input: aws_secret_access_key }
+    region_name: { get_input: aws_region_name }
+
+  aws_config: &aws_config
+    aws_access_key_id: { get_input: aws_access_key_id }
+    aws_secret_access_key: { get_input: aws_secret_access_key }
+    ec2_region_name: { get_input: aws_region_name }
+
+node_templates:
+  
+  lambda_function_invocation:
+    type: cloudify.nodes.aws.lambda.Invoke
+    properties:
+      client_config: *client_config
+    relationships:
+    - type: cloudify.relationships.connected_to
+      target: lambda_function
+  
+  lambda_function:
+    type: cloudify.nodes.aws.lambda.Function
+    properties:
+      resource_id: myLambdaFunction
+      resource_config:
+        kwargs:
+          Runtime: python2.7
+          Role: arn:aws:iam::352582918444:role/service-role/cfyLambdaRole
+          Handler: main.lambda_handler
+          MemorySize: 256
+          Code:
+            ZipFile: function/main.zip
+      client_config: *client_config
+    relationships:
+    - type: cloudify.relationships.connected_to
+      target: subnet_1
+    - type: cloudify.relationships.connected_to
+      target: subnet_2
+    - type: cloudify.relationships.connected_to
+      target: security_group
+  
+  subnet_1:
+    type: cloudify.aws.nodes.Subnet
+    properties:
+      use_external_resource: true
+      resource_id: { get_input: aws_vpc_subnet_2_id }
+      cidr_block: N/A
+      aws_config: *aws_config
+    relationships:
+    - type: cloudify.aws.relationships.subnet_contained_in_vpc
+      target: vpc
+        
+  subnet_2:
+    type: cloudify.aws.nodes.Subnet
+    properties:
+      use_external_resource: true
+      resource_id: { get_input: aws_vpc_subnet_1_id }
+      cidr_block: N/A
+      aws_config: *aws_config
+    relationships:
+    - type: cloudify.aws.relationships.subnet_contained_in_vpc
+      target: vpc
+  
+  security_group:
+    type: cloudify.aws.nodes.SecurityGroup
+    properties:
+      use_external_resource: true
+      resource_id: { get_input: aws_security_group_id }
+      description: N/A
+      aws_config: *aws_config
+    relationships:
+    - type: cloudify.aws.relationships.security_group_contained_in_vpc
+      target: vpc
+  
+  vpc:
+    type: cloudify.aws.nodes.VPC
+    properties:
+      use_external_resource: true
+      resource_id: { get_input: aws_vpc_id }
+      cidr_block:  N/A
+      aws_config: *aws_config
