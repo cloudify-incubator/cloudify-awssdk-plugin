@@ -12,9 +12,10 @@ class AWSResourceBase(object):
     '''
         AWS base interface
     '''
-    def __init__(self, ctx_node, resource_id=None, client=None, logger=None):
+    def __init__(self, client, resource_id=None, logger=None):
         self.logger = logger or init_cloudify_logger(NullHandler(),
                                                      'AWSResourceBase')
+        self.client = client
         self.resource_id = str(resource_id) if resource_id else None
 
     @property

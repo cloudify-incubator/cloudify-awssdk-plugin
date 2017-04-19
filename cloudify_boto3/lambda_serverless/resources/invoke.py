@@ -5,13 +5,13 @@
 '''
 # Cloudify
 from cloudify_boto3.common import decorators, utils
-from cloudify_boto3.lambda_serverless import LambdaConnection
+from cloudify_boto3.common.connection import Boto3Connection
 
 RESOURCE_TYPE = 'Lambda Function Invocation'
 
 
 @decorators.aws_resource(resource_type=RESOURCE_TYPE)
-def start(ctx, iface, resource_config, **_):
+def start(ctx, resource_config, **_):
     '''Starts an AWS Lambda Function invocation'''
     # Build API params
     params = resource_config
@@ -25,7 +25,7 @@ def start(ctx, iface, resource_config, **_):
             instance=lambda_function.target.instance,
             raise_on_missing=True)
     # Invoke the function
-    client = LambdaConnection(ctx.node).client()
+    client = Boto3Connection(ctx.node).client('lambda')
     ctx.logger.debug('Starting %s with parameters: %s'
                      % (RESOURCE_TYPE, params))
     res = client.invoke(**params)

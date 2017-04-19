@@ -91,6 +91,6 @@ def create(ctx, iface, resource_config, **_):
 @decorators.aws_resource(SubnetGroup, RESOURCE_TYPE,
                          ignore_properties=True)
 @decorators.wait_for_delete()
-def delete(ctx, iface, resource_config, **_):
+def delete(iface, resource_config, **_):
     '''Deletes an AWS Subnet Group'''
     iface.delete(resource_config)

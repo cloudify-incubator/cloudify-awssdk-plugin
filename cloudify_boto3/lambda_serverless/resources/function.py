@@ -111,6 +111,6 @@ def create(ctx, iface, resource_config, **_):
 @decorators.aws_resource(LambdaFunction, RESOURCE_TYPE,
                          ignore_properties=True)
 @decorators.wait_for_delete()
-def delete(ctx, iface, resource_config, **_):
+def delete(iface, resource_config, **_):
     '''Deletes an AWS Lambda Function'''
     iface.delete(resource_config)

@@ -119,6 +119,6 @@ def create(ctx, iface, resource_config, **_):
                          ignore_properties=True)
 @decorators.wait_for_status(status_pending=['deleting'],
                             fail_on_missing=False)
-def delete(ctx, iface, resource_config, **_):
+def delete(iface, resource_config, **_):
     '''Deletes an AWS RDS Instance'''
     iface.delete(resource_config)

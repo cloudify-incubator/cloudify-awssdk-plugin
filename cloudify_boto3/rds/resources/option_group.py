@@ -95,7 +95,7 @@ def create(ctx, iface, resource_config, **_):
 @decorators.aws_resource(OptionGroup, RESOURCE_TYPE,
                          ignore_properties=True)
 @decorators.wait_for_delete(status_pending=['available'])
-def delete(ctx, iface, resource_config, **_):
+def delete(iface, resource_config, **_):
     '''Deletes an AWS Option Group'''
     try:
         iface.delete(resource_config)

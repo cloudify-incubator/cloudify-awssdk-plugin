@@ -19,7 +19,7 @@
 '''
 # Cloudify AWS RDS
 from cloudify_boto3.common import AWSResourceBase
-from cloudify_boto3.rds.connection import RDSConnection
+from cloudify_boto3.common.connection import Boto3Connection
 
 # pylint: disable=R0903
 
@@ -29,5 +29,24 @@ class RDSBase(AWSResourceBase):
         AWS RDS base interface
     '''
     def __init__(self, ctx_node, resource_id=None, client=None, logger=None):
-        self.client = client or RDSConnection(ctx_node).client()
-        AWSResourceBase.__init__(self, ctx_node, resource_id, client, logger)
+        AWSResourceBase.__init__(
+            self, client or Boto3Connection(ctx_node).client('rds'),
+            resource_id=resource_id, logger=logger)
+
+    @property
+    def properties(self):
+        '''Gets the properties of an external resource'''
+        raise NotImplementedError()
+
+    @property
+    def status(self):
+        '''Gets the status of an external resource'''
+        raise NotImplementedError()
+
+    def create(self, params):
+        '''Creates a resource'''
+        raise NotImplementedError()
+
+    def delete(self, params=None):
+        '''Deletes a resource'''
+        raise NotImplementedError()

@@ -84,7 +84,7 @@ def create(ctx, iface, resource_config, **_):
 
 
 @decorators.aws_resource(ParameterGroup, RESOURCE_TYPE)
-def configure(ctx, iface, resource_config, **_):
+def configure(iface, resource_config, **_):
     '''Configures an AWS RDS Parameter Group'''
     if not resource_config:
         return
@@ -95,7 +95,7 @@ def configure(ctx, iface, resource_config, **_):
 @decorators.aws_resource(ParameterGroup, RESOURCE_TYPE,
                          ignore_properties=True)
 @decorators.wait_for_delete(status_pending=['available'])
-def delete(ctx, iface, resource_config, **_):
+def delete(iface, resource_config, **_):
     '''Deletes an AWS Parameter Group'''
     iface.delete(resource_config)
 

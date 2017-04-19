@@ -1,7 +1,7 @@
 '''
-    Serverless.Connection
-    ~~~~~~~~~~~~~~~~~~~~~
-    AWS Lambda connection
+    Connection
+    ~~~~~~~~~~
+    AWS connection
 '''
 # Boto
 import boto3
@@ -11,9 +11,9 @@ from cloudify_boto3.common.constants import AWS_CONFIG_PROPERTY
 # pylint: disable=R0903
 
 
-class LambdaConnection(object):
+class Boto3Connection(object):
     '''
-        Provides a sugared connection to the AWS Lambda service
+        Provides a sugared connection to an AWS service
 
     :param `cloudify.context.NodeContext` node: A Cloudify node
     :param dict aws_config: AWS connection configuration overrides
@@ -30,12 +30,12 @@ class LambdaConnection(object):
         self.aws_config = {k: v for k, v in self.aws_config.iteritems()
                            if k in aws_config_whitelist}
 
-    def client(self):
+    def client(self, service_name):
         '''
-            Builds an AWS Lambda connection client
+            Builds an AWS connection client
 
-        :returns: An AWS Lambda boto3 client
-        :rtype: `boto.serverless.connection.LambdaConnection`
+        :param str service_name: A Boto3 service name
+        :returns: An AWS service Boto3 client
         :raises: :exc:`cloudify.exceptions.NonRecoverableError`
         '''
-        return boto3.client('lambda', **self.aws_config)
+        return boto3.client(service_name, **self.aws_config)

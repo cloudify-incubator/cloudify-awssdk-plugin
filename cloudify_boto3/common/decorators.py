@@ -38,7 +38,8 @@ def aws_resource(class_decl=None,
             if not ignore_properties:
                 # Normalize resource_config property
                 resource_config = props.get('resource_config') or dict()
-                resource_config_kwargs = resource_config.get('kwargs') or dict()
+                resource_config_kwargs = \
+                    resource_config.get('kwargs') or dict()
                 if 'kwargs' in resource_config:
                     del resource_config['kwargs']
                 resource_config.update(resource_config_kwargs)
@@ -63,8 +64,11 @@ def aws_resource(class_decl=None,
 def wait_for_status(status_good=None,
                     status_pending=None,
                     fail_on_missing=True):
+    '''AWS resource decorator'''
     def wrapper_outer(function):
+        '''Outer function'''
         def wrapper_inner(**kwargs):
+            '''Inner, worker function'''
             ctx = kwargs['ctx']
             resource_type = kwargs.get('resource_type', 'AWS Resource')
             iface = kwargs['iface']
@@ -92,8 +96,11 @@ def wait_for_status(status_good=None,
 
 
 def wait_for_delete(status_deleted=None, status_pending=None):
+    '''AWS resource decorator'''
     def wrapper_outer(function):
+        '''Outer function'''
         def wrapper_inner(**kwargs):
+            '''Inner, worker function'''
             ctx = kwargs['ctx']
             resource_type = kwargs.get('resource_type', 'AWS Resource')
             iface = kwargs['iface']
