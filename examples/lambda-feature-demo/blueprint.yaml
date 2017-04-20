@@ -71,9 +71,8 @@ node_templates:
       resource_config:
         kwargs:
           Runtime: python2.7
-          Role: arn:aws:iam::352582918444:role/service-role/cfyLambdaRole
           Handler: main.lambda_handler
-          MemorySize: 256
+          MemorySize: 128
           Code:
             ZipFile: function/main.zip
       client_config: *client_config
@@ -84,6 +83,72 @@ node_templates:
       target: subnet_2
     - type: cloudify.relationships.connected_to
       target: security_group
+    - type: cloudify.relationships.connected_to
+      target: iam_role_lambda_function
+
+  iam_role_lambda_function:
+    type: cloudify.nodes.aws.iam.Role
+    properties:
+      resource_id: cfyLambdaRole2
+      client_config: *client_config
+      resource_config:
+        kwargs:
+          Path: /service-role/
+          AssumeRolePolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Effect: Allow
+              Principal:
+                Service: lambda.amazonaws.com
+              Action: 'sts:AssumeRole'
+    relationships:
+    - type: cloudify.relationships.aws.iam.role_connected_to_policy
+      target: iam_policy_vpc_access
+    - type: cloudify.relationships.aws.iam.role_connected_to_policy
+      target: iam_policy_cloudwatch_access
+     
+  iam_policy_vpc_access:
+    type: cloudify.nodes.aws.iam.Policy
+    properties:
+      resource_id: AWSLambdaVPCAccessExecutionRole
+      client_config: *client_config
+      resource_config:
+        kwargs:
+          Description: >-
+            Grants access to EC2 network components
+          Path: /service-role/
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Effect: Allow
+              Action:
+              - 'ec2:CreateNetworkInterface'
+              - 'ec2:DeleteNetworkInterface'
+              - 'ec2:DescribeNetworkInterfaces'
+              Resource: '*'
+
+  iam_policy_cloudwatch_access:
+    type: cloudify.nodes.aws.iam.Policy
+    properties:
+      resource_id: AWSLambdaBasicExecutionRole
+      client_config: *client_config
+      resource_config:
+        kwargs:
+          Description: >-
+            Grants access to CloudWatch logs
+          Path: /service-role/
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Effect: Allow
+              Action: 'logs:CreateLogGroup'
+              Resource: arn:aws:logs:us-east-1:352582918444:*
+            - Effect: Allow
+              Action:
+              - 'logs:CreateLogStream'
+              - 'logs:PutLogEvents'
+              Resource:
+              - arn:aws:logs:us-east-1:352582918444:log-group:/aws/lambda/myLambdaFunction:*
   
   subnet_1:
     type: cloudify.aws.nodes.Subnet

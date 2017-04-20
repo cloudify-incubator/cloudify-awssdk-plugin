@@ -81,8 +81,8 @@ class OptionGroup(RDSBase):
                           % (self.type_name, params))
         res = self.client.create_option_group(**params)
         self.logger.debug('Response: %s' % res)
-        self.resource_id = res['OptionGroup']['OptionGroupName']
-        return self.resource_id
+        self.update_resource_id(res['OptionGroup']['OptionGroupName'])
+        return self.resource_id, res['OptionGroup']['OptionGroupArn']
 
     def delete(self, params=None):
         '''
@@ -103,7 +103,9 @@ def create(ctx, iface, resource_config, **_):
     # Build API params
     resource_config.update(dict(OptionGroupName=iface.resource_id))
     # Actually create the resource
-    utils.update_resource_id(ctx.instance, iface.create(resource_config))
+    res_id, res_arn = iface.create(resource_config)
+    utils.update_resource_id(ctx.instance, res_id)
+    utils.update_resource_arn(ctx.instance, res_arn)
 
 
 @decorators.aws_resource(OptionGroup, RESOURCE_TYPE,

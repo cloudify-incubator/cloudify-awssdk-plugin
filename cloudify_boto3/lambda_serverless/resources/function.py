@@ -63,8 +63,8 @@ class LambdaFunction(LambdaBase):
                           % (self.type_name, params))
         res = self.client.create_function(**params)
         self.logger.debug('Response: %s' % res)
-        self.resource_id = res['FunctionName']
-        return self.resource_id
+        self.update_resource_id(res['FunctionName'])
+        return self.resource_id, res['FunctionArn']
 
     def delete(self, params=None):
         '''
@@ -104,6 +104,14 @@ def create(ctx, iface, resource_config, **_):
                 raise_on_missing=True))
     vpc_config['SecurityGroupIds'] = security_groups
     params['VpcConfig'] = vpc_config
+    # Attach an IAM Role if it exists
+    iam_role = utils.find_rel_by_node_type(
+        ctx.instance, 'cloudify.nodes.aws.iam.Role')
+    if iam_role:
+        params['Role'] = utils.get_resource_arn(
+            node=iam_role.target.node,
+            instance=iam_role.target.instance,
+            raise_on_missing=True)
     # Handle user-profided code ZIP file
     if params.get('Code', dict()).get('ZipFile'):
         codezip = params['Code']['ZipFile']
@@ -119,7 +127,9 @@ def create(ctx, iface, resource_config, **_):
             with open(codezip, mode='rb') as _file:
                 params['Code']['ZipFile'] = _file.read()
     # Actually create the resource
-    utils.update_resource_id(ctx.instance, iface.create(params))
+    res_id, res_arn = iface.create(params)
+    utils.update_resource_id(ctx.instance, res_id)
+    utils.update_resource_arn(ctx.instance, res_arn)
 
 
 @decorators.aws_resource(LambdaFunction, RESOURCE_TYPE,

@@ -13,100 +13,88 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 '''
-    RDS.SubnetGroup
-    ~~~~~~~~~~~~~~~
-    AWS RDS subnet group interface
+    IAM.Policy
+    ~~~~~~~~~~
+    AWS IAM Policy interface
 '''
+from json import dumps as json_dumps
 # Cloudify
 from cloudify_boto3.common import decorators, utils
-from cloudify_boto3.rds import RDSBase
+from cloudify_boto3.iam import IAMBase
 # Boto
 from botocore.exceptions import ClientError
 
-RESOURCE_TYPE = 'RDS Subnet Group'
+RESOURCE_TYPE = 'IAM Policy'
 
 
-class SubnetGroup(RDSBase):
+class IAMPolicy(IAMBase):
     '''
-        AWS RDS Subnet Group interface
+        AWS IAM Policy interface
     '''
     def __init__(self, ctx_node, resource_id=None, client=None, logger=None):
-        RDSBase.__init__(self, ctx_node, resource_id, client, logger)
+        IAMBase.__init__(self, ctx_node, resource_id, client, logger)
         self.type_name = RESOURCE_TYPE
 
     @property
     def properties(self):
         '''Gets the properties of an external resource'''
-        resources = None
+        resource = None
         try:
-            resources = self.client.describe_db_subnet_groups(
-                DBSubnetGroupName=self.resource_id)
+            resource = self.client.get_policy(PolicyArn=self.resource_id)
         except ClientError:
             pass
-        if not resources or not resources.get('DBSubnetGroups', list()):
+        if not resource or not resource.get('Policy', dict()):
             return None
-        return resources['DBSubnetGroups'][0]
+        return resource['Policy']
 
     @property
     def status(self):
         '''Gets the status of an external resource'''
-        props = self.properties
-        if not props:
-            return None
-        return props['SubnetGroupStatus']
+        if self.properties:
+            return 'available'
+        return None
 
     def create(self, params):
         '''
-            Create a new AWS RDS subnet group.
-        .. note:
-            See http://bit.ly/2ownCxX for config details.
+            Create a new AWS IAM Policy.
         '''
         self.logger.debug('Creating %s with parameters: %s'
                           % (self.type_name, params))
-        res = self.client.create_db_subnet_group(**params)
+        res = self.client.create_policy(**params)
         self.logger.debug('Response: %s' % res)
-        self.update_resource_id(res['DBSubnetGroup']['DBSubnetGroupName'])
-        return self.resource_id, res['DBSubnetGroup']['DBSubnetGroupArn']
+        self.update_resource_id(res['Policy']['Arn'])
+        return res['Policy']['PolicyName'], res['Policy']['Arn']
 
     def delete(self, params=None):
         '''
-            Deletes an existing AWS RDS subnet group.
-        .. note:
-            See http://bit.ly/2pC0sWj for config details.
+            Deletes an existing AWS IAM Policy.
         '''
         params = params or dict()
-        params.update(dict(DBSubnetGroupName=self.resource_id))
+        params.update(dict(PolicyArn=self.resource_id))
         self.logger.debug('Deleting %s with parameters: %s'
                           % (self.type_name, params))
-        self.client.delete_db_subnet_group(**params)
+        self.client.delete_policy(**params)
 
 
-@decorators.aws_resource(SubnetGroup, RESOURCE_TYPE)
-@decorators.wait_for_status(status_good=['Complete'])
+@decorators.aws_resource(IAMPolicy, RESOURCE_TYPE)
 def create(ctx, iface, resource_config, **_):
-    '''Creates an AWS RDS Subnet Group'''
+    '''Creates an AWS IAM Policy'''
     # Build API params
     params = resource_config
-    params.update(dict(DBSubnetGroupName=iface.resource_id))
-    # Find connected subnets
-    subnet_ids = params.get('SubnetIds', list())
-    for rel in utils.find_rels_by_node_type(
-            ctx.instance, 'cloudify.aws.nodes.Subnet'):
-        subnet_ids.append(
-            utils.get_resource_id(
-                node=rel.target.node,
-                instance=rel.target.instance,
-                raise_on_missing=True))
-    params['SubnetIds'] = subnet_ids
+    params.update(dict(PolicyName=iface.resource_id))
+    if 'PolicyDocument' in params and \
+            isinstance(params['PolicyDocument'], dict):
+        params['PolicyDocument'] = json_dumps(params['PolicyDocument'])
     # Actually create the resource
     res_id, res_arn = iface.create(params)
     utils.update_resource_id(ctx.instance, res_id)
     utils.update_resource_arn(ctx.instance, res_arn)
 
 
-@decorators.aws_resource(SubnetGroup, RESOURCE_TYPE,
+@decorators.aws_resource(IAMPolicy, RESOURCE_TYPE,
                          ignore_properties=True)
 @decorators.wait_for_delete()
 def delete(iface, resource_config, **_):
-    '''Deletes an AWS Subnet Group'''
+    '''Deletes an AWS IAM Policy'''
+    iface.update_resource_id(utils.get_resource_arn())
     iface.delete(resource_config)

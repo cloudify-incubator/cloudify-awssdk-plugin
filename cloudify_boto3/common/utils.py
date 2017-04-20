@@ -22,6 +22,26 @@ from cloudify.exceptions import NonRecoverableError
 from cloudify_boto3.common import constants
 
 
+def get_resource_string(
+        node=None, instance=None,
+        property_key=None, attribute_key=None):
+    '''
+        Gets a string of a Cloudify node and/or instance, searching
+        both properties and runtime properties (attributes).
+    :param `cloudify.context.NodeContext` node:
+        Cloudify node.
+    :param `cloudify.context.NodeInstanceContext` instance:
+        Cloudify node instance.
+    '''
+    node = node if node else ctx.node
+    instance = instance if instance else ctx.instance
+    props = node.properties if node else {}
+    runtime_props = instance.runtime_properties if instance else {}
+    # Search instance runtime properties first, then the node properties
+    value = runtime_props.get(attribute_key, props.get(property_key))
+    return str(value) if value else None
+
+
 def get_resource_id(node=None, instance=None,
                     raise_on_missing=False):
     '''
@@ -35,24 +55,47 @@ def get_resource_id(node=None, instance=None,
         an exception if the resource ID is not found.
     :raises: :exc:`cloudify.exceptions.NonRecoverableError`
     '''
-    node = node if node else ctx.node
-    instance = instance if instance else ctx.instance
-    props = node.properties if node else {}
-    runtime_props = instance.runtime_properties if instance else {}
-    # Search instance runtime properties first, then the node properties
-    resource_id = runtime_props.get(
-        constants.EXTERNAL_RESOURCE_ID, props.get('resource_id'))
+    resource_id = get_resource_string(
+        node, instance, 'resource_id', constants.EXTERNAL_RESOURCE_ID)
     if not resource_id and raise_on_missing:
         raise NonRecoverableError(
             'Missing resource ID! Node=%s, Instance=%s' % (
                 node.id if node else None,
                 instance.id if instance else None))
-    return str(resource_id) if resource_id else None
+    return resource_id
+
+
+def get_resource_arn(node=None, instance=None,
+                     raise_on_missing=False):
+    '''
+        Gets the (external) resource ARN of a Cloudify node and/or instance.
+        depending on the environment available.
+    :param `cloudify.context.NodeContext` node:
+        Cloudify node.
+    :param `cloudify.context.NodeInstanceContext` instance:
+        Cloudify node instance.
+    :param boolean raise_on_missing: If True, causes this method to raise
+        an exception if the resource ID is not found.
+    :raises: :exc:`cloudify.exceptions.NonRecoverableError`
+    '''
+    resource_id = get_resource_string(
+        node, instance, 'resource_arn', constants.EXTERNAL_RESOURCE_ARN)
+    if not resource_id and raise_on_missing:
+        raise NonRecoverableError(
+            'Missing resource ARN! Node=%s, Instance=%s' % (
+                node.id if node else None,
+                instance.id if instance else None))
+    return resource_id
 
 
 def update_resource_id(instance, val):
     '''Updates an instance's resource ID'''
     instance.runtime_properties[constants.EXTERNAL_RESOURCE_ID] = str(val)
+
+
+def update_resource_arn(instance, val):
+    '''Updates an instance's resource ARN'''
+    instance.runtime_properties[constants.EXTERNAL_RESOURCE_ARN] = str(val)
 
 
 def get_parent_resource_id(node_instance,

@@ -1,0 +1,152 @@
+# #######
+# Copyright (c) 2017 GigaSpaces Technologies Ltd. All rights reserved
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#        http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+#    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    * See the License for the specific language governing permissions and
+#    * limitations under the License.
+'''
+    IAM.Role
+    ~~~~~~~~
+    AWS IAM Role interface
+'''
+from json import dumps as json_dumps
+# Cloudify
+from cloudify_boto3.common import decorators, utils
+from cloudify_boto3.iam import IAMBase
+# Boto
+from botocore.exceptions import ClientError
+
+RESOURCE_TYPE = 'IAM Role'
+
+
+class IAMRole(IAMBase):
+    '''
+        AWS IAM Role interface
+    '''
+    def __init__(self, ctx_node, resource_id=None, client=None, logger=None):
+        IAMBase.__init__(self, ctx_node, resource_id, client, logger)
+        self.type_name = RESOURCE_TYPE
+
+    @property
+    def properties(self):
+        '''Gets the properties of an external resource'''
+        resource = None
+        try:
+            resource = self.client.get_role(RoleName=self.resource_id)
+        except ClientError:
+            pass
+        if not resource or not resource.get('Role', dict()):
+            return None
+        return resource['Role']
+
+    @property
+    def status(self):
+        '''Gets the status of an external resource'''
+        if self.properties:
+            return 'available'
+        return None
+
+    def create(self, params):
+        '''
+            Create a new AWS IAM Role.
+        '''
+        self.logger.debug('Creating %s with parameters: %s'
+                          % (self.type_name, params))
+        res = self.client.create_role(**params)
+        self.logger.debug('Response: %s' % res)
+        self.update_resource_id(res['Role']['RoleName'])
+        return self.resource_id, res['Role']['Arn']
+
+    def delete(self, params=None):
+        '''
+            Deletes an existing AWS IAM Role.
+        '''
+        params = params or dict()
+        params.update(dict(RoleName=self.resource_id))
+        self.logger.debug('Deleting %s with parameters: %s'
+                          % (self.type_name, params))
+        self.client.delete_role(**params)
+
+    def attach_policy(self, params):
+        '''
+            Attaches an IAM Policy to an IAM Role
+        '''
+        self.logger.debug('Attaching IAM Policy "%s" to IAM Role "%s"'
+                          % (params.get('PolicyArn'), self.resource_id))
+        params = params or dict()
+        params.update(dict(RoleName=self.resource_id))
+        self.client.attach_role_policy(**params)
+
+    def detach_policy(self, params):
+        '''
+            Detaches an IAM Policy from an IAM Role
+        '''
+        self.logger.debug('Detaching IAM Policy "%s" from IAM Role "%s"'
+                          % (params.get('PolicyArn'), self.resource_id))
+        params = params or dict()
+        params.update(dict(RoleName=self.resource_id))
+        self.client.detach_role_policy(**params)
+
+
+@decorators.aws_resource(IAMRole, RESOURCE_TYPE)
+def create(ctx, iface, resource_config, **_):
+    '''Creates an AWS IAM Role'''
+    # Build API params
+    params = resource_config
+    params.update(dict(RoleName=iface.resource_id))
+    if 'AssumeRolePolicyDocument' in params and \
+            isinstance(params['AssumeRolePolicyDocument'], dict):
+        params['AssumeRolePolicyDocument'] = \
+            json_dumps(params['AssumeRolePolicyDocument'])
+    # Actually create the resource
+    res_id, res_arn = iface.create(params)
+    utils.update_resource_id(ctx.instance, res_id)
+    utils.update_resource_arn(ctx.instance, res_arn)
+
+
+@decorators.aws_resource(IAMRole, RESOURCE_TYPE,
+                         ignore_properties=True)
+@decorators.wait_for_delete()
+def delete(iface, resource_config, **_):
+    '''Deletes an AWS IAM Role'''
+    iface.delete(resource_config)
+
+
+def attach_policy(ctx, resource_config):
+    '''Attaches a Policy to a Role'''
+    resource_config = resource_config or dict()
+    resource_config['PolicyArn'] = utils.get_resource_arn(
+        ctx.target.node,
+        ctx.target.instance,
+        raise_on_missing=True)
+    IAMRole(
+        ctx.source.node, logger=ctx.logger,
+        resource_id=utils.get_resource_id(
+            node=ctx.source.node,
+            instance=ctx.source.instance,
+            raise_on_missing=True)
+    ).attach_policy(resource_config)
+
+
+def detach_policy(ctx, resource_config):
+    '''Detaches a Policy from a Role'''
+    resource_config = resource_config or dict()
+    resource_config['PolicyArn'] = utils.get_resource_arn(
+        ctx.target.node,
+        ctx.target.instance,
+        raise_on_missing=True)
+    IAMRole(
+        ctx.source.node, logger=ctx.logger,
+        resource_id=utils.get_resource_id(
+            node=ctx.source.node,
+            instance=ctx.source.instance,
+            raise_on_missing=True)
+    ).detach_policy(resource_config)

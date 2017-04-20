@@ -13,28 +13,25 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 '''
-    Common
-    ~~~~~~
-    AWS common interfaces
+    IAM
+    ~~~
+    AWS IAM base interface
 '''
-from logging import NullHandler
-# Cloudify
-from cloudify.logs import init_cloudify_logger
+# Cloudify AWS IAM
+from cloudify_boto3.common import AWSResourceBase
+from cloudify_boto3.common.connection import Boto3Connection
+
+# pylint: disable=R0903
 
 
-class AWSResourceBase(object):
+class IAMBase(AWSResourceBase):
     '''
-        AWS base interface
+        AWS IAM base interface
     '''
-    def __init__(self, client, resource_id=None, logger=None):
-        self.logger = logger or init_cloudify_logger(NullHandler(),
-                                                     'AWSResourceBase')
-        self.client = client
-        self.resource_id = str(resource_id) if resource_id else None
-
-    def update_resource_id(self, resource_id):
-        '''Updates the resource_id value'''
-        self.resource_id = resource_id
+    def __init__(self, ctx_node, resource_id=None, client=None, logger=None):
+        AWSResourceBase.__init__(
+            self, client or Boto3Connection(ctx_node).client('iam'),
+            resource_id=resource_id, logger=logger)
 
     @property
     def properties(self):

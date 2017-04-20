@@ -20,7 +20,9 @@
 # Cloudify
 from cloudify.exceptions import (OperationRetry, NonRecoverableError)
 from cloudify_boto3.common import utils
-from cloudify_boto3.common.constants import EXTERNAL_RESOURCE_ID as EXT_RES_ID
+from cloudify_boto3.common.constants import (
+    EXTERNAL_RESOURCE_ARN as EXT_RES_ARN,
+    EXTERNAL_RESOURCE_ID as EXT_RES_ID)
 
 
 def aws_resource(class_decl=None,
@@ -38,6 +40,9 @@ def aws_resource(class_decl=None,
             if resource_id and not \
                     ctx.instance.runtime_properties.get(EXT_RES_ID):
                 ctx.instance.runtime_properties[EXT_RES_ID] = resource_id
+            if resource_id and not \
+                    ctx.instance.runtime_properties.get(EXT_RES_ARN):
+                ctx.instance.runtime_properties[EXT_RES_ARN] = resource_id
             # Override any runtime properties if needed
             runtime_properties = kwargs.get('runtime_properties') or dict()
             for key, val in runtime_properties.iteritems():

@@ -17,7 +17,7 @@
     ~~~~~~
     AWS Labmda base interface
 '''
-# Cloudify AWS RDS
+# Cloudify AWS Lambda
 from cloudify_boto3.common import AWSResourceBase
 from cloudify_boto3.common.connection import Boto3Connection
 

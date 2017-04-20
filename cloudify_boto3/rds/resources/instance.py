@@ -65,8 +65,8 @@ class DBInstance(RDSBase):
                           % (self.type_name, params))
         res = self.client.create_db_instance(**params)
         self.logger.debug('Response: %s' % res)
-        self.resource_id = res['DBInstance']['DBInstanceIdentifier']
-        return self.resource_id
+        self.update_resource_id(res['DBInstance']['DBInstanceIdentifier'])
+        return self.resource_id, res['DBInstance']['DBInstanceArn']
 
     def delete(self, params=None):
         '''
@@ -126,7 +126,9 @@ def create(ctx, iface, resource_config, **_):
                 raise_on_missing=True))
     params['VpcSecurityGroupIds'] = security_groups
     # Actually create the resource
-    utils.update_resource_id(ctx.instance, iface.create(params))
+    res_id, res_arn = iface.create(params)
+    utils.update_resource_id(ctx.instance, res_id)
+    utils.update_resource_arn(ctx.instance, res_arn)
 
 
 @decorators.aws_resource(DBInstance, RESOURCE_TYPE,
