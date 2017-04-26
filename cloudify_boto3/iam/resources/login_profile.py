@@ -13,61 +13,47 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 '''
-    RDS.Option
-    ~~~~~~~~~~
-    AWS RDS option interface
+    IAM.LoginProfile
+    ~~~~~~~~~~~~~~~~
+    AWS IAM User Login Profile
 '''
 # Cloudify
 from cloudify_boto3.common import decorators, utils
-from cloudify_boto3.rds.resources.option_group import OptionGroup
+from cloudify_boto3.iam.resources.user import IAMUser
 
-RESOURCE_TYPE = 'RDS Option'
+RESOURCE_TYPE = 'IAM User Login Profile'
 
 
 @decorators.aws_resource(resource_type=RESOURCE_TYPE)
 def configure(ctx, resource_config, **_):
-    '''Configures an AWS RDS Option'''
+    '''Configures an AWS IAM Login Profile'''
     # Save the parameters
-    if resource_config.get('OptionName') and not utils.get_resource_id():
-        utils.update_resource_id(ctx.instance, resource_config['OptionName'])
     ctx.instance.runtime_properties['resource_config'] = resource_config
 
 
 @decorators.aws_relationship(resource_type=RESOURCE_TYPE)
 def attach_to(ctx, resource_config, **_):
-    '''Attaches an RDS Option to something else'''
+    '''Attaches an IAM Login Profile to something else'''
     rtprops = ctx.source.instance.runtime_properties
     params = resource_config or rtprops.get('resource_config') or dict()
     if utils.is_node_type(ctx.target.node,
-                          'cloudify.nodes.aws.rds.OptionGroup'):
-        params['OptionName'] = utils.get_resource_id(raise_on_missing=True)
-        OptionGroup(
+                          'cloudify.nodes.aws.iam.User'):
+        IAMUser(
             ctx.target.node, logger=ctx.logger,
             resource_id=utils.get_resource_id(
                 node=ctx.target.node,
                 instance=ctx.target.instance,
-                raise_on_missing=True)).include_option(params)
-    elif utils.is_node_type(ctx.target.node,
-                            'cloudify.aws.nodes.SecurityGroup'):
-        security_groups = rtprops.get('resource_config').get(
-            'VpcSecurityGroupMemberships', list())
-        security_groups.append(
-            utils.get_resource_id(
-                node=ctx.target.node,
-                instance=ctx.target.instance,
-                raise_on_missing=True))
-        ctx.source.instance.runtime_properties[
-            'resource_config']['VpcSecurityGroupMemberships'] = security_groups
+                raise_on_missing=True)).create_login_profile(params)
 
 
 @decorators.aws_relationship(resource_type=RESOURCE_TYPE)
 def detach_from(ctx, resource_config, **_):
-    '''Detaches an RDS Option from something else'''
+    '''Detaches an IAM Login Profile from something else'''
     if utils.is_node_type(ctx.target.node,
-                          'cloudify.nodes.aws.rds.OptionGroup'):
-        OptionGroup(
+                          'cloudify.nodes.aws.iam.User'):
+        IAMUser(
             ctx.target.node, logger=ctx.logger,
             resource_id=utils.get_resource_id(
                 node=ctx.target.node,
                 instance=ctx.target.instance,
-                raise_on_missing=True)).remove_option(resource_config)
+                raise_on_missing=True)).delete_login_profile(resource_config)

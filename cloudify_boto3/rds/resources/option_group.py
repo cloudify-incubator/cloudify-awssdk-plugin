@@ -121,28 +121,26 @@ def delete(iface, resource_config, **_):
         raise exc
 
 
-def include_option(ctx):
-    '''Adds an option to an option group'''
-    ctx.logger.debug('Option RTA: %s' %
-                     ctx.target.instance.runtime_properties['resource_config'])
-    OptionGroup(
-        ctx.source.node, logger=ctx.logger,
-        resource_id=utils.get_resource_id(
-            node=ctx.source.node,
-            instance=ctx.source.instance,
+@decorators.aws_relationship(OptionGroup, RESOURCE_TYPE)
+def attach_to(ctx, iface, resource_config, **_):
+    '''Attaches an RDS OptionGroup to something else'''
+    rtprops = ctx.target.instance.runtime_properties
+    params = resource_config or rtprops.get('resource_config') or dict()
+    if utils.is_node_type(ctx.target.node,
+                          'cloudify.nodes.aws.rds.Option'):
+        params['OptionName'] = utils.get_resource_id(
+            node=ctx.target.node,
+            instance=ctx.target.instance,
             raise_on_missing=True)
-    ).include_option(ctx.target.instance.runtime_properties['resource_config'])
+        iface.include_option(params)
 
 
-def remove_option(ctx):
-    '''Adds an option to an option group'''
-    OptionGroup(
-        ctx.source.node, logger=ctx.logger,
-        resource_id=utils.get_resource_id(
-            node=ctx.source.node,
-            instance=ctx.source.instance,
-            raise_on_missing=True)
-    ).remove_option(utils.get_resource_id(
-        node=ctx.target.node,
-        instance=ctx.target.instance,
-        raise_on_missing=True))
+@decorators.aws_relationship(OptionGroup, RESOURCE_TYPE)
+def detach_from(ctx, iface, resource_config, **_):
+    '''Detaches an RDS OptionGroup from something else'''
+    if utils.is_node_type(ctx.target.node,
+                          'cloudify.nodes.aws.rds.Option'):
+        iface.remove_option(utils.get_resource_id(
+            node=ctx.target.node,
+            instance=ctx.target.instance,
+            raise_on_missing=True))

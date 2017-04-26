@@ -1,0 +1,147 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+
+description: >
+  Example blueprint showing AWS IAM functionality.
+
+
+imports:
+- http://www.getcloudify.org/spec/cloudify/3.4.2/types.yaml
+- http://www.getcloudify.org/spec/aws-plugin/1.4.4/plugin.yaml
+- https://raw.githubusercontent.com/cloudify-incubator/cloudify-boto3-plugin/dev/plugin.yaml
+
+
+inputs:
+  aws_access_key_id:
+    type: string
+  
+  aws_secret_access_key:
+    type: string
+    
+  aws_region_name:
+    type: string
+    default: us-east-1
+
+
+dsl_definitions:
+  client_config: &client_config
+    aws_access_key_id: { get_input: aws_access_key_id }
+    aws_secret_access_key: { get_input: aws_secret_access_key }
+    region_name: { get_input: aws_region_name }
+
+  aws_config: &aws_config
+    aws_access_key_id: { get_input: aws_access_key_id }
+    aws_secret_access_key: { get_input: aws_secret_access_key }
+    ec2_region_name: { get_input: aws_region_name }
+
+node_templates:
+
+  iam_user_api_access:
+    type: cloudify.nodes.aws.iam.AccessKey
+    relationships:
+    - type: cloudify.relationships.aws.iam.access_key.connected_to
+      target: iam_user
+
+  iam_user_login_profile:
+    type: cloudify.nodes.aws.iam.LoginProfile
+    properties:
+      resource_config:
+        kwargs:
+          Password: !!str Cl0ud1fy2017
+    relationships:
+    - type: cloudify.relationships.aws.iam.login_profile.connected_to
+      target: iam_user
+
+  iam_user:
+    type: cloudify.nodes.aws.iam.User
+    properties:
+      resource_id: !!str CloudifyUser=,.@-Test
+      client_config: *client_config
+      resource_config:
+        kwargs:
+          Path: !!str /!"#$%&'()*+,-.0123456789:;<=>?@abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ{|}~/
+    relationships:
+    - type: cloudify.relationships.aws.iam.user.connected_to
+      target: iam_group
+    #- type: cloudify.relationships.aws.iam.user.connected_to
+    #  target: iam_user_login_profile
+    #- type: cloudify.relationships.aws.iam.user.connected_to
+    #  target: iam_user_api_access
+    - type: cloudify.relationships.aws.iam.user.connected_to
+      target: iam_policy_vpc_access
+
+  iam_group:
+    type: cloudify.nodes.aws.iam.Group
+    properties:
+      resource_id: !!str CloudifyGroup=,.@-Test
+      client_config: *client_config
+      resource_config:
+        kwargs:
+          Path: !!str /!"#$%&'()*+,-.0123456789:;<=>?@abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ{|}~/
+    relationships:
+    - type: cloudify.relationships.aws.iam.group.connected_to
+      target: iam_policy_vpc_access
+
+  iam_role:
+    type: cloudify.nodes.aws.iam.Role
+    properties:
+      resource_id: CloudifyLambdaEC2Role
+      client_config: *client_config
+      resource_config:
+        kwargs:
+          Path: !!str /service-role/
+          AssumeRolePolicyDocument:
+            Version: !!str 2012-10-17
+            Statement:
+            - Effect: Allow
+              Principal:
+                Service: !!str lambda.amazonaws.com
+              Action: !!str sts:AssumeRole
+    relationships:
+    - type: cloudify.relationships.aws.iam.role.connected_to
+      target: iam_policy_vpc_access
+    - type: cloudify.relationships.aws.iam.role.connected_to
+      target: iam_policy_cloudwatch_access
+     
+  iam_policy_vpc_access:
+    type: cloudify.nodes.aws.iam.Policy
+    properties:
+      resource_id: CloudifyVPCAccessPolicy
+      client_config: *client_config
+      resource_config:
+        kwargs:
+          Description: >-
+            Grants access to EC2 network components
+          Path: !!str /service-role/
+          PolicyDocument:
+            Version: !!str 2012-10-17
+            Statement:
+            - Effect: Allow
+              Action:
+              - !!str ec2:CreateNetworkInterface
+              - !!str ec2:DeleteNetworkInterface
+              - !!str ec2:DescribeNetworkInterfaces
+              Resource: '*'
+
+  iam_policy_cloudwatch_access:
+    type: cloudify.nodes.aws.iam.Policy
+    properties:
+      resource_id: CloudifyLambdaEC2Policy
+      client_config: *client_config
+      resource_config:
+        kwargs:
+          Description: >-
+            Grants access to CloudWatch logs
+          Path: !!str /service-role/
+          PolicyDocument:
+            Version: !!str 2012-10-17
+            Statement:
+            - Effect: Allow
+              Action: !!str logs:CreateLogGroup
+              Resource: !!str arn:aws:logs:us-east-1:352582918444:*
+            - Effect: Allow
+              Action:
+              - !!str logs:CreateLogStream'
+              - !!str logs:PutLogEvents'
+              Resource:
+              - !!str arn:aws:logs:us-east-1:352582918444:log-group:/aws/lambda/myLambdaFunction:*

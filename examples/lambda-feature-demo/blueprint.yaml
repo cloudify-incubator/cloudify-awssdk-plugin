@@ -58,10 +58,8 @@ node_templates:
   
   lambda_function_invocation:
     type: cloudify.nodes.aws.lambda.Invoke
-    properties:
-      client_config: *client_config
     relationships:
-    - type: cloudify.relationships.connected_to
+    - type: cloudify.relationships.aws.lambda.invoke.connected_to
       target: lambda_function
   
   lambda_function:
@@ -102,9 +100,9 @@ node_templates:
                 Service: lambda.amazonaws.com
               Action: 'sts:AssumeRole'
     relationships:
-    - type: cloudify.relationships.aws.iam.role_connected_to_policy
+    - type: cloudify.relationships.aws.iam.role.connected_to
       target: iam_policy_vpc_access
-    - type: cloudify.relationships.aws.iam.role_connected_to_policy
+    - type: cloudify.relationships.aws.iam.role.connected_to
       target: iam_policy_cloudwatch_access
      
   iam_policy_vpc_access:

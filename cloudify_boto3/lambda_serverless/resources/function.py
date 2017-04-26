@@ -76,6 +76,20 @@ class LambdaFunction(LambdaBase):
                           % (self.type_name, params))
         self.client.delete_function(**params)
 
+    def invoke(self, params):
+        '''
+            Invokes an AWS Lambda Function.
+        '''
+        params = params or dict()
+        params.update(dict(FunctionName=self.resource_id))
+        self.logger.debug('Invoking %s with parameters: %s'
+                          % (self.type_name, params))
+        res = self.client.invoke(**params)
+        if res and res.get('Payload'):
+            res['Payload'] = res['Payload'].read()
+        self.logger.debug('Response: %s' % res)
+        return res
+
 
 @decorators.aws_resource(LambdaFunction, RESOURCE_TYPE)
 def create(ctx, iface, resource_config, **_):

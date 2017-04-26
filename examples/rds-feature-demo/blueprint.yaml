@@ -80,38 +80,57 @@ node_templates:
           AvailabilityZone: us-east-1d
       client_config: *client_config
     relationships:
-    - type: cloudify.relationships.connected_to
+    - type: cloudify.relationships.aws.rds.instance_read_replica.connected_to
       target: rds_mysql_instance
-    - type: cloudify.relationships.connected_to
+    - type: cloudify.relationships.aws.rds.instance_read_replica.connected_to
       target: rds_option_group
-    - type: cloudify.relationships.connected_to
+    - type: cloudify.relationships.aws.rds.instance_read_replica.connected_to
       target: rds_parameter_group
   
   rds_mysql_instance:
     type: cloudify.nodes.aws.rds.Instance
     properties:
       resource_id: devdbinstance
-      resource_config:
-        kwargs:
-          DBInstanceClass: db.t2.small
-          Engine: mysql
-          EngineVersion: 5.7.16
-          AvailabilityZone: us-east-1a
-          StorageType: gp2
-          AllocatedStorage: 10
-          DBName: devdb
-          MasterUsername: root
-          MasterUserPassword: Password1234
       client_config: *client_config
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          inputs:
+            resource_config:
+              DBInstanceClass: db.t2.small
+              Engine: mysql
+              EngineVersion: 5.7.16
+              AvailabilityZone: us-east-1a
+              StorageType: gp2
+              AllocatedStorage: 10
+              DBName: devdb
+              MasterUsername: root
+              MasterUserPassword: Password1234
+              # MonitoringRoleArn: { get_attribute: [my_monitoring_iam_role, aws_resource_arn] }
+              # DomainIAMRoleName: { get_attribute: [my_domain_iam_role, aws_resource_arn] }
     relationships:
-    - type: cloudify.relationships.connected_to
+    - type: cloudify.relationships.aws.rds.instance.connected_to
       target: rds_subnet_group
-    - type: cloudify.relationships.connected_to
+    - type: cloudify.relationships.aws.rds.instance.connected_to
       target: rds_option_group
-    - type: cloudify.relationships.connected_to
+    - type: cloudify.relationships.aws.rds.instance.connected_to
       target: rds_parameter_group
-    - type: cloudify.relationships.connected_to
+    - type: cloudify.relationships.aws.rds.instance.connected_to
       target: rds_security_group
+    #- type: cloudify.relationships.aws.rds.instance.connected_to
+    #  target: my_monitoring_iam_role
+    #  source_interfaces:
+    #    cloudify.interfaces.relationship_lifecycle:
+    #      preconfigure:
+    #        inputs:
+    #          iam_role_type_key: MonitoringRoleArn
+    #- type: cloudify.relationships.aws.rds.instance.connected_to
+    #  target: my_domain_iam_role
+    #  source_interfaces:
+    #    cloudify.interfaces.relationship_lifecycle:
+    #      preconfigure:
+    #        inputs:
+    #          iam_role_type_key: DomainIAMRoleName
   
   rds_parameter_group:
     type: cloudify.nodes.aws.rds.ParameterGroup
@@ -138,17 +157,8 @@ node_templates:
                 ParameterValue: en_US
                 ApplyMethod: immediate
     relationships:
-    - type: cloudify.relationships.aws.rds.parameter_group_connected_to_parameter
+    - type: cloudify.relationships.aws.rds.parameter_group.connected_to
       target: rds_parameter_1
-                
-  rds_parameter_1:
-    type: cloudify.nodes.aws.rds.Parameter
-    properties:
-      resource_config:
-        kwargs:
-          ParameterName: log_timestamps
-          ParameterValue: UTC
-          ApplyMethod: immediate
       
   rds_option_group:
     type: cloudify.nodes.aws.rds.OptionGroup
@@ -161,9 +171,18 @@ node_templates:
           OptionGroupDescription: MySQL5.7 Option Group for Dev
       client_config: *client_config
     relationships:
-    - type: cloudify.relationships.aws.rds.option_group_connected_to_option
+    - type: cloudify.relationships.aws.rds.option_group.connected_to
       target: rds_option_1
-  
+                
+  rds_parameter_1:
+    type: cloudify.nodes.aws.rds.Parameter
+    properties:
+      resource_config:
+        kwargs:
+          ParameterName: log_timestamps
+          ParameterValue: UTC
+          ApplyMethod: immediate
+      
   rds_option_1:
     type: cloudify.nodes.aws.rds.Option
     properties:
@@ -172,7 +191,7 @@ node_templates:
         kwargs:
           Port: 21212
     relationships:
-    - type: cloudify.relationships.connected_to
+    - type: cloudify.relationships.aws.rds.option.connected_to
       target: rds_security_group
               
   rds_subnet_group:
@@ -184,9 +203,9 @@ node_templates:
           DBSubnetGroupDescription: MySQL5.7 Subnet Group for Dev
       client_config: *client_config
     relationships:
-    - type: cloudify.relationships.connected_to
+    - type: cloudify.relationships.aws.rds.subnet_group.connected_to
       target: rds_subnet_1
-    - type: cloudify.relationships.connected_to
+    - type: cloudify.relationships.aws.rds.subnet_group.connected_to
       target: rds_subnet_2
   
   rds_subnet_1:

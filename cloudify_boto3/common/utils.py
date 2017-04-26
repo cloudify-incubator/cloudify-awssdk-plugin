@@ -195,6 +195,14 @@ def find_rel_by_node_type(node_instance, node_type):
     return rels[0] if len(rels) > 0 else None
 
 
+def is_node_type(node, node_type):
+    '''
+        Checks if a node is of a given node type.
+    :returns: `True` or `False`
+    '''
+    return node_type in node.type_hierarchy
+
+
 def get_ancestor_by_type(inst, node_type):
     '''
         Gets an ancestor context (recursive search)

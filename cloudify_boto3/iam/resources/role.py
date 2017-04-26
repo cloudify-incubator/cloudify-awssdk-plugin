@@ -120,33 +120,25 @@ def delete(iface, resource_config, **_):
     iface.delete(resource_config)
 
 
-def attach_policy(ctx, resource_config):
-    '''Attaches a Policy to a Role'''
-    resource_config = resource_config or dict()
-    resource_config['PolicyArn'] = utils.get_resource_arn(
-        ctx.target.node,
-        ctx.target.instance,
-        raise_on_missing=True)
-    IAMRole(
-        ctx.source.node, logger=ctx.logger,
-        resource_id=utils.get_resource_id(
-            node=ctx.source.node,
-            instance=ctx.source.instance,
+@decorators.aws_relationship(IAMRole, RESOURCE_TYPE)
+def attach_to(ctx, iface, resource_config, **_):
+    '''Attaches an IAM Role to something else'''
+    if utils.is_node_type(ctx.target.node,
+                          'cloudify.nodes.aws.iam.Policy'):
+        resource_config['PolicyArn'] = utils.get_resource_arn(
+            node=ctx.target.node,
+            instance=ctx.target.instance,
             raise_on_missing=True)
-    ).attach_policy(resource_config)
+        iface.attach_policy(resource_config)
 
 
-def detach_policy(ctx, resource_config):
-    '''Detaches a Policy from a Role'''
-    resource_config = resource_config or dict()
-    resource_config['PolicyArn'] = utils.get_resource_arn(
-        ctx.target.node,
-        ctx.target.instance,
-        raise_on_missing=True)
-    IAMRole(
-        ctx.source.node, logger=ctx.logger,
-        resource_id=utils.get_resource_id(
-            node=ctx.source.node,
-            instance=ctx.source.instance,
+@decorators.aws_relationship(IAMRole, RESOURCE_TYPE)
+def detach_from(ctx, iface, resource_config, **_):
+    '''Detaches an IAM Role from something else'''
+    if utils.is_node_type(ctx.target.node,
+                          'cloudify.nodes.aws.iam.Policy'):
+        resource_config['PolicyArn'] = utils.get_resource_arn(
+            node=ctx.target.node,
+            instance=ctx.target.instance,
             raise_on_missing=True)
-    ).detach_policy(resource_config)
+        iface.detach_policy(resource_config)

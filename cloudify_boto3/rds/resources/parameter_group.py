@@ -117,15 +117,21 @@ def delete(iface, resource_config, **_):
     iface.delete(resource_config)
 
 
-def update_parameter(ctx):
-    '''Updates a parameter in a parameter group'''
-    ctx.logger.debug('Param RTA: %s' %
-                     ctx.target.instance.runtime_properties['resource_config'])
-    ParameterGroup(
-        ctx.source.node, logger=ctx.logger,
-        resource_id=utils.get_resource_id(
-            node=ctx.source.node,
-            instance=ctx.source.instance,
+@decorators.aws_relationship(ParameterGroup, RESOURCE_TYPE)
+def attach_to(ctx, iface, resource_config, **_):
+    '''Attaches an RDS ParameterGroup to something else'''
+    rtprops = ctx.target.instance.runtime_properties
+    params = resource_config or rtprops.get('resource_config') or dict()
+    if utils.is_node_type(ctx.target.node,
+                          'cloudify.nodes.aws.rds.Parameter'):
+        params['ParameterName'] = utils.get_resource_id(
+            node=ctx.target.node,
+            instance=ctx.target.instance,
             raise_on_missing=True)
-    ).update_parameter(
-        ctx.target.instance.runtime_properties['resource_config'])
+        iface.update_parameter(params)
+
+
+@decorators.aws_relationship(ParameterGroup, RESOURCE_TYPE)
+def detach_from(ctx, iface, resource_config, **_):
+    '''Detaches an RDS ParameterGroup from something else'''
+    pass

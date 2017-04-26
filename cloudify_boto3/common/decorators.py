@@ -25,6 +25,36 @@ from cloudify_boto3.common.constants import (
     EXTERNAL_RESOURCE_ID as EXT_RES_ID)
 
 
+def aws_relationship(class_decl=None,
+                     resource_type='AWS Resource'):
+    '''AWS resource decorator'''
+    def wrapper_outer(function):
+        '''Outer function'''
+        def wrapper_inner(**kwargs):
+            '''Inner, worker function'''
+            ctx = kwargs['ctx']
+            # Add new operation arguments
+            kwargs['resource_type'] = resource_type
+            kwargs['iface'] = class_decl(
+                ctx.source.node, logger=ctx.logger,
+                resource_id=utils.get_resource_id(
+                    node=ctx.source.node,
+                    instance=ctx.source.instance,
+                    raise_on_missing=True)) if class_decl else None
+            kwargs['resource_config'] = kwargs.get('resource_config') or dict()
+            ret = function(**kwargs)
+            # When modifying nested runtime properties, the internal
+            # "dirty checking" mechanism will not know of our changes.
+            # This forces the internal tracking to mark the properties as
+            # dirty and will be refreshed on next query.
+            # pylint: disable=W0212
+            ctx.source.instance.runtime_properties._set_changed()
+            ctx.target.instance.runtime_properties._set_changed()
+            return ret
+        return wrapper_inner
+    return wrapper_outer
+
+
 def aws_resource(class_decl=None,
                  resource_type='AWS Resource',
                  ignore_properties=False):
@@ -66,7 +96,7 @@ def aws_resource(class_decl=None,
                 kwargs['resource_config'] = kwargs.get('resource_config') or \
                     resource_config or dict()
             # Check if using external
-            if ctx.node.properties['use_external_resource']:
+            if ctx.node.properties.get('use_external_resource', False):
                 resource_id = utils.get_resource_id(
                     node=ctx.node, instance=ctx.instance)
                 ctx.logger.info('%s ID# "%s" is user-provided.'

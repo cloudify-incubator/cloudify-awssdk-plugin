@@ -18,6 +18,7 @@
     AWS RDS instance read replica interface
 '''
 # Cloudify
+from cloudify.exceptions import NonRecoverableError
 from cloudify_boto3.common import decorators, utils
 from cloudify_boto3.rds import RDSBase
 # Boto
@@ -57,7 +58,7 @@ class DBInstanceReadReplica(RDSBase):
 
     def create(self, params):
         '''
-            Create a new AWS RDS DB instance.
+            Create a new AWS RDS DB Instance Read Replica.
         '''
         self.logger.debug('Creating %s with parameters: %s'
                           % (self.type_name, params))
@@ -68,9 +69,7 @@ class DBInstanceReadReplica(RDSBase):
 
     def delete(self, params=None):
         '''
-            Deletes an existing AWS RDS DB instance.
-        .. note:
-            See http://bit.ly/2pkNk91 for config details.
+            Deletes an existing AWS RDS DB Instance Read Replica.
         '''
         params = params or dict(SkipFinalSnapshot=True)
         params.update(dict(
@@ -80,38 +79,22 @@ class DBInstanceReadReplica(RDSBase):
         self.client.delete_db_instance(**params)
 
 
+@decorators.aws_resource(resource_type=RESOURCE_TYPE)
+def prepare(ctx, resource_config, **_):
+    '''Prepares an AWS RDS Instance Read Replica'''
+    # Save the parameters
+    ctx.instance.runtime_properties['resource_config'] = resource_config
+
+
 @decorators.aws_resource(DBInstanceReadReplica, RESOURCE_TYPE)
-@decorators.wait_for_status(status_good=['available'],
-                            status_pending=['creating', 'modifying'])
+@decorators.wait_for_status(
+    status_good=['available'],
+    status_pending=['creating', 'modifying', 'backing-up'])
 def create(ctx, iface, resource_config, **_):
-    '''Creates an AWS RDS Instance RR'''
+    '''Creates an AWS RDS Instance Read Replica'''
     # Build API params
-    params = resource_config
+    params = ctx.instance.runtime_properties['resource_config'] or dict()
     params.update(dict(DBInstanceIdentifier=iface.resource_id))
-    # Attach a DB Instance if it exists
-    dbinstance = utils.find_rel_by_node_type(
-        ctx.instance, 'cloudify.nodes.aws.rds.Instance')
-    if dbinstance:
-        params['SourceDBInstanceIdentifier'] = utils.get_resource_id(
-            node=dbinstance.target.node,
-            instance=dbinstance.target.instance,
-            raise_on_missing=True)
-    # Attach a Subnet Group if it exists
-    subnet_group = utils.find_rel_by_node_type(
-        ctx.instance, 'cloudify.nodes.aws.rds.SubnetGroup')
-    if subnet_group:
-        params['DBSubnetGroupName'] = utils.get_resource_id(
-            node=subnet_group.target.node,
-            instance=subnet_group.target.instance,
-            raise_on_missing=True)
-    # Attach an Option Group if it exists
-    option_group = utils.find_rel_by_node_type(
-        ctx.instance, 'cloudify.nodes.aws.rds.OptionGroup')
-    if option_group:
-        params['OptionGroupName'] = utils.get_resource_id(
-            node=option_group.target.node,
-            instance=option_group.target.instance,
-            raise_on_missing=True)
     # Actually create the resource
     res_id, res_arn = iface.create(params)
     utils.update_resource_id(ctx.instance, res_id)
@@ -120,8 +103,51 @@ def create(ctx, iface, resource_config, **_):
 
 @decorators.aws_resource(DBInstanceReadReplica, RESOURCE_TYPE,
                          ignore_properties=True)
-@decorators.wait_for_status(status_pending=['deleting'],
-                            fail_on_missing=False)
+@decorators.wait_for_delete(status_pending=['deleting'])
 def delete(iface, resource_config, **_):
-    '''Deletes an AWS RDS Instance RR'''
+    '''Deletes an AWS RDS Instance Read Replica'''
     iface.delete(resource_config)
+
+
+@decorators.aws_relationship(DBInstanceReadReplica, RESOURCE_TYPE)
+def prepare_assoc(ctx, iface, resource_config, **inputs):
+    '''Prepares to associate an RDS Instance Read Replica to something else'''
+    if utils.is_node_type(ctx.target.node,
+                          'cloudify.nodes.aws.rds.SubnetGroup'):
+        ctx.source.instance.runtime_properties[
+            'resource_config']['DBSubnetGroupName'] = utils.get_resource_id(
+                node=ctx.target.node,
+                instance=ctx.target.instance,
+                raise_on_missing=True)
+    elif utils.is_node_type(ctx.target.node,
+                            'cloudify.nodes.aws.rds.OptionGroup'):
+        ctx.source.instance.runtime_properties[
+            'resource_config']['OptionGroupName'] = utils.get_resource_id(
+                node=ctx.target.node,
+                instance=ctx.target.instance,
+                raise_on_missing=True)
+    elif utils.is_node_type(ctx.target.node,
+                            'cloudify.nodes.aws.rds.Instance'):
+        ctx.source.instance.runtime_properties[
+            'resource_config']['SourceDBInstanceIdentifier'] = \
+                utils.get_resource_id(
+                    node=ctx.target.node,
+                    instance=ctx.target.instance,
+                    raise_on_missing=True)
+    elif utils.is_node_type(ctx.target.node,
+                            'cloudify.nodes.aws.iam.Role'):
+        if not inputs.get('iam_role_type_key') or \
+                not inputs.get('iam_role_id_key'):
+            raise NonRecoverableError(
+                'Missing required relationship inputs "iam_role_type_key" '
+                'and/or "iam_role_id_key".')
+        ctx.source.instance.runtime_properties[
+            'resource_config'][inputs['iam_role_type_key']] = \
+            utils.get_resource_string(
+                attribute_key=inputs['iam_role_id_key'])
+
+
+@decorators.aws_relationship(DBInstanceReadReplica, RESOURCE_TYPE)
+def detach_from(ctx, iface, resource_config, **_):
+    '''Detaches an RDS Instance Read Replica from something else'''
+    pass

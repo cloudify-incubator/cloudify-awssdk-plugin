@@ -81,23 +81,20 @@ class SubnetGroup(RDSBase):
         self.client.delete_db_subnet_group(**params)
 
 
+@decorators.aws_resource(resource_type=RESOURCE_TYPE)
+def prepare(ctx, resource_config, **_):
+    '''Prepares an AWS RDS Subnet Group'''
+    # Save the parameters
+    ctx.instance.runtime_properties['resource_config'] = resource_config
+
+
 @decorators.aws_resource(SubnetGroup, RESOURCE_TYPE)
 @decorators.wait_for_status(status_good=['Complete'])
 def create(ctx, iface, resource_config, **_):
     '''Creates an AWS RDS Subnet Group'''
     # Build API params
-    params = resource_config
+    params = ctx.instance.runtime_properties['resource_config'] or dict()
     params.update(dict(DBSubnetGroupName=iface.resource_id))
-    # Find connected subnets
-    subnet_ids = params.get('SubnetIds', list())
-    for rel in utils.find_rels_by_node_type(
-            ctx.instance, 'cloudify.aws.nodes.Subnet'):
-        subnet_ids.append(
-            utils.get_resource_id(
-                node=rel.target.node,
-                instance=rel.target.instance,
-                raise_on_missing=True))
-    params['SubnetIds'] = subnet_ids
     # Actually create the resource
     res_id, res_arn = iface.create(params)
     utils.update_resource_id(ctx.instance, res_id)
@@ -110,3 +107,27 @@ def create(ctx, iface, resource_config, **_):
 def delete(iface, resource_config, **_):
     '''Deletes an AWS Subnet Group'''
     iface.delete(resource_config)
+
+
+@decorators.aws_relationship(SubnetGroup, RESOURCE_TYPE)
+def prepare_assoc(ctx, iface, resource_config, **_):
+    '''Prepares to associate an RDS SubnetGroup to something else'''
+    if utils.is_node_type(ctx.target.node,
+                          'cloudify.aws.nodes.Subnet'):
+        subnet_ids = ctx.source.instance.runtime_properties[
+            'resource_config'].get('SubnetIds', list())
+        subnet_ids.append(
+            utils.get_resource_id(
+                node=ctx.target.node,
+                instance=ctx.target.instance,
+                raise_on_missing=True))
+        ctx.source.instance.runtime_properties[
+            'resource_config']['SubnetIds'] = subnet_ids
+        # pylint: disable=W0212
+        ctx.source.instance.runtime_properties._set_changed()
+
+
+@decorators.aws_relationship(SubnetGroup, RESOURCE_TYPE)
+def detach_from(ctx, iface, resource_config, **_):
+    '''Detaches an RDS SubnetGroup from something else'''
+    pass

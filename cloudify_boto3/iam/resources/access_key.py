@@ -13,40 +13,53 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 '''
-    Serverless.Invoke
-    ~~~~~~~~~~~~~~~~~
-    AWS Lambda Function invocation interface
+    IAM.AccessKey
+    ~~~~~~~~~~~~~
+    AWS IAM User Access Key
 '''
 # Cloudify
 from cloudify_boto3.common import decorators, utils
-from cloudify_boto3.lambda_serverless.resources.function import LambdaFunction
+from cloudify_boto3.iam.resources.user import IAMUser
 
-RESOURCE_TYPE = 'Lambda Function Invocation'
+RESOURCE_TYPE = 'IAM User Access Key'
 
 
 @decorators.aws_resource(resource_type=RESOURCE_TYPE)
 def configure(ctx, resource_config, **_):
-    '''Configures an AWS Lambda Invoke'''
+    '''Configures an AWS IAM Access Key'''
     # Save the parameters
     ctx.instance.runtime_properties['resource_config'] = resource_config
 
 
 @decorators.aws_relationship(resource_type=RESOURCE_TYPE)
 def attach_to(ctx, resource_config, **_):
-    '''Attaches an Lambda Invoke to something else'''
+    '''Attaches an IAM Access Key to something else'''
     rtprops = ctx.source.instance.runtime_properties
     if utils.is_node_type(ctx.target.node,
-                          'cloudify.nodes.aws.lambda.Function'):
-        ctx.source.instance.runtime_properties['output'] = LambdaFunction(
+                          'cloudify.nodes.aws.iam.User'):
+        resp = IAMUser(
             ctx.target.node, logger=ctx.logger,
             resource_id=utils.get_resource_id(
                 node=ctx.target.node,
                 instance=ctx.target.instance,
-                raise_on_missing=True)).invoke(
+                raise_on_missing=True)).create_access_key(
                     resource_config or rtprops.get('resource_config'))
+        utils.update_resource_id(ctx.source.instance, resp['AccessKeyId'])
+        ctx.source.instance.runtime_properties['SecretAccessKey'] = \
+            resp['SecretAccessKey']
 
 
 @decorators.aws_relationship(resource_type=RESOURCE_TYPE)
 def detach_from(ctx, resource_config, **_):
-    '''Detaches an Lambda Invoke from something else'''
-    pass
+    '''Detaches an IAM Access Key from something else'''
+    if utils.is_node_type(ctx.target.node,
+                          'cloudify.nodes.aws.iam.User'):
+        resource_config['AccessKeyId'] = utils.get_resource_id(
+            node=ctx.source.node,
+            instance=ctx.source.instance,
+            raise_on_missing=True)
+        IAMUser(ctx.target.node, logger=ctx.logger,
+                resource_id=utils.get_resource_id(
+                    node=ctx.target.node,
+                    instance=ctx.target.instance,
+                    raise_on_missing=True)).delete_access_key(resource_config)
