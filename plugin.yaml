@@ -58,6 +58,17 @@ data_types:
         default: {}
 
 
+  cloudify.datatypes.aws.lambda.Function.config:
+    properties:
+      kwargs:
+        default: {}
+        
+  cloudify.datatypes.aws.lambda.Invoke.config:
+    properties:
+      kwargs:
+        default: {}
+
+
   cloudify.datatypes.aws.rds.Instance.config:
     properties:
       kwargs:
@@ -94,12 +105,7 @@ data_types:
         default: {}
 
 
-  cloudify.datatypes.aws.lambda.Function.config:
-    properties:
-      kwargs:
-        default: {}
-        
-  cloudify.datatypes.aws.lambda.Invoke.config:
+  cloudify.datatypes.aws.route53.HostedZone.config:
     properties:
       kwargs:
         default: {}
@@ -510,6 +516,122 @@ node_types:
                 Boto3 method. Key names must match the case that Boto3 requires.
               required: false
               default: {}
+
+
+  # Reference: https://boto3.readthedocs.io/en/latest/reference/services/lambda.html#Lambda.Client.create_function
+  cloudify.nodes.aws.lambda.Function:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        description: *use_external_resource_desc
+        type: boolean
+        default: false
+      resource_id:
+        description: *resource_id_desc
+        type: string
+        default: ''
+      client_config:
+        description: >
+          A dictionary of values to pass to authenticate with the AWS API.
+        type: cloudify.datatypes.aws.ConnectionConfig
+        required: false
+      resource_config:
+        description: >
+          Configuration key-value data to be passed as-is to the corresponding
+          Boto3 method. Key names must match the case that Boto3 requires.
+        type: cloudify.datatypes.aws.lambda.Function.config
+        required: false
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: awssdk.cloudify_boto3.lambda_serverless.resources.function.create
+          inputs:
+            aws_resource_id:
+              description: >
+                This overrides the resource_id property (useful for setting the
+                resource ID of a node instance at runtime).
+              type: string
+              required: false
+              default: ~
+            runtime_properties:
+              description: >
+                This overrides any runtime property at runtime. This is a key-value
+                pair / dictionary that will be passed, as-is, to the runtime properties
+                of the running instance.
+              required: false
+              default: ~
+            force_operation:
+              description: >
+                Forces the current operation to be executed regardless
+                if the "use_external_resource" property is set or not.
+              required: false
+              default: false
+            resource_config:
+              description: >
+                Configuration key-value data to be passed as-is to the corresponding
+                Boto3 method. Key names must match the case that Boto3 requires.
+              required: false
+              default: {}
+        delete:
+          implementation: awssdk.cloudify_boto3.lambda_serverless.resources.function.delete
+          inputs:
+            aws_resource_id:
+              description: >
+                This overrides the resource_id property (useful for setting the
+                resource ID of a node instance at runtime).
+              type: string
+              required: false
+              default: ~
+            runtime_properties:
+              description: >
+                This overrides any runtime property at runtime. This is a key-value
+                pair / dictionary that will be passed, as-is, to the runtime properties
+                of the running instance.
+              required: false
+              default: ~
+            force_operation:
+              description: >
+                Forces the current operation to be executed regardless
+                if the "use_external_resource" property is set or not.
+              required: false
+              default: false
+            resource_config:
+              description: >
+                Configuration key-value data to be passed as-is to the corresponding
+                Boto3 method. Key names must match the case that Boto3 requires.
+              required: false
+              default: {}
+
+  # Reference: https://boto3.readthedocs.io/en/latest/reference/services/lambda.html#Lambda.Client.invoke
+  # Stores invocation output in runtime property "output".
+  cloudify.nodes.aws.lambda.Invoke:
+    derived_from: cloudify.nodes.Root
+    properties:
+      resource_config:
+        description: >
+          Configuration key-value data to be passed as-is to the corresponding
+          Boto3 method. Key names must match the case that Boto3 requires.
+        type: cloudify.datatypes.aws.lambda.Invoke.config
+        required: false
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure:
+          implementation: awssdk.cloudify_boto3.lambda_serverless.resources.invoke.configure
+          inputs:
+            runtime_properties:
+              description: >
+                This overrides any runtime property at runtime. This is a key-value
+                pair / dictionary that will be passed, as-is, to the runtime properties
+                of the running instance.
+              required: false
+              default: ~
+            resource_config:
+              description: >
+                Configuration key-value data to be passed as-is to the corresponding
+                Boto3 method. Key names must match the case that Boto3 requires.
+              required: false
+              default: {}
+
   
   # Reference: https://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.create_db_instance
   cloudify.nodes.aws.rds.Instance:
@@ -989,7 +1111,7 @@ node_types:
               required: false
               default: {}
             
-  # Reference: https://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.delete_db_parameter_group
+  # Reference: https://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.create_db_parameter_group
   cloudify.nodes.aws.rds.ParameterGroup:
     derived_from: cloudify.nodes.Root
     properties:
@@ -1158,8 +1280,11 @@ node_types:
               default: {}
 
 
-  # Reference: https://boto3.readthedocs.io/en/latest/reference/services/lambda.html#Lambda.Client.create_function
-  cloudify.nodes.aws.lambda.Function:
+
+
+
+  # Reference: https://boto3.readthedocs.io/en/latest/reference/services/route53.html#Route53.Client.create_hosted_zone
+  cloudify.nodes.aws.route53.HostedZone:
     derived_from: cloudify.nodes.Root
     properties:
       use_external_resource:
@@ -1179,12 +1304,41 @@ node_types:
         description: >
           Configuration key-value data to be passed as-is to the corresponding
           Boto3 method. Key names must match the case that Boto3 requires.
-        type: cloudify.datatypes.aws.lambda.Function.config
+        type: cloudify.datatypes.aws.route53.HostedZone.config
         required: false
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.lambda_serverless.resources.function.create
+          implementation: awssdk.cloudify_boto3.route53.resources.hosted_zone.prepare
+          inputs:
+            aws_resource_id:
+              description: >
+                This overrides the resource_id property (useful for setting the
+                resource ID of a node instance at runtime).
+              type: string
+              required: false
+              default: ~
+            runtime_properties:
+              description: >
+                This overrides any runtime property at runtime. This is a key-value
+                pair / dictionary that will be passed, as-is, to the runtime properties
+                of the running instance.
+              required: false
+              default: ~
+            force_operation:
+              description: >
+                Forces the current operation to be executed regardless
+                if the "use_external_resource" property is set or not.
+              required: false
+              default: false
+            resource_config:
+              description: >
+                Configuration key-value data to be passed as-is to the corresponding
+                Boto3 method. Key names must match the case that Boto3 requires.
+              required: false
+              default: {}
+        configure:
+          implementation: awssdk.cloudify_boto3.route53.resources.hosted_zone.create
           inputs:
             aws_resource_id:
               description: >
@@ -1213,7 +1367,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.lambda_serverless.resources.function.delete
+          implementation: awssdk.cloudify_boto3.route53.resources.hosted_zone.delete
           inputs:
             aws_resource_id:
               description: >
@@ -1242,35 +1396,6 @@ node_types:
               required: false
               default: {}
 
-  # Reference: https://boto3.readthedocs.io/en/latest/reference/services/lambda.html#Lambda.Client.invoke
-  # Stores invocation output in runtime property "output".
-  cloudify.nodes.aws.lambda.Invoke:
-    derived_from: cloudify.nodes.Root
-    properties:
-      resource_config:
-        description: >
-          Configuration key-value data to be passed as-is to the corresponding
-          Boto3 method. Key names must match the case that Boto3 requires.
-        type: cloudify.datatypes.aws.lambda.Invoke.config
-        required: false
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        configure:
-          implementation: awssdk.cloudify_boto3.lambda_serverless.resources.invoke.configure
-          inputs:
-            runtime_properties:
-              description: >
-                This overrides any runtime property at runtime. This is a key-value
-                pair / dictionary that will be passed, as-is, to the runtime properties
-                of the running instance.
-              required: false
-              default: ~
-            resource_config:
-              description: >
-                Configuration key-value data to be passed as-is to the corresponding
-                Boto3 method. Key names must match the case that Boto3 requires.
-              required: false
-              default: {}
 
 relationships:
   
@@ -1316,155 +1441,6 @@ relationships:
               default: {}
 
 
-  ####
-  # AWS Relational Database Service
-  ####
-
-  ##
-  # RDS INSTANCE READ REPLICA
-  ##
-  # RDS INSTANCE: https://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.create_db_instance_read_replica
-  # RDS PARAMETER GROUP: https://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.create_db_instance_read_replica
-  # RDS OPTION GROUP: https://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.create_db_instance_read_replica
-  # IAM ROLE: https://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.create_db_instance
-  cloudify.relationships.aws.rds.instance_read_replica.connected_to:
-    derived_from: cloudify.relationships.aws.connected_to
-    source_interfaces:
-      cloudify.interfaces.relationship_lifecycle:
-        preconfigure:
-          implementation: awssdk.cloudify_boto3.rds.resources.instance_read_replica.prepare_assoc
-          inputs:
-            iam_role_type_key:
-              description: >
-                If the relationship target is an IAM Role, it's necessary to give more context in order to
-                match the Role with the correct mapping to the relationship source since this type accepts
-                more than 1 type of Role. For instance, the RDS.Client.create_db_instance() method can
-                take both "DomainIAMRoleName" and "MonitoringRoleArn" keys. Consider this input as the
-                destination function keyword for the Role's ID or ARN. This is a required input if the
-                relationship target is of type IAM Role. 
-              type: string
-              default: MonitoringRoleArn
-              required: false
-            iam_role_id_key:
-              description: >
-                If the relationship target is an IAM Role, it's necessary to give more context in order to
-                match the Role with the correct mapping to the relationship source since this type accepts
-                more than 1 type of Role. The value for this input should be the key name of a runtime
-                property (of the target) which will be subsequently placed as the value for the destination
-                function keyword from the "iam_role_type_key" input. This is a required input if the
-                relationship target is of type IAM Role. 
-              type: string
-              default: aws_resource_arn
-        unlink: { implementation: awssdk.cloudify_boto3.rds.resources.instance_read_replica.detach_from }
-
-  ##
-  # RDS INSTANCE
-  ##
-  # RDS SUBNET GROUP: https://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.create_db_instance
-  # RDS PARAMETER GROUP: https://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.create_db_instance
-  # RDS OPTION GROUP: https://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.create_db_instance
-  # IAM ROLE: https://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.create_db_instance
-  # VPC SECURITY GROUP: https://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.create_db_instance
-  cloudify.relationships.aws.rds.instance.connected_to:
-    derived_from: cloudify.relationships.aws.connected_to
-    source_interfaces:
-      cloudify.interfaces.relationship_lifecycle:
-        preconfigure:
-          implementation: awssdk.cloudify_boto3.rds.resources.instance.prepare_assoc
-          inputs:
-            iam_role_type_key:
-              description: >
-                If the relationship target is an IAM Role, it's necessary to give more context in order to
-                match the Role with the correct mapping to the relationship source since this type accepts
-                more than 1 type of Role. For instance, the RDS.Client.create_db_instance() method can
-                take both "DomainIAMRoleName" and "MonitoringRoleArn" keys. Consider this input as the
-                destination function keyword for the Role's ID or ARN. This is a required input if the
-                relationship target is of type IAM Role. 
-              type: string
-              default: ~
-              required: false
-            iam_role_id_key:
-              description: >
-                If the relationship target is an IAM Role, it's necessary to give more context in order to
-                match the Role with the correct mapping to the relationship source since this type accepts
-                more than 1 type of Role. The value for this input should be the key name of a runtime
-                property (of the target) which will be subsequently placed as the value for the destination
-                function keyword from the "iam_role_type_key" input. This is a required input if the
-                relationship target is of type IAM Role. 
-              type: string
-              default: aws_resource_arn
-        unlink: { implementation: awssdk.cloudify_boto3.rds.resources.instance.detach_from }
-
-  ##
-  # RDS SUBNET GROUP
-  ##
-  # VPC SUBNET: https://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.create_db_subnet_group
-  cloudify.relationships.aws.rds.subnet_group.connected_to:
-    derived_from: cloudify.relationships.aws.connected_to
-    source_interfaces:
-      cloudify.interfaces.relationship_lifecycle:
-        preconfigure: { implementation: awssdk.cloudify_boto3.rds.resources.subnet_group.prepare_assoc }
-        unlink: { implementation: awssdk.cloudify_boto3.rds.resources.subnet_group.detach_from }
-
-  ##
-  # RDS PARAMETER GROUP
-  ##
-  # RDS PARAMETER: https://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.modify_db_parameter_group
-  cloudify.relationships.aws.rds.parameter_group.connected_to:
-    derived_from: cloudify.relationships.aws.connected_to
-    source_interfaces:
-      cloudify.interfaces.relationship_lifecycle:
-        establish: { implementation: awssdk.cloudify_boto3.rds.resources.parameter_group.attach_to }
-        unlink: { implementation: awssdk.cloudify_boto3.rds.resources.parameter_group.detach_from }
-
-  ##
-  # RDS PARAMETER
-  ##
-  # RDS PARAMETER GROUP: https://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.modify_db_parameter_group
-  cloudify.relationships.aws.rds.parameter.connected_to:
-    derived_from: cloudify.relationships.aws.connected_to
-    source_interfaces:
-      cloudify.interfaces.relationship_lifecycle:
-        establish: { implementation: awssdk.cloudify_boto3.rds.resources.parameter.attach_to }
-        unlink: { implementation: awssdk.cloudify_boto3.rds.resources.parameter.detach_from }
-
-  ##
-  # RDS OPTION GROUP
-  ##
-  # RDS OPTION: https://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.modify_db_option_group
-  cloudify.relationships.aws.rds.option_group.connected_to:
-    derived_from: cloudify.relationships.aws.connected_to
-    source_interfaces:
-      cloudify.interfaces.relationship_lifecycle:
-        establish: { implementation: awssdk.cloudify_boto3.rds.resources.option_group.attach_to }
-        unlink: { implementation: awssdk.cloudify_boto3.rds.resources.option_group.detach_from }
-
-  ##
-  # RDS OPTION
-  ##
-  # RDS OPTION GROUP: https://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.modify_db_option_group
-  cloudify.relationships.aws.rds.option.connected_to:
-    derived_from: cloudify.relationships.aws.connected_to
-    source_interfaces:
-      cloudify.interfaces.relationship_lifecycle:
-        establish: { implementation: awssdk.cloudify_boto3.rds.resources.option.attach_to }
-        unlink: { implementation: awssdk.cloudify_boto3.rds.resources.option.detach_from }    
-
-  ####
-  # AWS Lambda
-  ####
-  
-  ##
-  # LAMBDA INVOKE
-  ##
-  # LAMBDA FUNCTION: https://boto3.readthedocs.io/en/latest/reference/services/lambda.html#Lambda.Client.invoke
-  cloudify.relationships.aws.lambda.invoke.connected_to:
-    derived_from: cloudify.relationships.aws.connected_to
-    source_interfaces:
-      cloudify.interfaces.relationship_lifecycle:
-        establish: { implementation: awssdk.cloudify_boto3.lambda_serverless.resources.invoke.attach_to }
-        unlink: { implementation: awssdk.cloudify_boto3.lambda_serverless.resources.invoke.detach_from }
-  
 
   ####
   # AWS Identity & Access Management
@@ -1528,3 +1504,170 @@ relationships:
       cloudify.interfaces.relationship_lifecycle:
         establish: { implementation: awssdk.cloudify_boto3.iam.resources.role.attach_to }
         unlink: { implementation: awssdk.cloudify_boto3.iam.resources.role.detach_from }
+
+
+  ####
+  # AWS Lambda
+  ####
+  
+  ##
+  # LAMBDA INVOKE
+  ##
+  # LAMBDA FUNCTION: https://boto3.readthedocs.io/en/latest/reference/services/lambda.html#Lambda.Client.invoke
+  cloudify.relationships.aws.lambda.invoke.connected_to:
+    derived_from: cloudify.relationships.aws.connected_to
+    source_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        establish: { implementation: awssdk.cloudify_boto3.lambda_serverless.resources.invoke.attach_to }
+        unlink: { implementation: awssdk.cloudify_boto3.lambda_serverless.resources.invoke.detach_from }
+
+
+  ####
+  # AWS Relational Database Service
+  ####
+
+  ##
+  # RDS INSTANCE READ REPLICA
+  ##
+  # RDS INSTANCE: https://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.create_db_instance_read_replica
+  # RDS PARAMETER GROUP: https://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.create_db_instance_read_replica
+  # RDS OPTION GROUP: https://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.create_db_instance_read_replica
+  # IAM ROLE: https://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.create_db_instance
+  cloudify.relationships.aws.rds.instance_read_replica.connected_to:
+    derived_from: cloudify.relationships.aws.connected_to
+    source_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        preconfigure:
+          implementation: awssdk.cloudify_boto3.rds.resources.instance_read_replica.prepare_assoc
+          inputs:
+            iam_role_type_key:
+              description: >
+                If the relationship target is an IAM Role, it's necessary to give more context in order to
+                match the Role with the correct mapping to the relationship source since this type accepts
+                more than 1 type of Role. For instance, the RDS.Client.create_db_instance() method can
+                take both "DomainIAMRoleName" and "MonitoringRoleArn" keys. Consider this input as the
+                destination function keyword for the Role's ID or ARN. This is a required input if the
+                relationship target is of type IAM Role. 
+              type: string
+              default: MonitoringRoleArn
+              required: false
+            iam_role_id_key:
+              description: >
+                If the relationship target is an IAM Role, it's necessary to give more context in order to
+                match the Role with the correct mapping to the relationship source since this type accepts
+                more than 1 type of Role. The value for this input should be the key name of a runtime
+                property (of the target) which will be subsequently placed as the value for the destination
+                function keyword from the "iam_role_type_key" input. This is a required input if the
+                relationship target is of type IAM Role. 
+              type: string
+              default: aws_resource_arn
+        unlink: { implementation: awssdk.cloudify_boto3.rds.resources.instance_read_replica.detach_from }
+
+  ##
+  # RDS INSTANCE
+  ##
+  # RDS SUBNET GROUP: https://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.create_db_instance
+  # RDS PARAMETER GROUP: https://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.create_db_instance
+  # RDS OPTION GROUP: https://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.create_db_instance
+  # IAM ROLE: https://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.create_db_instance
+  # EC2 SECURITY GROUP: https://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.create_db_instance
+  cloudify.relationships.aws.rds.instance.connected_to:
+    derived_from: cloudify.relationships.aws.connected_to
+    source_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        preconfigure:
+          implementation: awssdk.cloudify_boto3.rds.resources.instance.prepare_assoc
+          inputs:
+            iam_role_type_key:
+              description: >
+                If the relationship target is an IAM Role, it's necessary to give more context in order to
+                match the Role with the correct mapping to the relationship source since this type accepts
+                more than 1 type of Role. For instance, the RDS.Client.create_db_instance() method can
+                take both "DomainIAMRoleName" and "MonitoringRoleArn" keys. Consider this input as the
+                destination function keyword for the Role's ID or ARN. This is a required input if the
+                relationship target is of type IAM Role. 
+              type: string
+              default: ~
+              required: false
+            iam_role_id_key:
+              description: >
+                If the relationship target is an IAM Role, it's necessary to give more context in order to
+                match the Role with the correct mapping to the relationship source since this type accepts
+                more than 1 type of Role. The value for this input should be the key name of a runtime
+                property (of the target) which will be subsequently placed as the value for the destination
+                function keyword from the "iam_role_type_key" input. This is a required input if the
+                relationship target is of type IAM Role. 
+              type: string
+              default: aws_resource_arn
+        unlink: { implementation: awssdk.cloudify_boto3.rds.resources.instance.detach_from }
+
+  ##
+  # RDS SUBNET GROUP
+  ##
+  # EC2 VPC SUBNET: https://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.create_db_subnet_group
+  cloudify.relationships.aws.rds.subnet_group.connected_to:
+    derived_from: cloudify.relationships.aws.connected_to
+    source_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        preconfigure: { implementation: awssdk.cloudify_boto3.rds.resources.subnet_group.prepare_assoc }
+        unlink: { implementation: awssdk.cloudify_boto3.rds.resources.subnet_group.detach_from }
+
+  ##
+  # RDS PARAMETER GROUP
+  ##
+  # RDS PARAMETER: https://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.modify_db_parameter_group
+  cloudify.relationships.aws.rds.parameter_group.connected_to:
+    derived_from: cloudify.relationships.aws.connected_to
+    source_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        establish: { implementation: awssdk.cloudify_boto3.rds.resources.parameter_group.attach_to }
+        unlink: { implementation: awssdk.cloudify_boto3.rds.resources.parameter_group.detach_from }
+
+  ##
+  # RDS PARAMETER
+  ##
+  # RDS PARAMETER GROUP: https://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.modify_db_parameter_group
+  cloudify.relationships.aws.rds.parameter.connected_to:
+    derived_from: cloudify.relationships.aws.connected_to
+    source_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        establish: { implementation: awssdk.cloudify_boto3.rds.resources.parameter.attach_to }
+        unlink: { implementation: awssdk.cloudify_boto3.rds.resources.parameter.detach_from }
+
+  ##
+  # RDS OPTION GROUP
+  ##
+  # RDS OPTION: https://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.modify_db_option_group
+  cloudify.relationships.aws.rds.option_group.connected_to:
+    derived_from: cloudify.relationships.aws.connected_to
+    source_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        establish: { implementation: awssdk.cloudify_boto3.rds.resources.option_group.attach_to }
+        unlink: { implementation: awssdk.cloudify_boto3.rds.resources.option_group.detach_from }
+
+  ##
+  # RDS OPTION
+  ##
+  # RDS OPTION GROUP: https://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.modify_db_option_group
+  cloudify.relationships.aws.rds.option.connected_to:
+    derived_from: cloudify.relationships.aws.connected_to
+    source_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        establish: { implementation: awssdk.cloudify_boto3.rds.resources.option.attach_to }
+        unlink: { implementation: awssdk.cloudify_boto3.rds.resources.option.detach_from }    
+
+
+  ####
+  # AWS Route53 DNS Service
+  ####
+
+  ## 
+  # ROUTE53 HOSTED ZONE
+  ##
+  # EC2 VPC: https://boto3.readthedocs.io/en/latest/reference/services/route53.html#Route53.Client.create_hosted_zone
+  cloudify.relationships.aws.route53.hosted_zone.connected_to:
+    derived_from: cloudify.relationships.aws.connected_to
+    source_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        preconfigure: { implementation: awssdk.cloudify_boto3.route53.resources.hosted_zone.prepare_assoc }
+        unlink: { implementation: awssdk.cloudify_boto3.route53.resources.hosted_zone.detach_from }

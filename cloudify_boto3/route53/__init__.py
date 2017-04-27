@@ -13,9 +13,9 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 '''
-    RDS
-    ~~~
-    AWS RDS base interface
+    Route53
+    ~~~~~~~
+    AWS Route53 base interface
 '''
 # Cloudify AWS
 from cloudify_boto3.common import AWSResourceBase
@@ -24,13 +24,13 @@ from cloudify_boto3.common.connection import Boto3Connection
 # pylint: disable=R0903
 
 
-class RDSBase(AWSResourceBase):
+class Route53Base(AWSResourceBase):
     '''
-        AWS RDS base interface
+        AWS Route53 base interface
     '''
     def __init__(self, ctx_node, resource_id=None, client=None, logger=None):
         AWSResourceBase.__init__(
-            self, client or Boto3Connection(ctx_node).client('rds'),
+            self, client or Boto3Connection(ctx_node).client('route53'),
             resource_id=resource_id, logger=logger)
 
     @property

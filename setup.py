@@ -26,15 +26,17 @@ setup(
         'cloudify_boto3.common',
         'cloudify_boto3.iam',
         'cloudify_boto3.iam.resources',
+        'cloudify_boto3.lambda_serverless',
+        'cloudify_boto3.lambda_serverless.resources',
         'cloudify_boto3.rds',
         'cloudify_boto3.rds.resources',
-        'cloudify_boto3.lambda_serverless',
-        'cloudify_boto3.lambda_serverless.resources'
+        'cloudify_boto3.route53',
+        'cloudify_boto3.route53.resources'
     ],
     description='A Cloudify plugin for AWS',
     install_requires=[
         'cloudify-plugins-common>=3.4',
         'boto3==1.4.4',
-        'botocore==1.5.39'
+        'botocore==1.5.44'
     ]
 )
