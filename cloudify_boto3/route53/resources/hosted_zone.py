@@ -17,6 +17,8 @@
     ~~~~~~~~~~~~~~~~~~
     AWS Route53 Hosted Zone interface
 '''
+# Sleep
+from time import sleep
 # Cloudify
 from cloudify_boto3.common import decorators, utils
 from cloudify_boto3.common.connection import Boto3Connection
@@ -69,6 +71,28 @@ class Route53HostedZone(Route53Base):
                           % (self.type_name, params))
         return self.client.delete_hosted_zone(**params)
 
+    def change_resource_record_sets(self, params):
+        '''
+            Changes an AWS Route53 Resource Record Set.
+        '''
+        self.logger.debug(
+            'Changing Route53 Resource Record Set in %s with parameters: %s'
+            % (self.type_name, params))
+        res = self.client.change_resource_record_sets(**params)
+        self.logger.debug('Response: %s' % res)
+        return res['ChangeInfo']
+
+    def list_resource_record_sets(self, params):
+        '''
+            Gets a list of all AWS Route53 Resource Record Sets.
+        '''
+        self.logger.debug(
+            'Listing Route53 Resource Record Sets in %s with parameters: %s'
+            % (self.type_name, params))
+        res = self.client.list_resource_record_sets(**params)
+        self.logger.debug('Response: %s' % res)
+        return res['ResourceRecordSets']
+
 
 @decorators.aws_resource(resource_type=RESOURCE_TYPE)
 def prepare(ctx, resource_config, **_):
@@ -94,8 +118,29 @@ def create(ctx, iface, resource_config, **_):
 @decorators.aws_resource(Route53HostedZone, RESOURCE_TYPE,
                          ignore_properties=True)
 @decorators.wait_for_delete(status_pending=['available'])
-def delete(iface, resource_config, **_):
+def delete(ctx, iface, resource_config, resource_type,
+           force_delete, **_):
     '''Deletes an AWS Route53 Hosted Zone'''
+    if force_delete:
+        ctx.logger.warn(
+            'Attempting to purge all Resource Record Sets from the %s'
+            % resource_type)
+        # Iterate over all Record Sets
+        for record in iface.list_resource_record_sets(dict(
+                HostedZoneId=iface.resource_id,
+                MaxItems='100')):
+            # Skip default record types
+            if record['Type'] in ['NS', 'SOA']:
+                continue
+            # Delete the Record Set
+            iface.change_resource_record_sets(dict(
+                HostedZoneId=iface.resource_id,
+                ChangeBatch=dict(
+                    Changes=[dict(
+                        Action='DELETE',
+                        ResourceRecordSet=record)])))
+            # Sleep to avoid hitting AWS throttling / limits
+            sleep(1)
     iface.delete(resource_config)
 
 

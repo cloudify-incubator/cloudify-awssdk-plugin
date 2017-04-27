@@ -110,6 +110,11 @@ data_types:
       kwargs:
         default: {}
 
+  cloudify.datatypes.aws.route53.RecordSet.config:
+    properties:
+      kwargs:
+        default: {}
+
 
 dsl_definitions:
   use_external_resource_desc: &use_external_resource_desc >
@@ -1389,6 +1394,128 @@ node_types:
                 if the "use_external_resource" property is set or not.
               required: false
               default: false
+            force_delete:
+              description: >
+                Hosted Zones can only be deleted if all Resource Sets (except for the
+                default ones) are already removed. If this is set to `true`, the operation
+                will attempt to delete all Resource Sets within the Hosted Zone before
+                deleting the Hosted Zone itself.
+              required: true
+              default: false
+            resource_config:
+              description: >
+                Configuration key-value data to be passed as-is to the corresponding
+                Boto3 method. Key names must match the case that Boto3 requires.
+              required: false
+              default: {}
+
+
+  # Reference: https://boto3.readthedocs.io/en/latest/reference/services/route53.html#Route53.Client.change_resource_record_sets
+  cloudify.nodes.aws.route53.RecordSet:
+    derived_from: cloudify.nodes.Root
+    properties:
+      use_external_resource:
+        description: *use_external_resource_desc
+        type: boolean
+        default: false
+      resource_id:
+        description: *resource_id_desc
+        type: string
+        default: ''
+      client_config:
+        description: >
+          A dictionary of values to pass to authenticate with the AWS API.
+        type: cloudify.datatypes.aws.ConnectionConfig
+        required: false
+      resource_config:
+        description: >
+          Configuration key-value data to be passed as-is to the corresponding
+          Boto3 method. Key names must match the case that Boto3 requires.
+        type: cloudify.datatypes.aws.route53.RecordSet.config
+        required: false
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: awssdk.cloudify_boto3.route53.resources.record_set.prepare
+          inputs:
+            aws_resource_id:
+              description: >
+                This overrides the resource_id property (useful for setting the
+                resource ID of a node instance at runtime).
+              type: string
+              required: false
+              default: ~
+            runtime_properties:
+              description: >
+                This overrides any runtime property at runtime. This is a key-value
+                pair / dictionary that will be passed, as-is, to the runtime properties
+                of the running instance.
+              required: false
+              default: ~
+            force_operation:
+              description: >
+                Forces the current operation to be executed regardless
+                if the "use_external_resource" property is set or not.
+              required: false
+              default: false
+            resource_config:
+              description: >
+                Configuration key-value data to be passed as-is to the corresponding
+                Boto3 method. Key names must match the case that Boto3 requires.
+              required: false
+              default: {}
+        configure:
+          implementation: awssdk.cloudify_boto3.route53.resources.record_set.create
+          inputs:
+            aws_resource_id:
+              description: >
+                This overrides the resource_id property (useful for setting the
+                resource ID of a node instance at runtime).
+              type: string
+              required: false
+              default: ~
+            runtime_properties:
+              description: >
+                This overrides any runtime property at runtime. This is a key-value
+                pair / dictionary that will be passed, as-is, to the runtime properties
+                of the running instance.
+              required: false
+              default: ~
+            force_operation:
+              description: >
+                Forces the current operation to be executed regardless
+                if the "use_external_resource" property is set or not.
+              required: false
+              default: false
+            resource_config:
+              description: >
+                Configuration key-value data to be passed as-is to the corresponding
+                Boto3 method. Key names must match the case that Boto3 requires.
+              required: false
+              default: {}
+        delete:
+          implementation: awssdk.cloudify_boto3.route53.resources.record_set.delete
+          inputs:
+            aws_resource_id:
+              description: >
+                This overrides the resource_id property (useful for setting the
+                resource ID of a node instance at runtime).
+              type: string
+              required: false
+              default: ~
+            runtime_properties:
+              description: >
+                This overrides any runtime property at runtime. This is a key-value
+                pair / dictionary that will be passed, as-is, to the runtime properties
+                of the running instance.
+              required: false
+              default: ~
+            force_operation:
+              description: >
+                Forces the current operation to be executed regardless
+                if the "use_external_resource" property is set or not.
+              required: false
+              default: false
             resource_config:
               description: >
                 Configuration key-value data to be passed as-is to the corresponding
@@ -1671,3 +1798,14 @@ relationships:
       cloudify.interfaces.relationship_lifecycle:
         preconfigure: { implementation: awssdk.cloudify_boto3.route53.resources.hosted_zone.prepare_assoc }
         unlink: { implementation: awssdk.cloudify_boto3.route53.resources.hosted_zone.detach_from }
+
+  ## 
+  # ROUTE53 RESOURCE RECORD SET
+  ##
+  # ROUTE53 HOSTED ZONE: https://boto3.readthedocs.io/en/latest/reference/services/route53.html#Route53.Client.change_resource_record_sets
+  cloudify.relationships.aws.route53.record_set.connected_to:
+    derived_from: cloudify.relationships.aws.connected_to
+    source_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        preconfigure: { implementation: awssdk.cloudify_boto3.route53.resources.record_set.prepare_assoc }
+        unlink: { implementation: awssdk.cloudify_boto3.route53.resources.record_set.detach_from }

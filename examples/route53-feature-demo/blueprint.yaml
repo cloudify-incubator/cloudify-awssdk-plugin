@@ -41,6 +41,40 @@ dsl_definitions:
 
 node_templates:
 
+  dns_record_set_2:
+    type: cloudify.nodes.aws.route53.RecordSet
+    properties:
+      client_config: *client_config
+      resource_config:
+        kwargs:
+          Action: CREATE
+          ResourceRecordSet:
+            Name: { concat: ["dev.", { get_property: [dns_hosted_zone, resource_id] }] }
+            Type: !!str TXT
+            TTL: !!int 60
+            ResourceRecords:
+            - Value: '"Created using Cloudify"'
+    relationships:
+    - type: cloudify.relationships.aws.route53.record_set.connected_to
+      target: dns_hosted_zone
+
+  dns_record_set_1:
+    type: cloudify.nodes.aws.route53.RecordSet
+    properties:
+      client_config: *client_config
+      resource_config:
+        kwargs:
+          Action: UPSERT
+          ResourceRecordSet:
+            Name: { concat: ["staging.", { get_property: [dns_hosted_zone, resource_id] }] }
+            Type: !!str TXT
+            TTL: !!int 60
+            ResourceRecords:
+            - Value: '"Created using Cloudify"'
+    relationships:
+    - type: cloudify.relationships.aws.route53.record_set.connected_to
+      target: dns_hosted_zone
+
   dns_hosted_zone:
     type: cloudify.nodes.aws.route53.HostedZone
     properties:
@@ -51,6 +85,11 @@ node_templates:
           HostedZoneConfig:
             Comment: !!str Cloudify-generated DNS Hosted Zone
             PrivateZone: !!bool true
+    #interfaces:
+    #  cloudify.interfaces.lifecycle:
+    #    delete:
+    #      inputs:
+    #        force_delete: true
     relationships:
     - type: cloudify.relationships.aws.route53.hosted_zone.connected_to
       target: dns_vpc
