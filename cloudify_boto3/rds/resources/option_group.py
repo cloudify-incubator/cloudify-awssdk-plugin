@@ -15,7 +15,7 @@
 '''
     RDS.OptionGroup
     ~~~~~~~~~~~~~~~
-    AWS RDS option group interface
+    AWS RDS Option Group interface
 '''
 # Cloudify
 from cloudify.exceptions import OperationRetry
@@ -112,7 +112,7 @@ def create(ctx, iface, resource_config, **_):
                          ignore_properties=True)
 @decorators.wait_for_delete(status_pending=['available'])
 def delete(iface, resource_config, **_):
-    '''Deletes an AWS Option Group'''
+    '''Deletes an AWS RDS Option Group'''
     try:
         iface.delete(resource_config)
     except ClientError as exc:

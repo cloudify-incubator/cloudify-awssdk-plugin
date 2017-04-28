@@ -24,6 +24,8 @@ setup(
     packages=[
         'cloudify_boto3',
         'cloudify_boto3.common',
+        'cloudify_boto3.dynamodb',
+        'cloudify_boto3.dynamodb.resources',
         'cloudify_boto3.iam',
         'cloudify_boto3.iam.resources',
         'cloudify_boto3.lambda_serverless',
