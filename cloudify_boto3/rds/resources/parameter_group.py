@@ -100,7 +100,8 @@ def create(ctx, iface, resource_config, **_):
     utils.update_resource_arn(ctx.instance, res_arn)
 
 
-@decorators.aws_resource(ParameterGroup, RESOURCE_TYPE)
+@decorators.aws_resource(ParameterGroup, RESOURCE_TYPE,
+                         ignore_properties=True)
 def configure(iface, resource_config, **_):
     '''Configures an AWS RDS Parameter Group'''
     if not resource_config:
