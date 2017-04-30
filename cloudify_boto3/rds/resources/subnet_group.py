@@ -123,8 +123,6 @@ def prepare_assoc(ctx, iface, resource_config, **_):
                 raise_on_missing=True))
         ctx.source.instance.runtime_properties[
             'resource_config']['SubnetIds'] = subnet_ids
-        # pylint: disable=W0212
-        ctx.source.instance.runtime_properties._set_changed()
 
 
 @decorators.aws_relationship(SubnetGroup, RESOURCE_TYPE)

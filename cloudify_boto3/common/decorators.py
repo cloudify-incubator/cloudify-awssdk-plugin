@@ -42,6 +42,17 @@ def aws_relationship(class_decl=None,
                     instance=ctx.source.instance,
                     raise_on_missing=True)) if class_decl else None
             kwargs['resource_config'] = kwargs.get('resource_config') or dict()
+            # Check if using external
+            if ctx.source.node.properties.get('use_external_resource', False):
+                resource_id = utils.get_resource_id(
+                    node=ctx.source.node, instance=ctx.source.instance)
+                ctx.logger.info('%s ID# "%s" is user-provided.'
+                                % (resource_type, resource_id))
+                if not kwargs.get('force_operation', False):
+                    return
+                ctx.logger.warn('%s ID# "%s" has force_operation set.'
+                                % (resource_type, resource_id))
+            # Execute the function
             ret = function(**kwargs)
             # When modifying nested runtime properties, the internal
             # "dirty checking" mechanism will not know of our changes.
