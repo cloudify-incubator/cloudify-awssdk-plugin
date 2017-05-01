@@ -94,8 +94,12 @@ def create(ctx, iface, resource_config, **_):
 
 @decorators.aws_resource(LambdaPermission, RESOURCE_TYPE,
                          ignore_properties=True)
-def delete(iface, resource_config, **_):
+def delete(ctx, iface, resource_config, **_):
     '''Deletes an AWS Lambda Permission'''
+    # Build API params
+    resource_config.update(dict(
+        FunctionName=ctx.instance.runtime_properties[
+            'resource_config'].get('FunctionName')))
     iface.delete(resource_config)
 
 
@@ -105,7 +109,7 @@ def prepare_assoc(ctx, iface, resource_config, **_):
     if utils.is_node_type(ctx.target.node,
                           'cloudify.nodes.aws.lambda.Function'):
         ctx.source.instance.runtime_properties[
-            'resource_config']['FunctionName'] = utils.get_resource_id(
+            'resource_config']['FunctionName'] = utils.get_resource_arn(
                 node=ctx.target.node,
                 instance=ctx.target.instance,
                 raise_on_missing=True)
