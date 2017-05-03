@@ -217,3 +217,24 @@ def get_ancestor_by_type(inst, node_type):
     if node_type in rel.target.node.type_hierarchy:
         return rel.target
     return get_ancestor_by_type(rel.target.instance, node_type)
+
+
+def add_resources_from_rels(node_instance, node_type, current_list):
+    '''
+        Updates a resource list with relationships same target types
+    :param `cloudify.context.NodeInstanceContext` inst: Cloudify instance
+    :param string node_type: Node type name
+    :param current_list: List of IDs
+    :return: updated list
+    '''
+    resources = \
+        find_rels_by_node_type(
+            node_instance,
+            node_type)
+    for resource in resources:
+        resource_id = \
+            resource.target.instance.runtime_properties[
+                constants.EXTERNAL_RESOURCE_ID]
+        if resource_id not in current_list:
+            current_list.append(resource_id)
+    return current_list

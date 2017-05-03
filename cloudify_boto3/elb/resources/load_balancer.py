@@ -29,7 +29,7 @@ from cloudify_boto3.common.constants import (
 # Boto
 from botocore.exceptions import ClientError
 
-RESOURCE_TYPE = 'ELB Classic Load Balancer'
+RESOURCE_TYPE = 'ELB Load Balancer'
 LB_NAME = 'LoadBalancerName'
 LB_ARN = 'LoadBalancerArn'
 LB_ATTR = 'Attributes'
@@ -41,7 +41,7 @@ SECGROUPS = 'SecurityGroups'
 
 class ELBLoadBalancer(ELBBase):
     '''
-        AWS ELB classic load balancer interface
+        AWS ELB load balancer interface
     '''
     def __init__(self, ctx_node, resource_id=None, client=None, logger=None):
         ELBBase.__init__(
@@ -74,7 +74,7 @@ class ELBLoadBalancer(ELBBase):
 
     def create(self, params):
         '''
-            Create a new AWS ELB classic load balancer.
+            Create a new AWS ELB load balancer.
         .. note:
             See http://bit.ly/2pwMHtb for config details.
         '''
@@ -87,7 +87,7 @@ class ELBLoadBalancer(ELBBase):
 
     def delete(self, params=None):
         '''
-            Deletes an existing ELB classic load balancer.
+            Deletes an existing ELB load balancer.
         .. note:
             See http://bit.ly/2pwRpY9 for config details.
         '''
@@ -112,7 +112,7 @@ class ELBLoadBalancer(ELBBase):
 
 @decorators.aws_resource(resource_type=RESOURCE_TYPE)
 def prepare(ctx, resource_config, **_):
-    '''Prepares an ELB classic load balancer'''
+    '''Prepares an ELB load balancer'''
     # Save the parameters
     ctx.instance.runtime_properties['resource_config'] = resource_config
 
@@ -122,7 +122,7 @@ def prepare(ctx, resource_config, **_):
     status_good=['active'],
     status_pending=['provisioning'])
 def create(ctx, iface, resource_config, **_):
-    '''Creates an AWS ELB classic load balancer'''
+    '''Creates an AWS ELB load balancer'''
     # Build API params
     cfg = \
         ctx.instance.runtime_properties['resource_config'] or resource_config
@@ -155,15 +155,13 @@ def create(ctx, iface, resource_config, **_):
     if iface.resource_id and 'Name' not in params.keys():
         params.update(dict(Name=iface.resource_id))
     # Actually create the resource
-    res_id, res_arn = iface.create(params)
-    utils.update_resource_id(ctx.instance, res_id)
-    utils.update_resource_arn(ctx.instance, res_arn)
+    iface.create(params)
 
 
 @decorators.aws_resource(ELBLoadBalancer,
                          RESOURCE_TYPE)
 def modify(ctx, iface, resource_config, **_):
-    '''modify an AWS ELB classic load balancer attributes'''
+    '''modify an AWS ELB load balancer attributes'''
     params = \
         ctx.instance.runtime_properties['resource_config'] \
         or resource_config
@@ -186,6 +184,6 @@ def modify(ctx, iface, resource_config, **_):
 @decorators.aws_resource(ELBLoadBalancer, RESOURCE_TYPE,
                          ignore_properties=True)
 @decorators.wait_for_delete(status_pending=[])
-def delete(iface, resource_config, **_):
-    '''Deletes an AWS ELB classic load balancer'''
+def delete(ctx, iface, resource_config, **_):
+    '''Deletes an AWS ELB load balancer'''
     iface.delete(resource_config)

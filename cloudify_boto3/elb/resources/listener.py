@@ -118,7 +118,6 @@ def create(ctx, iface, resource_config, **_):
         lb_arn = \
             targs[0].target.instance.runtime_properties[EXTERNAL_RESOURCE_ARN]
         params.update({LB_ARN: lb_arn})
-        del targs
 
     for action in params.get('DefaultActions', []):
         target_grp = action.get(TARGET_ARN)
@@ -142,7 +141,6 @@ def create(ctx, iface, resource_config, **_):
 
 @decorators.aws_resource(ELBListener, RESOURCE_TYPE,
                          ignore_properties=True)
-@decorators.wait_for_delete(status_pending=[])
 def delete(iface, resource_config, **_):
     '''Deletes an AWS ELB listener'''
     iface.delete(resource_config)
