@@ -1,0 +1,66 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+- http://www.getcloudify.org/spec/cloudify/3.4.2/types.yaml
+- plugin.yaml
+
+inputs:
+
+  aws_access_key_id:
+    type: string
+
+  aws_secret_access_key:
+    type: string
+
+  aws_region_name:
+    type: string
+    default: us-east-1
+
+dsl_definitions:
+  client_config: &client_config
+    aws_access_key_id: { get_input: aws_access_key_id }
+    aws_secret_access_key: { get_input: aws_secret_access_key }
+    region_name: { get_input: aws_region_name }
+
+  aws_config: &aws_config
+    aws_access_key_id: { get_input: aws_access_key_id }
+    aws_secret_access_key: { get_input: aws_secret_access_key }
+    ec2_region_name: { get_input: aws_region_name }
+
+node_templates:
+
+  bucket_policy:
+    type: cloudify.nodes.aws.s3.BucketPolicy
+    properties:
+      resource_config:
+        kwargs:
+          Policy: |
+            {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Sid": "EveryoneGetPlugin",
+                  "Effect": "Allow",
+                  "Principal": "*",
+                  "Action": [
+                    "s3:GetObject"
+                  ],
+                  "Resource": "arn:aws:s3:::boto3-plugin/*"
+                }
+              ]
+            }
+      client_config: *client_config
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: bucket
+
+  bucket:
+    type: cloudify.nodes.aws.s3.Bucket
+    properties:
+      resource_config:
+        kwargs:
+          ACL: public-read-write
+          Bucket: boto3-plugin
+          CreateBucketConfiguration:
+            LocationConstraint: { get_input: aws_region_name }
+      client_config: *client_config
