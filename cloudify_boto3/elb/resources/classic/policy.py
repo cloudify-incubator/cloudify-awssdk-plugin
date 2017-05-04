@@ -25,8 +25,11 @@ from cloudify_boto3.common.constants import EXTERNAL_RESOURCE_ID
 
 RESOURCE_TYPE = 'ELB classic policy'
 POLICY_NAME = 'PolicyName'
+POLICY_NAMES = 'PolicyNames'
 LB_NAME = 'LoadBalancerName'
+LB_PORT = 'LoadBalancerPort'
 LB_TYPE = 'cloudify.nodes.aws.elb.Classic.LoadBalancer'
+LISTENER_TYPE = 'cloudify.nodes.aws.elb.Classic.Listener'
 
 
 class ELBClassicPolicy(ELBBase):
@@ -55,7 +58,7 @@ class ELBClassicPolicy(ELBBase):
             return None
         return props['State']['Code']
 
-    def create(self, params, sticky=False):
+    def create(self, params):
         '''
             Create a new AWS ELB classic policy.
         .. note:
@@ -63,12 +66,33 @@ class ELBClassicPolicy(ELBBase):
         '''
         self.logger.debug('Creating %s with parameters: %s'
                           % (self.type_name, params))
-        if sticky:
-            res = \
-                self.client.create_lb_cookie_stickiness_policy(**params)
-        else:
-            res = \
-                self.client.create_load_balancer_policy(**params)
+        res = \
+            self.client.create_load_balancer_policy(**params)
+        self.logger.debug('Response: %s' % res)
+        return res
+
+    def create_sticky(self, params):
+        '''
+            Create a new AWS ELB classic policy.
+        .. note:
+            See http://bit.ly/2oYIQrZ for config details.
+        '''
+        self.logger.debug('Creating %s with parameters: %s'
+                          % (self.type_name, params))
+        res = \
+            self.client.create_lb_cookie_stickiness_policy(**params)
+        self.logger.debug('Response: %s' % res)
+        return res
+
+    def start(self, params):
+        '''
+            Refresh the AWS ELB classic policies.
+        .. note:
+            See http://bit.ly/2qBuhb5 for config details.
+        '''
+        self.logger.debug('Creating %s with parameters: %s'
+                          % (self.type_name, params))
+        res = self.client.set_load_balancer_policies_of_listener(**params)
         self.logger.debug('Response: %s' % res)
         return res
 
@@ -115,7 +139,7 @@ def create(ctx, iface, resource_config, **_):
 
 
 @decorators.aws_resource(ELBClassicPolicy, RESOURCE_TYPE)
-def create_lb_stickiness(ctx, iface, resource_config, **_):
+def create_sticky(ctx, iface, resource_config, **_):
     '''Creates an AWS ELB classic policy'''
     # Build API params
     params = \
@@ -135,7 +159,65 @@ def create_lb_stickiness(ctx, iface, resource_config, **_):
     ctx.instance.runtime_properties[POLICY_NAME] = \
         params.get(POLICY_NAME)
     # Actually create the resource
-    iface.create(params, sticky=True)
+    iface.create_sticky(params)
+
+
+@decorators.aws_resource(ELBClassicPolicy,
+                         RESOURCE_TYPE,
+                         ignore_properties=True)
+def start_sticky(ctx, iface, resource_config, **_):
+    '''Starts an AWS ELB classic policy'''
+    # Build API params
+    params = resource_config
+
+    # This operations requires the LoadBalancerName, LoadBalancerPort,
+    # and the PolicyName.
+    if LB_NAME not in params:
+        targs = \
+            utils.find_rels_by_node_type(
+                ctx.instance,
+                LB_TYPE)
+        lb_name = \
+            targs[0].target.instance.runtime_properties[
+                EXTERNAL_RESOURCE_ID]
+        ctx.instance.runtime_properties[LB_NAME] = \
+            lb_name
+        params.update({LB_NAME: lb_name})
+
+    # The LoadBalancerPort can come either from the resource config,
+    # or it can come from a relationship to a Listener or a LoadBalancer.
+    # A listener is prefered because only one LoadBalancerPort is expected
+    # to be defined per listener, whereas a LoadBalancer many listeners
+    # are defined. If many listeners are found then the first listener is
+    # used.
+    if LB_PORT not in params:
+        targs = \
+            utils.find_rels_by_node_type(
+                ctx.instance,
+                LISTENER_TYPE)
+        if not targs:
+            targs = \
+                utils.find_rels_by_node_type(
+                    ctx.instance,
+                    LB_TYPE)
+            instance_cfg = \
+                targs[0].target.instance.runtime_properties['resource_config']
+        else:
+            instance_cfg = \
+                targs[0].target.instance.runtime_properties['resource_config']
+        listener = instance_cfg.get('Listeners', [])[0]
+        listener_port = listener.get(LB_PORT)
+        params.update({LB_PORT: listener_port})
+
+    # This API call takes a list of policies as an argument.
+    # However this node type represents only one policy.
+    # Therefore we restrict the usage.
+    if POLICY_NAMES not in params:
+        policy_names = ctx.instance.runtime_properties[POLICY_NAME]
+        params.update({POLICY_NAMES: [policy_names]})
+
+    # Actually create the resource
+    iface.start(params)
 
 
 @decorators.aws_resource(ELBClassicPolicy, RESOURCE_TYPE)

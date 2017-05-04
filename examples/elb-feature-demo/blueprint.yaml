@@ -31,7 +31,35 @@ dsl_definitions:
 
 node_templates:
 
-  instance:
+  instance3:
+    type: cloudify.aws.nodes.Instance
+    properties:
+      agent_config:
+        install_method: none
+      image_id: ami-01ccc867
+      instance_type: t2.micro
+      aws_config: *aws_config
+    relationships:
+      - type: cloudify.aws.relationships.instance_connected_to_subnet
+        target: subnet3
+      - type: cloudify.relationships.aws.elb.instance.connected_to
+        target: classic_elb
+
+  instance2:
+    type: cloudify.aws.nodes.Instance
+    properties:
+      agent_config:
+        install_method: none
+      image_id: ami-01ccc867
+      instance_type: t2.micro
+      aws_config: *aws_config
+    relationships:
+      - type: cloudify.aws.relationships.instance_connected_to_subnet
+        target: subnet2
+      - type: cloudify.relationships.aws.elb.instance.connected_to
+        target: classic_elb
+
+  instance1:
     type: cloudify.aws.nodes.Instance
     properties:
       agent_config:
@@ -56,6 +84,8 @@ node_templates:
     relationships:
     - type: cloudify.relationships.depends_on
       target: classic_elb
+    - type: cloudify.relationships.depends_on
+      target: classic_elb_listener
 
   classic_policy:
     type: cloudify.nodes.aws.elb.Classic.Policy
