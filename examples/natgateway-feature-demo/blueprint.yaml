@@ -1,0 +1,68 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+- http://www.getcloudify.org/spec/cloudify/3.4.2/types.yaml
+- http://www.getcloudify.org/spec/aws-plugin/1.4.6/plugin.yaml
+- plugin.yaml
+
+inputs:
+
+  aws_access_key_id:
+    type: string
+
+  aws_secret_access_key:
+    type: string
+
+  aws_region_name:
+    type: string
+    default: us-east-1
+
+dsl_definitions:
+
+  client_config: &client_config
+    aws_access_key_id: { get_input: aws_access_key_id }
+    aws_secret_access_key: { get_input: aws_secret_access_key }
+    region_name: { get_input: aws_region_name }
+
+  aws_config: &aws_config
+    aws_access_key_id: { get_input: aws_access_key_id }
+    aws_secret_access_key: { get_input: aws_secret_access_key }
+    ec2_region_name: { get_input: aws_region_name }
+
+node_templates:
+
+  natgateway:
+    type: cloudify.nodes.aws.ec2.NATGateway
+    properties:
+      client_config: *client_config
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: subnet
+    - type: cloudify.relationships.depends_on
+      target: elasticip
+
+  elasticip:
+    type: cloudify.aws.nodes.ElasticIP
+    properties:
+      aws_config: *aws_config
+      domain: vpc
+
+  subnet:
+    type: cloudify.aws.nodes.Subnet
+    properties:
+      aws_config: *aws_config
+      use_external_resource: true
+      resource_id: subnet-b545b1c2
+      cidr_block:  172.30.0.0/24
+      availability_zone: eu-west-1a
+    relationships:
+    - type: cloudify.aws.relationships.subnet_contained_in_vpc
+      target: vpc
+
+  vpc:
+    type: cloudify.aws.nodes.VPC
+    properties:
+      aws_config: *aws_config
+      use_external_resource: true
+      resource_id: vpc-ffec199a
+      cidr_block:  172.30.0.0/16

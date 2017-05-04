@@ -252,3 +252,24 @@ def add_resources_from_rels(node_instance, node_type, current_list):
         if resource_id not in current_list:
             current_list.append(resource_id)
     return current_list
+
+
+def find_resource_id_by_type(node_instance, node_type):
+    '''
+        Finds the resource_id of a single node,
+        which is connected via a relationship.
+    :param `cloudify.context.NodeInstanceContext` inst: Cloudify instance
+    :param string node_type: Node type name
+    :return: None or the resource id
+    '''
+
+    targ = \
+        find_rel_by_node_type(
+            node_instance,
+            node_type)
+    if targ:
+        resource_id = \
+            targ.target.instance.runtime_properties.get(
+                constants.EXTERNAL_RESOURCE_ID)
+        return resource_id
+    return None
