@@ -13,9 +13,9 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 '''
-    Autoscaling.Policy
+    Autoscaling.LifecycleHook
     ~~~~~~~~~~~~~~
-    AWS Autoscaling Policy interface
+    AWS Autoscaling Lifecycle Hook interface
 '''
 # Cloudify
 from cloudify_boto3.common import decorators, utils
@@ -23,19 +23,17 @@ from cloudify_boto3.autoscaling import AutoscalingBase
 # Boto
 from botocore.exceptions import ClientError
 
-RESOURCE_TYPE = 'Autoscaling Policy'
+RESOURCE_TYPE = 'Autoscaling Lifecycle Hook'
+HOOKS = 'LifecycleHooks'
+HOOK_NAMES = 'LifecycleHookNames'
+HOOK_NAME = 'LifecycleHookName'
 GROUP_NAME = 'AutoScalingGroupName'
-SCALING_POLICIES = 'ScalingPolicies'
-POLICY_NAMES = 'PolicyNames'
-POLICY_NAME = 'PolicyName'
-POLICY_ARN = 'PolicyARN'
-POLICY_TYPES = 'PolicyTypes'
 GROUP_TYPE = 'cloudify.nodes.aws.autoscaling.Group'
 
 
-class AutoscalingPolicy(AutoscalingBase):
+class AutoscalingLifecycleHook(AutoscalingBase):
     '''
-        Autoscaling Autoscaling Policy interface
+        Autoscaling Lifecycle Hook interface
     '''
     def __init__(self, ctx_node, resource_id=None, client=None, logger=None):
         AutoscalingBase.__init__(self, ctx_node, resource_id, client, logger)
@@ -44,14 +42,14 @@ class AutoscalingPolicy(AutoscalingBase):
     @property
     def properties(self):
         '''Gets the properties of an external resource'''
-        params = {POLICY_NAMES: [self.resource_id]}
+        params = {HOOK_NAMES: [self.resource_id]}
         try:
             resources = \
-                self.client.describe_policies(**params)
+                self.client.describe_lifecycle_hooks(**params)
         except ClientError:
             pass
         else:
-            return resources.get(SCALING_POLICIES, [None])[0]
+            return resources.get(HOOKS, [None])[0]
 
     @property
     def status(self):
@@ -63,42 +61,42 @@ class AutoscalingPolicy(AutoscalingBase):
 
     def create(self, params):
         '''
-            Create a new AWS Autoscaling Autoscaling Policy.
+            Create a new AWS Autoscaling Lifecycle Hook.
         '''
         if not self.resource_id:
-            setattr(self, 'resource_id', params.get(POLICY_NAME))
+            setattr(self, 'resource_id', params.get(HOOK_NAME))
         self.logger.debug('Creating %s with parameters: %s'
                           % (self.type_name, params))
-        res = self.client.put_scaling_policy(**params)
+        res = self.client.put_lifecycle_hook(**params)
         self.logger.debug('Response: %s' % res)
-        return res.get(POLICY_ARN)
+        return res
 
     def delete(self, params=None):
         '''
-            Deletes an existing AWS Autoscaling Policy.
+            Deletes an existing AWS Autoscaling Lifecycle Hook.
         '''
-        if POLICY_NAME not in params.keys():
-            params.update({POLICY_NAME: self.resource_id})
+        if HOOK_NAME not in params.keys():
+            params.update({HOOK_NAME: self.resource_id})
         self.logger.debug('Deleting %s with parameters: %s'
                           % (self.type_name, params))
-        res = self.client.delete_policy(**params)
+        res = self.client.delete_lifecycle_hook(**params)
         self.logger.debug('Response: %s' % res)
         return res
 
 
 @decorators.aws_resource(resource_type=RESOURCE_TYPE)
 def prepare(ctx, resource_config, **_):
-    '''Prepares an AWS Autoscaling Autoscaling Policy'''
+    '''Prepares an AWS Autoscaling Lifecycle Hook'''
     # Save the parameters
     ctx.instance.runtime_properties['resource_config'] = resource_config
 
 
-@decorators.aws_resource(AutoscalingPolicy, RESOURCE_TYPE)
+@decorators.aws_resource(AutoscalingLifecycleHook, RESOURCE_TYPE)
 def create(ctx, iface, resource_config, **_):
-    '''Creates an AWS Autoscaling Autoscaling Policy'''
+    '''Creates an AWS Autoscaling Lifecycle Hook'''
     params = resource_config.copy()
     utils.update_resource_id(
-        ctx.instance, params.get(POLICY_NAME))
+        ctx.instance, params.get(HOOK_NAME))
 
     # Ensure the $GROUP_NAME parameter is populated.
     autoscaling_group = params.get(GROUP_NAME)
@@ -111,15 +109,13 @@ def create(ctx, iface, resource_config, **_):
         autoscaling_group
 
     # Actually create the resource
-    resource_arn = iface.create(params)
-    utils.update_resource_arn(
-        ctx.instance, resource_arn)
+    iface.create(params)
 
 
-@decorators.aws_resource(AutoscalingPolicy, RESOURCE_TYPE,
+@decorators.aws_resource(AutoscalingLifecycleHook, RESOURCE_TYPE,
                          ignore_properties=True)
 def delete(ctx, iface, resource_config, **_):
-    '''Deletes an AWS Autoscaling Autoscaling Policy'''
+    '''Deletes an AWS Autoscaling Lifecycle Hook'''
     params = resource_config.copy()
 
     # Ensure the $GROUP_NAME parameter is populated.
