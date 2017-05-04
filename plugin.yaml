@@ -3,7 +3,7 @@ plugins:
     executor: central_deployment_agent
     package_name: cloudify-boto3-plugin
     package_version: '1.0'
-    source: https://github.com/cloudify-incubator/cloudify-boto3-plugin/archive/elb.zip
+    source: https://github.com/cloudify-incubator/cloudify-boto3-plugin/archive/dev.zip
 
 
 data_types:
@@ -137,12 +137,17 @@ data_types:
       kwargs:
         default: {}
 
-  cloudify.datatypes.aws.elb.Listener.config:
+  cloudify.datatypes.aws.elb.Classic.Listener.config:
     properties:
       kwargs:
         default: {}
 
-  cloudify.datatypes.aws.elb.Classic.Listener.config:
+  cloudify.datatypes.aws.elb.Classic.Policy.config:
+    properties:
+      kwargs:
+        default: {}
+
+  cloudify.datatypes.aws.elb.Listener.config:
     properties:
       kwargs:
         default: {}
@@ -156,8 +161,6 @@ data_types:
     properties:
       kwargs:
         default: {}
-
-  cloudify.datatypes.aws.elb.Classic.Policy.config:
 
   cloudify.datatypes.aws.SQS.Queue.config:
     properties:
