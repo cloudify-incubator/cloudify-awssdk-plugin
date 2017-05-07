@@ -29,6 +29,26 @@ dsl_definitions:
 
 node_templates:
 
+  bucket_lifecycle_configuration:
+    type: cloudify.nodes.aws.s3.BucketLifecycleConfiguration
+    properties:
+      resource_config:
+        kwargs:
+          LifecycleConfiguration:
+            Rules:
+            - ID: Standard Rule LFC
+              Prefix: boto3
+              Status: Disabled
+              Transition:
+                Days: 31
+                StorageClass: STANDARD_IA
+              Expiration:
+                Days: 95
+      client_config: *client_config
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: bucket
+
   bucket_policy:
     type: cloudify.nodes.aws.s3.BucketPolicy
     properties:
