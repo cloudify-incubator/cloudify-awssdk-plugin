@@ -17,6 +17,8 @@
     ~~~~~~~~~~~~~~
     AWS S3 Bucket interface
 '''
+# Generic
+import json
 # Cloudify
 from cloudify_boto3.common import decorators, utils
 from cloudify_boto3.s3 import S3Base
@@ -104,6 +106,9 @@ def create(ctx, iface, resource_config, **_):
         params[BUCKET] = bucket_name
     ctx.instance.runtime_properties[BUCKET] = bucket_name
     bucket_policy = params.get(POLICY)
+    if not isinstance(bucket_policy, basestring):
+        bucket_policy = json.dumps(bucket_policy)
+        params[POLICY] = bucket_policy
     ctx.instance.runtime_properties[POLICY] = bucket_policy
     utils.update_resource_id(ctx.instance, bucket_name)
     # Actually create the resource

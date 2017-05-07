@@ -74,6 +74,20 @@ node_templates:
     - type: cloudify.relationships.depends_on
       target: bucket
 
+  bucket_tagging:
+    type: cloudify.nodes.aws.s3.BucketTagging
+    properties:
+      resource_config:
+        kwargs:
+          Tagging:
+            TagSet:
+            - Key: Name
+              Value: bucket_tagging
+      client_config: *client_config
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: bucket
+
   bucket:
     type: cloudify.nodes.aws.s3.Bucket
     properties:

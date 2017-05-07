@@ -13,9 +13,9 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 '''
-    S3.Bucket.LifecycleConfiguration
+    S3.Bucket.Tagging
     ~~~~~~~~~~~~~~
-    AWS S3 Bucket Lifecycle Configuration interface
+    AWS S3 Bucket Tagging interface
 '''
 # Cloudify
 from cloudify_boto3.common import decorators, utils
@@ -24,16 +24,16 @@ from cloudify_boto3.common.constants import EXTERNAL_RESOURCE_ID
 # Boto
 from botocore.exceptions import ClientError
 
-RESOURCE_TYPE = 'S3 Lifecycle Configuration'
+RESOURCE_TYPE = 'S3 Bucket Tagging'
 BUCKET = 'Bucket'
+TAGGING = 'Tagging'
 BUCKET_TYPE = 'cloudify.nodes.aws.s3.Bucket'
-RULES = 'Rules'
-ID = 'ID'
+TAGSET = 'TagSet'
 
 
-class S3BucketLifecycleConfiguration(S3Base):
+class S3BucketTagging(S3Base):
     '''
-        AWS S3 Bucket Lifecycle Configuration interface
+        AWS S3 Bucket Tagging interface
     '''
     def __init__(self, ctx_node, resource_id=None, client=None, logger=None):
         S3Base.__init__(self, ctx_node, resource_id, client, logger)
@@ -43,55 +43,50 @@ class S3BucketLifecycleConfiguration(S3Base):
     def properties(self):
         '''Gets the properties of an external resource'''
         try:
-            resources = \
-                self.client.get_bucket_lifecycle_configuration(
+            resource = \
+                self.client.get_bucket_tagging(
                     {BUCKET: self.resource_id})
         except ClientError:
             pass
         else:
-            for resource in resources.get(RULES, []):
-                return resource.get(ID, None)
-        return None
+            return [] if not resource else resource.get(TAGSET, [])
 
     @property
     def status(self):
         '''Gets the status of an external resource'''
-        props = self.properties
-        if not props:
-            return None
-        return props['Status']
+        pass
 
     def create(self, params):
         '''
-            Create a new AWS Bucket Lifecycle Configuration Policy.
+            Create a new AWS Bucket Tagging.
         '''
         self.logger.debug('Creating %s with parameters: %s'
                           % (self.type_name, params))
-        res = self.client.put_bucket_lifecycle(**params)
+        res = self.client.put_bucket_tagging(**params)
         self.logger.debug('Response: %s' % res)
         return res
 
     def delete(self, params=None):
         '''
-            Deletes an existing AWS Bucket Lifecycle Configuration Policy.
+            Deletes an existing AWS Bucket Tagging.
         '''
         if BUCKET not in params.keys():
             params.update({BUCKET: self.resource_id})
         self.logger.debug('Deleting %s with parameters: %s'
                           % (self.type_name, params))
-        self.client.delete_bucket_lifecycle(**params)
+        self.client.delete_bucket_tagging(**params)
 
 
 @decorators.aws_resource(resource_type=RESOURCE_TYPE)
 def prepare(ctx, resource_config, **_):
-    '''Prepares an AWS Bucket Lifecycle Configuration Policy'''
+    '''Prepares an AWS Bucket Bucket Tagging'''
     # Save the parameters
     ctx.instance.runtime_properties['resource_config'] = resource_config
 
 
-@decorators.aws_resource(S3BucketLifecycleConfiguration, RESOURCE_TYPE)
+@decorators.aws_resource(S3BucketTagging, RESOURCE_TYPE)
 def create(ctx, iface, resource_config, **_):
-    '''Creates an AWS S3 Bucket Lifecycle Configuration'''
+    '''Creates an AWS S3 Bucket Bucket Tagging'''
 
     params = resource_config.copy()
     bucket_name = params.get(BUCKET)
@@ -114,8 +109,8 @@ def create(ctx, iface, resource_config, **_):
     iface.create(params)
 
 
-@decorators.aws_resource(S3BucketLifecycleConfiguration, RESOURCE_TYPE,
+@decorators.aws_resource(S3BucketTagging, RESOURCE_TYPE,
                          ignore_properties=True)
 def delete(iface, resource_config, **_):
-    '''Deletes an AWS S3 Bucket Lifecycle Configuration'''
+    '''Deletes an AWS S3 Bucket Bucket Tagging'''
     iface.delete(resource_config)
