@@ -23,7 +23,7 @@ from cloudify_boto3.ec2 import EC2Base
 # Boto
 from botocore.exceptions import ClientError
 
-RESOURCE_TYPE = 'EC2 NAT Gateway Bucket'
+RESOURCE_TYPE = 'EC2 NAT Gateway'
 NATGATEWAYS = 'NatGateways'
 NATGATEWAY_ID = 'NatGatewayId'
 NATGATEWAY_IDS = 'NatGatewayIds'
