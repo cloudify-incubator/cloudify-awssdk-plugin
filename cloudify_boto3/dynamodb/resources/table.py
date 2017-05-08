@@ -88,7 +88,7 @@ def create(ctx, iface, resource_config, **_):
     params.update({TABLE_NAME: iface.resource_id})
 
     # Actually create the resource
-    res_id, res_arn = iface.create(resource_config)
+    res_id, res_arn = iface.create(params)
     utils.update_resource_id(ctx.instance, res_id)
     utils.update_resource_arn(ctx.instance, res_arn)
 
