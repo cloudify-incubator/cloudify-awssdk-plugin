@@ -29,7 +29,9 @@ def configure(ctx, resource_config, **_):
     '''Configures an AWS RDS Parameter'''
     # Save the parameters
     if resource_config.get('ParameterName') and not utils.get_resource_id():
-        utils.update_resource_id(ctx.instance, resource_config['ParameterName'])
+        utils.update_resource_id(
+            ctx.instance,
+            resource_config['ParameterName'])
     ctx.instance.runtime_properties['resource_config'] = resource_config
 
 
