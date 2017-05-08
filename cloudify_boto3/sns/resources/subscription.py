@@ -17,8 +17,6 @@
     ~~~~~~~~
     AWS SNS Subscription interface
 """
-# Generic
-import re
 # Cloudify
 from cloudify.exceptions import NonRecoverableError
 from cloudify_boto3.common import decorators, utils
@@ -32,8 +30,6 @@ RESOURCE_TYPE = 'SNS Subscription'
 SUB_ARN = 'SubscriptionArn'
 TOPIC_TYPE = 'cloudify.nodes.aws.SNS.Topic'
 TOPIC_ARN = 'TopicArn'
-ARN_REGEX = '^arn\:aws\:'
-ARN_MATCHER = re.compile(ARN_REGEX)
 CONFIRM_AUTHENTICATED = 'ConfirmationWasAuthenticated'
 
 
@@ -126,7 +122,8 @@ def create(ctx, iface, resource_config, **_):
         raise NonRecoverableError(
             'Endpoint ARN or node_name was not provided.')
 
-    if not ARN_MATCHER.match(endpoint_name):
+    # If endpoint_name is not a valid arn get arn from relationship.
+    if not utils.validate_arn(endpoint_name):
         rel = \
             utils.find_rels_by_node_name(
                 ctx.instance,
