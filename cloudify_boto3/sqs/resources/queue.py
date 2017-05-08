@@ -17,6 +17,8 @@
     ~~~~~~~~
     AWS SQS Queue interface
 """
+# Generic
+import json
 # Cloudify
 from cloudify_boto3.common import decorators, utils
 from cloudify_boto3.sqs import SQSBase
@@ -27,6 +29,7 @@ RESOURCE_TYPE = 'SQS Queue'
 QUEUE_URL = 'QueueUrl'
 QUEUE_URLS = 'QueueUrls'
 QUEUE_ARN = 'QueueArn'
+POLICY = 'Policy'
 
 
 class SQSQueue(SQSBase):
@@ -101,6 +104,11 @@ def create(ctx, iface, resource_config, **_):
     # Create a copy of the resource config for clean manipulation.
     params = \
         dict() if not resource_config else resource_config.copy()
+
+    queue_attributes = params.get('Attributes', {})
+    queue_attributes_policy = queue_attributes.get('Policy')
+    if not isinstance(queue_attributes_policy, basestring):
+        queue_attributes[POLICY] = json.dumps(queue_attributes_policy)
 
     # Actually create the resource
     res_id, res_arn = iface.create(params)
