@@ -117,7 +117,8 @@ def delete(iface, resource_config, **_):
     params = \
         dict() if not resource_config else resource_config.copy()
     # Add the required QueueUrl parameter.
-    params.update({QUEUE_URL: iface.resource_id})
+    if QUEUE_URL not in params.keys():
+        params.update({QUEUE_URL: iface.resource_id})
 
     # Actually delete the resource
     iface.delete(params)
