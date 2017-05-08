@@ -12,11 +12,11 @@
 #    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
-'''
+"""
     S3.Bucket
     ~~~~~~~~~~~~~~
     AWS S3 Bucket interface
-'''
+"""
 # Cloudify
 from cloudify_boto3.common import decorators, utils
 from cloudify_boto3.s3 import S3Base
@@ -25,53 +25,53 @@ from botocore.exceptions import ClientError
 
 RESOURCE_TYPE = 'S3 Bucket'
 BUCKET = 'Bucket'
+NAME = 'Name'
+LOCATION = 'Location'
 
 
 class S3Bucket(S3Base):
-    '''
+    """
         AWS S3 Bucket interface
-    '''
+    """
     def __init__(self, ctx_node, resource_id=None, client=None, logger=None):
         S3Base.__init__(self, ctx_node, resource_id, client, logger)
         self.type_name = RESOURCE_TYPE
 
     @property
     def properties(self):
-        '''Gets the properties of an external resource'''
+        """Gets the properties of an external resource"""
         try:
             resources = self.client.list_buckets()
         except ClientError:
             pass
         else:
             for resource in resources:
-                if resource.get('Name') is self.resource_id:
+                if resource.get(NAME) is self.resource_id:
                     return resource
             return None
 
     @property
     def status(self):
-        '''Gets the status of an external resource'''
+        """Gets the status of an external resource"""
         props = self.properties
         if not props:
             return None
         return props['Status']
 
     def create(self, params):
-        '''
+        """
             Create a new AWS S3 Bucket.
-        '''
+        """
         self.logger.debug('Creating %s with parameters: %s'
                           % (self.type_name, params))
         res = self.client.create_bucket(**params)
         self.logger.debug('Response: %s' % res)
-        return res['Location']
+        return res
 
-    def delete(self, params=None):
-        '''
+    def delete(self, params):
+        """
             Deletes an existing AWS S3 Bucket.
-        '''
-        if BUCKET not in params.keys():
-            params.update({BUCKET: self.resource_id})
+        """
         self.logger.debug('Deleting %s with parameters: %s'
                           % (self.type_name, params))
         self.client.delete_bucket(**params)
@@ -79,25 +79,40 @@ class S3Bucket(S3Base):
 
 @decorators.aws_resource(resource_type=RESOURCE_TYPE)
 def prepare(ctx, resource_config, **_):
-    '''Prepares an AWS S3 Bucket'''
+    """Prepares an AWS S3 Bucket"""
     # Save the parameters
     ctx.instance.runtime_properties['resource_config'] = resource_config
 
 
 @decorators.aws_resource(S3Bucket, RESOURCE_TYPE)
 def create(ctx, iface, resource_config, **_):
-    '''Creates an AWS S3 Bucket'''
-    params = resource_config.copy()
+    """Creates an AWS S3 Bucket"""
+
+    # Create a copy of the resource config for clean manipulation.
+    params = \
+        dict() if not resource_config else resource_config.copy()
+
     bucket_name = params.get(BUCKET)
     utils.update_resource_id(ctx.instance, bucket_name)
+
     # Actually create the resource
-    bucket_location = iface.create(resource_config)
-    ctx.instance.runtime_properties['Location'] = \
-        bucket_location
+    bucket = iface.create(resource_config)
+    ctx.instance.runtime_properties[LOCATION] = \
+        bucket.get(LOCATION)
 
 
 @decorators.aws_resource(S3Bucket, RESOURCE_TYPE,
                          ignore_properties=True)
 def delete(iface, resource_config, **_):
-    '''Deletes an AWS S3 Bucket'''
-    iface.delete(resource_config)
+    """Deletes an AWS S3 Bucket"""
+
+    # Create a copy of the resource config for clean manipulation.
+    params = \
+        dict() if not resource_config else resource_config.copy()
+
+    # Add the required BUCKET parameter.
+    if BUCKET not in params.keys():
+        params.update({BUCKET: iface.resource_id})
+
+    # Actually delete the resource
+    iface.delete(params)
