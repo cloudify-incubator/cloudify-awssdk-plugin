@@ -12,11 +12,11 @@
 #    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
-'''
+"""
     Autoscaling.LaunchConfiguration
     ~~~~~~~~~~~~~~
     AWS Autoscaling Launch Configuration interface
-'''
+"""
 # Cloudify
 from cloudify_boto3.common import decorators, utils
 from cloudify_boto3.autoscaling import AutoscalingBase
@@ -38,16 +38,16 @@ SECGROUP_TYPE = 'cloudify.aws.nodes.SecurityGroup'
 
 
 class AutoscalingLaunchConfiguration(AutoscalingBase):
-    '''
+    """
         Autoscaling Autoscaling Launch Configuration interface
-    '''
+    """
     def __init__(self, ctx_node, resource_id=None, client=None, logger=None):
         AutoscalingBase.__init__(self, ctx_node, resource_id, client, logger)
         self.type_name = RESOURCE_TYPE
 
     @property
     def properties(self):
-        '''Gets the properties of an external resource'''
+        """Gets the properties of an external resource"""
         params = {LC_NAMES: [self.resource_id]}
         try:
             resources = \
@@ -59,16 +59,16 @@ class AutoscalingLaunchConfiguration(AutoscalingBase):
 
     @property
     def status(self):
-        '''Gets the status of an external resource'''
+        """Gets the status of an external resource"""
         props = self.properties
         if not props:
             return None
         return None
 
     def create(self, params):
-        '''
+        """
             Create a new AWS Autoscaling Autoscaling Launch Configuration.
-        '''
+        """
         if not self.resource_id:
             setattr(self, 'resource_id', params.get(LC_NAME))
         self.logger.debug('Creating %s with parameters: %s'
@@ -79,12 +79,10 @@ class AutoscalingLaunchConfiguration(AutoscalingBase):
         return launch_configuration.get(LC_ARN)
 
     def delete(self, params=None):
-        '''
+        """
             Deletes an existing AWS Autoscaling Autoscaling
             Launch Configuration.
-        '''
-        if LC_NAME not in params.keys():
-            params.update({LC_NAME: self.resource_id})
+        """
         self.logger.debug('Deleting %s with parameters: %s'
                           % (self.type_name, params))
         res = self.client.delete_launch_configuration(**params)
@@ -94,14 +92,14 @@ class AutoscalingLaunchConfiguration(AutoscalingBase):
 
 @decorators.aws_resource(resource_type=RESOURCE_TYPE)
 def prepare(ctx, resource_config, **_):
-    '''Prepares an AWS Autoscaling Autoscaling Launch Configuration'''
+    """Prepares an AWS Autoscaling Autoscaling Launch Configuration"""
     # Save the parameters
     ctx.instance.runtime_properties['resource_config'] = resource_config
 
 
 @decorators.aws_resource(AutoscalingLaunchConfiguration, RESOURCE_TYPE)
 def create(ctx, iface, resource_config, **_):
-    '''Creates an AWS Autoscaling Autoscaling Launch Configuration'''
+    """Creates an AWS Autoscaling Autoscaling Launch Configuration"""
     params = resource_config.copy()
 
     # Add Security Groups
@@ -143,5 +141,10 @@ def create(ctx, iface, resource_config, **_):
 @decorators.aws_resource(AutoscalingLaunchConfiguration, RESOURCE_TYPE,
                          ignore_properties=True)
 def delete(iface, resource_config, **_):
-    '''Deletes an AWS Autoscaling Autoscaling Launch Configuration'''
-    iface.delete(resource_config)
+    """Deletes an AWS Autoscaling Autoscaling Launch Configuration"""
+    # Create a copy of the resource config for clean manipulation.
+    params = \
+        dict() if not resource_config else resource_config.copy()
+    if LC_NAME not in params.keys():
+        params.update({LC_NAME: iface.resource_id})
+    iface.delete(params)

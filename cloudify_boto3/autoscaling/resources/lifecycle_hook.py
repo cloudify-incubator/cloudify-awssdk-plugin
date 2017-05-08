@@ -12,11 +12,11 @@
 #    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
-'''
+"""
     Autoscaling.LifecycleHook
     ~~~~~~~~~~~~~~
     AWS Autoscaling Lifecycle Hook interface
-'''
+"""
 # Cloudify
 from cloudify_boto3.common import decorators, utils
 from cloudify_boto3.autoscaling import AutoscalingBase
@@ -32,16 +32,16 @@ GROUP_TYPE = 'cloudify.nodes.aws.autoscaling.Group'
 
 
 class AutoscalingLifecycleHook(AutoscalingBase):
-    '''
+    """
         Autoscaling Lifecycle Hook interface
-    '''
+    """
     def __init__(self, ctx_node, resource_id=None, client=None, logger=None):
         AutoscalingBase.__init__(self, ctx_node, resource_id, client, logger)
         self.type_name = RESOURCE_TYPE
 
     @property
     def properties(self):
-        '''Gets the properties of an external resource'''
+        """Gets the properties of an external resource"""
         params = {HOOK_NAMES: [self.resource_id]}
         try:
             resources = \
@@ -53,16 +53,16 @@ class AutoscalingLifecycleHook(AutoscalingBase):
 
     @property
     def status(self):
-        '''Gets the status of an external resource'''
+        """Gets the status of an external resource"""
         props = self.properties
         if not props:
             return None
         return None
 
     def create(self, params):
-        '''
+        """
             Create a new AWS Autoscaling Lifecycle Hook.
-        '''
+        """
         if not self.resource_id:
             setattr(self, 'resource_id', params.get(HOOK_NAME))
         self.logger.debug('Creating %s with parameters: %s'
@@ -72,11 +72,9 @@ class AutoscalingLifecycleHook(AutoscalingBase):
         return res
 
     def delete(self, params=None):
-        '''
+        """
             Deletes an existing AWS Autoscaling Lifecycle Hook.
-        '''
-        if HOOK_NAME not in params.keys():
-            params.update({HOOK_NAME: self.resource_id})
+        """
         self.logger.debug('Deleting %s with parameters: %s'
                           % (self.type_name, params))
         res = self.client.delete_lifecycle_hook(**params)
@@ -86,14 +84,14 @@ class AutoscalingLifecycleHook(AutoscalingBase):
 
 @decorators.aws_resource(resource_type=RESOURCE_TYPE)
 def prepare(ctx, resource_config, **_):
-    '''Prepares an AWS Autoscaling Lifecycle Hook'''
+    """Prepares an AWS Autoscaling Lifecycle Hook"""
     # Save the parameters
     ctx.instance.runtime_properties['resource_config'] = resource_config
 
 
 @decorators.aws_resource(AutoscalingLifecycleHook, RESOURCE_TYPE)
 def create(ctx, iface, resource_config, **_):
-    '''Creates an AWS Autoscaling Lifecycle Hook'''
+    """Creates an AWS Autoscaling Lifecycle Hook"""
     params = resource_config.copy()
     utils.update_resource_id(
         ctx.instance, params.get(HOOK_NAME))
@@ -115,8 +113,11 @@ def create(ctx, iface, resource_config, **_):
 @decorators.aws_resource(AutoscalingLifecycleHook, RESOURCE_TYPE,
                          ignore_properties=True)
 def delete(ctx, iface, resource_config, **_):
-    '''Deletes an AWS Autoscaling Lifecycle Hook'''
-    params = resource_config.copy()
+    """Deletes an AWS Autoscaling Lifecycle Hook"""
+
+    # Create a copy of the resource config for clean manipulation.
+    params = \
+        dict() if not resource_config else resource_config.copy()
 
     # Ensure the $GROUP_NAME parameter is populated.
     autoscaling_group = params.get(GROUP_NAME)
@@ -125,4 +126,7 @@ def delete(ctx, iface, resource_config, **_):
             ctx.instance.runtime_properties[GROUP_NAME]
         params.update(
             {GROUP_NAME: autoscaling_group})
+
+    if HOOK_NAME not in params.keys():
+        params.update({HOOK_NAME: iface.resource_id})
     iface.delete(params)
