@@ -244,7 +244,9 @@ def delete(ctx, iface, resource_config, **_):
         dict() if not resource_config else resource_config.copy()
 
     lb = params.get(LB_NAME) or ctx.instance.runtime_properties.get(LB_NAME)
-    policy = params.get(POLICY_NAME) or ctx.instance.runtime_properties.get(POLICY_NAME)
+    policy = \
+        params.get(POLICY_NAME) or \
+        ctx.instance.runtime_properties.get(POLICY_NAME)
 
     lb_delete_params = {
         LB_NAME: lb,
