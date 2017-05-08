@@ -62,6 +62,12 @@ class SNSSubscription(SNSBase):
             return 'available'
         return None
 
+    def create(self, params):
+        """
+            This only exists to implement all abstract methods.
+        """
+        return self.confirm(params)
+
     def confirm(self, params):
         """
             Confirms a AWS SNS Subscription request was successful.
@@ -98,8 +104,9 @@ def create(ctx, iface, resource_config, **_):
     params = \
         dict() if not resource_config else resource_config.copy()
 
+    topic_arn = params.get(TOPIC_ARN)
     # Add the required TopicArn parameter.
-    if TOPIC_ARN not in params:
+    if not topic_arn:
         rel = \
             utils.find_rel_by_node_type(
                 ctx.instance,
@@ -107,14 +114,15 @@ def create(ctx, iface, resource_config, **_):
         topic_arn = \
             rel.target.instance.runtime_properties.get(
                 EXTERNAL_RESOURCE_ARN)
-        topic_iface = SNSTopic(
-            ctx_node=rel.target.node,
-            resource_id=topic_arn,
-            client=iface.client,
-            logger=ctx.logger)
         ctx.instance.runtime_properties[TOPIC_ARN] = \
             topic_arn
         params[TOPIC_ARN] = topic_arn
+
+    topic_iface = SNSTopic(
+        ctx_node=ctx.node,
+        resource_id=topic_arn,
+        client=iface.client,
+        logger=ctx.logger)
 
     # Subscribe Endpoint is the arn of an endpoint
     endpoint_name = params.get('Endpoint')

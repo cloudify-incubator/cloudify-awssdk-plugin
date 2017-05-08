@@ -78,7 +78,7 @@ class SNSTopic(SNSBase):
         self.logger.debug('Response: %s' % res)
         return res[SUB_ARN]
 
-    def delete(self, params):
+    def delete(self, params=None):
         """
             Deletes an existing AWS SNS Topic.
         """
@@ -97,6 +97,7 @@ def prepare(ctx, resource_config, **_):
 @decorators.aws_resource(SNSTopic, RESOURCE_TYPE)
 def create(ctx, iface, resource_config, **_):
     """Creates an AWS SNS Topic"""
+
     # Create a copy of the resource config for clean manipulation.
     params = \
         dict() if not resource_config else resource_config.copy()
