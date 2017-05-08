@@ -12,13 +12,11 @@
 #    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
-'''
+"""
     Cloudwatch.target
     ~~~~~~~~~~~~~~
     AWS Cloudwatch Target interface
-'''
-# Generic
-import re
+"""
 # Cloudify
 from cloudify_boto3.common import decorators, utils
 from cloudify_boto3.cloudwatch import AWSCloudwatchBase
@@ -32,14 +30,12 @@ ID = 'Id'
 ARN = 'Arn'
 RULE = 'Rule'
 RULE_TYPE = 'cloudify.nodes.aws.cloudwatch.Rule'
-SIMPLE_ARN_REGEX = '^arn\:aws\:'
-ARN_MATCHER = re.compile(SIMPLE_ARN_REGEX)
 
 
 class CloudwatchTarget(AWSCloudwatchBase):
-    '''
+    """
         AWS Cloudwatch Target interface
-    '''
+    """
     def __init__(self, ctx_node, resource_id=None, client=None, logger=None):
         AWSCloudwatchBase.__init__(
             self,
@@ -51,18 +47,18 @@ class CloudwatchTarget(AWSCloudwatchBase):
 
     @property
     def properties(self):
-        '''Gets the properties of an external resource'''
-        pass
+        """Gets the properties of an external resource"""
+        return None
 
     @property
     def status(self):
-        '''Gets the status of an external resource'''
-        pass
+        """Gets the status of an external resource"""
+        return None
 
     def create(self, params):
-        '''
+        """
             Create a new AWS Cloudwatch Target.
-        '''
+        """
         self.logger.debug('Creating %s with parameters: %s'
                           % (self.type_name, params))
         res = self.client.put_targets(**params)
@@ -70,9 +66,9 @@ class CloudwatchTarget(AWSCloudwatchBase):
         return res
 
     def delete(self, params=None):
-        '''
+        """
             Deletes an existing AWS Cloudwatch Target.
-        '''
+        """
         self.logger.debug('Deleting %s with parameters: %s'
                           % (self.type_name, params))
         res = self.client.remove_targets(**params)
@@ -82,25 +78,29 @@ class CloudwatchTarget(AWSCloudwatchBase):
 
 @decorators.aws_resource(resource_type=RESOURCE_TYPE)
 def prepare(ctx, resource_config, **_):
-    '''Prepares an AWS Cloudwatch Alarm'''
+    """Prepares an AWS Cloudwatch Alarm"""
     # Save the parameters
     ctx.instance.runtime_properties['resource_config'] = resource_config
 
 
 @decorators.aws_resource(CloudwatchTarget, RESOURCE_TYPE)
 def create(ctx, iface, resource_config, **_):
-    '''Creates an AWS Cloudwatch Target'''
-    params = resource_config.copy()
+    """Creates an AWS Cloudwatch Target"""
+
+    # Create a copy of the resource config for clean manipulation.
+    params = \
+        dict() if not resource_config else resource_config.copy()
+
     rule = params.get(RULE)
     if not rule:
         rule = utils.find_resource_id_by_type(
             ctx.instance, RULE_TYPE)
         params[RULE] = rule
 
-    targets = resource_config.get(TARGETS, [])
+    targets = params.get(TARGETS, [])
     for target in targets:
-        target_arn = target.get(ARN)
-        if not ARN_MATCHER.match(target_arn):
+        target_arn = target.get(ARN, '')
+        if not utils.validate_arn(target_arn):
             targs = \
                 utils.find_rels_by_node_name(
                     ctx.instance,
@@ -119,15 +119,19 @@ def create(ctx, iface, resource_config, **_):
 
 @decorators.aws_resource(CloudwatchTarget, RESOURCE_TYPE)
 def delete(ctx, iface, resource_config, **_):
-    '''Deletes an AWS Cloudwatch Target'''
-    rule = resource_config.get(RULE)
+    """Deletes an AWS Cloudwatch Target"""
+
+    # Create a copy of the resource config for clean manipulation.
+    params = \
+        dict() if not resource_config else resource_config.copy()
+
+    rule = params.get(RULE)
     if not rule:
         rule = utils.find_resource_id_by_type(
             ctx.instance, RULE_TYPE)
+        params[RULE] = rule
 
-    # Build params dictionary.
-    params = {}
-    params[RULE] = rule
     params[IDS] = \
-        [target.get(ID) for target in resource_config.get(TARGETS)]
+        [target.get(ID) for target in params.pop(TARGETS)]
+
     iface.delete(params)
