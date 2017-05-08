@@ -70,7 +70,7 @@ class S3BucketPolicy(S3Base):
         self.logger.debug('Response: %s' % res)
         return res
 
-    def delete(self, params):
+    def delete(self, params=None):
         """
             Deletes an existing AWS S3 Bucket Policy.
         """
