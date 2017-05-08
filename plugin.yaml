@@ -1873,7 +1873,6 @@ node_types:
       cloudify.interfaces.lifecycle:
         create:
           implementation: awssdk.cloudify_boto3.sqs.resources.queue.prepare
-
           inputs:
             aws_resource_id:
               description: >

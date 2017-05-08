@@ -12,11 +12,11 @@
 #    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
-'''
+"""
     SQS.queue
     ~~~~~~~~
     AWS SQS Queue interface
-'''
+"""
 # Cloudify
 from cloudify_boto3.common import decorators, utils
 from cloudify_boto3.sqs import SQSBase
@@ -24,62 +24,64 @@ from cloudify_boto3.sqs import SQSBase
 from botocore.exceptions import ClientError
 
 RESOURCE_TYPE = 'SQS Queue'
+QUEUE_URL = 'QueueUrl'
+QUEUE_URLS = 'QueueUrls'
+QUEUE_ARN = 'QueueArn'
 
 
 class SQSQueue(SQSBase):
-    '''
+    """
         AWS SQS Queue interface
-    '''
+    """
     def __init__(self, ctx_node, resource_id=None, client=None, logger=None):
         SQSBase.__init__(self, ctx_node, resource_id, client, logger)
         self.type_name = RESOURCE_TYPE
 
     @property
     def properties(self):
-        '''Gets the properties of an external resource'''
+        """Gets the properties of an external resource"""
         try:
             resource = \
-                self.client.list_queues(QueueNamePrefix=self.resource_id)
+                self.client.list_queues(
+                    QueueNamePrefix=self.resource_id)
         except ClientError:
             pass
         else:
-            return resource.get('QueueUrls', [None])[0]
+            return resource.get(QUEUE_URLS, [None])[0]
+        return None
 
     @property
     def status(self):
-        '''Gets the status of an external resource'''
-        if self.properties:
-            return 'available'
+        """Gets the status of an external resource"""
         return None
 
     def create(self, params):
-        '''
+        """
             Create a new AWS SQS Queue.
-        '''
+        """
         self.logger.debug('Creating %s with parameters: %s'
                           % (self.type_name, params))
         res = self.client.create_queue(**params)
         self.logger.debug('Response: %s' % res)
 
+        # Attempt to retrieve the ARN.
         try:
             resource_attributes = \
                 self.client.get_queue_attributes(
-                    QueueUrl=res['QueueUrl'],
-                    AttributeNames=['QueueArn'])
+                    QueueUrl=res[QUEUE_URL],
+                    AttributeNames=[QUEUE_ARN])
         except ClientError:
             pass
         else:
             res_arn = \
-                resource_attributes.get('Attributes', {}).get('QueueArn')
-
-        return res['QueueUrl'], res_arn
+                resource_attributes.get('Attributes', {}).get(QUEUE_ARN)
+            return res[QUEUE_URL], res_arn
+        return res[QUEUE_URL], None
 
     def delete(self, params=None):
-        '''
+        """
             Deletes an existing AWS SQS Queue.
-        '''
-        params = params or dict()
-        params.update(dict(QueueUrl=self.resource_id))
+        """
         self.logger.debug('Deleting %s with parameters: %s'
                           % (self.type_name, params))
         self.client.delete_queue(**params)
@@ -87,16 +89,19 @@ class SQSQueue(SQSBase):
 
 @decorators.aws_resource(resource_type=RESOURCE_TYPE)
 def prepare(ctx, resource_config, **_):
-    '''Prepares an AWS SQS Queue'''
+    """Prepares an AWS SQS Queue"""
     # Save the parameters
     ctx.instance.runtime_properties['resource_config'] = resource_config
 
 
 @decorators.aws_resource(SQSQueue, RESOURCE_TYPE)
 def create(ctx, iface, resource_config, **_):
-    '''Creates an AWS SQS Queue'''
-    # Build API params
-    params = resource_config
+    """Creates an AWS SQS Queue"""
+
+    # Create a copy of the resource config for clean manipulation.
+    params = \
+        dict() if not resource_config else resource_config.copy()
+
     # Actually create the resource
     res_id, res_arn = iface.create(params)
     utils.update_resource_id(ctx.instance, res_id)
@@ -106,5 +111,13 @@ def create(ctx, iface, resource_config, **_):
 @decorators.aws_resource(SQSQueue, RESOURCE_TYPE,
                          ignore_properties=True)
 def delete(iface, resource_config, **_):
-    '''Deletes an AWS SQS Queue'''
-    iface.delete(resource_config)
+    """Deletes an AWS SQS Queue"""
+
+    # Create a copy of the resource config for clean manipulation.
+    params = \
+        dict() if not resource_config else resource_config.copy()
+    # Add the required QueueUrl parameter.
+    params.update({QUEUE_URL: iface.resource_id})
+
+    # Actually delete the resource
+    iface.delete(params)
