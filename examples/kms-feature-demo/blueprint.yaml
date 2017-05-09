@@ -1,0 +1,63 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+- http://www.getcloudify.org/spec/cloudify/3.4.2/types.yaml
+- plugin.yaml
+
+inputs:
+
+  aws_access_key_id:
+    type: string
+
+  aws_secret_access_key:
+    type: string
+
+  aws_region_name:
+    type: string
+    default: us-east-1
+
+  ami_arn:
+    type: string
+
+dsl_definitions:
+  client_config: &client_config
+    aws_access_key_id: { get_input: aws_access_key_id }
+    aws_secret_access_key: { get_input: aws_secret_access_key }
+    region_name: { get_input: aws_region_name }
+
+node_templates:
+
+  grant:
+    type: cloudify.nodes.aws.kms.Grant
+    properties:
+      resource_config:
+        kwargs:
+          Name: TestGrant
+          GranteePrincipal: { get_input: ami_arn }
+          Operations: [Encrypt, Decrypt]
+      client_config: *client_config
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: cmk
+
+  alias:
+    type: cloudify.nodes.aws.kms.Alias
+    properties:
+      resource_config:
+        kwargs:
+          AliasName: alias/test_key
+      client_config: *client_config
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: cmk
+
+  cmk:
+    type: cloudify.nodes.aws.kms.CustomerMasterKey
+    properties:
+      resource_config:
+        kwargs:
+          Description: An example CMK.
+          Tags:
+          - TagKey: Cloudify
+            TagValue: Example
+      client_config: *client_config
