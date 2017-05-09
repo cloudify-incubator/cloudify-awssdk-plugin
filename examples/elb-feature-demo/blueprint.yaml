@@ -173,6 +173,7 @@ node_templates:
     - type: cloudify.aws.relationships.security_group_contained_in_vpc
       target: vpc
 
+
   subnet1:
     type: cloudify.aws.nodes.Subnet
     properties:

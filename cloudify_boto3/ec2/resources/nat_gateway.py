@@ -12,18 +12,18 @@
 #    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
-'''
+"""
     EC2.NATGateway
     ~~~~~~~~~~~~~~
     AWS EC2 NAT Gateway interface
-'''
+"""
 # Cloudify
 from cloudify_boto3.common import decorators, utils
 from cloudify_boto3.ec2 import EC2Base
 # Boto
 from botocore.exceptions import ClientError
 
-RESOURCE_TYPE = 'EC2 NAT Gateway Bucket'
+RESOURCE_TYPE = 'EC2 NAT Gateway'
 NATGATEWAYS = 'NatGateways'
 NATGATEWAY_ID = 'NatGatewayId'
 NATGATEWAY_IDS = 'NatGatewayIds'
@@ -35,16 +35,16 @@ ELASTICIP_TYPE = 'cloudify.aws.nodes.ElasticIP'
 
 
 class EC2NatGateway(EC2Base):
-    '''
+    """
         EC2 NAT Gateway interface
-    '''
+    """
     def __init__(self, ctx_node, resource_id=None, client=None, logger=None):
         EC2Base.__init__(self, ctx_node, resource_id, client, logger)
         self.type_name = RESOURCE_TYPE
 
     @property
     def properties(self):
-        '''Gets the properties of an external resource'''
+        """Gets the properties of an external resource"""
         params = {NATGATEWAY_IDS: [self.resource_id]}
         try:
             resources = \
@@ -56,16 +56,16 @@ class EC2NatGateway(EC2Base):
 
     @property
     def status(self):
-        '''Gets the status of an external resource'''
+        """Gets the status of an external resource"""
         props = self.properties
         if not props:
             return None
         return props['State']
 
     def create(self, params):
-        '''
+        """
             Create a new AWS EC2 NAT Gateway.
-        '''
+        """
         self.logger.debug('Creating %s with parameters: %s'
                           % (self.type_name, params))
         res = self.client.create_nat_gateway(**params)
@@ -73,11 +73,9 @@ class EC2NatGateway(EC2Base):
         return res['NatGateway']
 
     def delete(self, params=None):
-        '''
+        """
             Deletes an existing AWS EC2 NAT Gateway.
-        '''
-        if NATGATEWAY_ID not in params.keys():
-            params.update({NATGATEWAY_ID: self.resource_id})
+        """
         self.logger.debug('Deleting %s with parameters: %s'
                           % (self.type_name, params))
         res = self.client.delete_nat_gateway(**params)
@@ -87,7 +85,7 @@ class EC2NatGateway(EC2Base):
 
 @decorators.aws_resource(resource_type=RESOURCE_TYPE)
 def prepare(ctx, resource_config, **_):
-    '''Prepares an AWS EC2 NAT Gateway'''
+    """Prepares an AWS EC2 NAT Gateway"""
     # Save the parameters
     ctx.instance.runtime_properties['resource_config'] = resource_config
 
@@ -97,8 +95,11 @@ def prepare(ctx, resource_config, **_):
     status_good=['available'],
     status_pending=['pending'])
 def create(ctx, iface, resource_config, **_):
-    '''Creates an AWS EC2 NAT Gateway'''
-    params = resource_config.copy()
+    """Creates an AWS EC2 NAT Gateway"""
+
+    # Create a copy of the resource config for clean manipulation.
+    params = \
+        dict() if not resource_config else resource_config.copy()
 
     subnet_id = params.get(SUBNET_ID)
     if not subnet_id:
@@ -131,5 +132,15 @@ def create(ctx, iface, resource_config, **_):
     status_deleted=['deleted'],
     status_pending=['deleting'])
 def delete(iface, resource_config, **_):
-    '''Deletes an AWS EC2 NAT Gateway'''
-    iface.delete(resource_config)
+    """Deletes an AWS EC2 NAT Gateway"""
+
+    # Create a copy of the resource config for clean manipulation.
+    params = \
+        dict() if not resource_config else resource_config.copy()
+    nat_gateway_id = params.get(NATGATEWAY_ID)
+
+    if not nat_gateway_id:
+        nat_gateway_id = iface.resource_id
+
+    params.update({NATGATEWAY_ID: nat_gateway_id})
+    iface.delete(params)

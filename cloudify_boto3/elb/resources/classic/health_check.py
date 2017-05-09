@@ -12,11 +12,11 @@
 #    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
-'''
+"""
     ELB.classic.health_check
     ~~~~~~~~~~~~
     AWS ELB classic health check interface
-'''
+"""
 # Cloudify
 from cloudify_boto3.common import decorators, utils
 from cloudify_boto3.elb import ELBBase
@@ -29,9 +29,9 @@ LB_TYPE = 'cloudify.nodes.aws.elb.Classic.LoadBalancer'
 
 
 class ELBClassicHealthCheck(ELBBase):
-    '''
+    """
         AWS ELB classic health check interface
-    '''
+    """
     def __init__(self, ctx_node, resource_id=None, client=None, logger=None):
         ELBBase.__init__(
             self,
@@ -43,45 +43,50 @@ class ELBClassicHealthCheck(ELBBase):
 
     @property
     def properties(self):
-        '''Gets the properties of an external resource'''
+        """Gets the properties of an external resource"""
         return None
 
     @property
     def status(self):
-        '''Gets the status of an external resource'''
+        """Gets the status of an external resource"""
         props = self.properties
         if not props:
             return None
         return props['State']['Code']
 
     def create(self, params):
-        '''
+        """
             Configure a new AWS ELB classic health check.
         .. note:
             See http://bit.ly/2p741nK for config details.
-        '''
+        """
         self.logger.debug('Configuring %s with parameters: %s'
                           % (self.type_name, params))
         res = self.client.configure_health_check(**params)
         self.logger.debug('Response: %s' % res)
         return res
 
+    def delete(self, params=None):
+        return None
+
 
 @decorators.aws_resource(resource_type=RESOURCE_TYPE)
 def prepare(ctx, resource_config, **_):
-    '''Prepares an ELB classic health check'''
+    """Prepares an ELB classic health check"""
     # Save the parameters
     ctx.instance.runtime_properties['resource_config'] = resource_config
 
 
 @decorators.aws_resource(ELBClassicHealthCheck, RESOURCE_TYPE)
 def create(ctx, iface, resource_config, **_):
-    '''Creates an AWS ELB classic health check'''
-    # Build API params
-    params = \
-        ctx.instance.runtime_properties['resource_config'] or resource_config
+    """Creates an AWS ELB classic health check"""
 
-    if LB_NAME not in params:
+    # Create a copy of the resource config for clean manipulation.
+    params = \
+        dict() if not resource_config else resource_config.copy()
+    lb_name = params.get(LB_NAME)
+
+    if not lb_name:
         targs = \
             utils.find_rels_by_node_type(
                 ctx.instance,
@@ -89,8 +94,9 @@ def create(ctx, iface, resource_config, **_):
         lb_name = \
             targs[0].target.instance.runtime_properties[
                 EXTERNAL_RESOURCE_ID]
-        ctx.instance.runtime_properties[LB_NAME] = lb_name
         params.update({LB_NAME: lb_name})
+
+    ctx.instance.runtime_properties[LB_NAME] = lb_name
 
     # Actually create the resource
     iface.create(params)

@@ -17,6 +17,9 @@
     ~~~~~~~~~~~~
     AWS helper utilities
 '''
+# Generic
+import re
+# Cloudify
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError
 from cloudify_boto3.common import constants
@@ -273,3 +276,8 @@ def find_resource_id_by_type(node_instance, node_type):
                 constants.EXTERNAL_RESOURCE_ID)
         return resource_id
     return None
+
+
+def validate_arn(arn_candidate, arn_regex=constants.ARN_REGEX):
+    arn_matcher = re.compile(arn_regex)
+    return arn_matcher.match(arn_candidate)

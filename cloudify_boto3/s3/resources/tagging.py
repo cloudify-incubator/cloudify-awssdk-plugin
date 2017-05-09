@@ -12,11 +12,11 @@
 #    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
-'''
+"""
     S3.Bucket.Tagging
     ~~~~~~~~~~~~~~
     AWS S3 Bucket Tagging interface
-'''
+"""
 # Cloudify
 from cloudify_boto3.common import decorators, utils
 from cloudify_boto3.s3 import S3Base
@@ -32,16 +32,16 @@ TAGSET = 'TagSet'
 
 
 class S3BucketTagging(S3Base):
-    '''
+    """
         AWS S3 Bucket Tagging interface
-    '''
+    """
     def __init__(self, ctx_node, resource_id=None, client=None, logger=None):
         S3Base.__init__(self, ctx_node, resource_id, client, logger)
         self.type_name = RESOURCE_TYPE
 
     @property
     def properties(self):
-        '''Gets the properties of an external resource'''
+        """Gets the properties of an external resource"""
         try:
             resource = \
                 self.client.get_bucket_tagging(
@@ -53,13 +53,13 @@ class S3BucketTagging(S3Base):
 
     @property
     def status(self):
-        '''Gets the status of an external resource'''
-        pass
+        """Gets the status of an external resource"""
+        return None
 
     def create(self, params):
-        '''
+        """
             Create a new AWS Bucket Tagging.
-        '''
+        """
         self.logger.debug('Creating %s with parameters: %s'
                           % (self.type_name, params))
         res = self.client.put_bucket_tagging(**params)
@@ -67,11 +67,9 @@ class S3BucketTagging(S3Base):
         return res
 
     def delete(self, params=None):
-        '''
+        """
             Deletes an existing AWS Bucket Tagging.
-        '''
-        if BUCKET not in params.keys():
-            params.update({BUCKET: self.resource_id})
+        """
         self.logger.debug('Deleting %s with parameters: %s'
                           % (self.type_name, params))
         self.client.delete_bucket_tagging(**params)
@@ -79,32 +77,34 @@ class S3BucketTagging(S3Base):
 
 @decorators.aws_resource(resource_type=RESOURCE_TYPE)
 def prepare(ctx, resource_config, **_):
-    '''Prepares an AWS Bucket Bucket Tagging'''
+    """Prepares an AWS Bucket Bucket Tagging"""
     # Save the parameters
     ctx.instance.runtime_properties['resource_config'] = resource_config
 
 
 @decorators.aws_resource(S3BucketTagging, RESOURCE_TYPE)
 def create(ctx, iface, resource_config, **_):
-    '''Creates an AWS S3 Bucket Bucket Tagging'''
+    """Creates an AWS S3 Bucket Bucket Tagging"""
 
-    params = resource_config.copy()
+    # Create a copy of the resource config for clean manipulation.
+    params = \
+        dict() if not resource_config else resource_config.copy()
+
+    # Get the bucket name from either params or a relationship.
     bucket_name = params.get(BUCKET)
-
     if not bucket_name:
         targ = utils.find_rel_by_node_type(
             ctx.instance,
             BUCKET_TYPE
         )
-        target_instance = targ.target.instance
         bucket_name = \
-            target_instance.runtime_properties.get(
+            targ.target.instance.runtime_properties.get(
                 EXTERNAL_RESOURCE_ID
             )
         params[BUCKET] = bucket_name
-
     ctx.instance.runtime_properties[BUCKET] = bucket_name
     utils.update_resource_id(ctx.instance, bucket_name)
+
     # Actually create the resource
     iface.create(params)
 
@@ -112,5 +112,15 @@ def create(ctx, iface, resource_config, **_):
 @decorators.aws_resource(S3BucketTagging, RESOURCE_TYPE,
                          ignore_properties=True)
 def delete(iface, resource_config, **_):
-    '''Deletes an AWS S3 Bucket Bucket Tagging'''
-    iface.delete(resource_config)
+    """Deletes an AWS S3 Bucket Bucket Tagging"""
+
+    # Create a copy of the resource config for clean manipulation.
+    params = \
+        dict() if not resource_config else resource_config.copy()
+
+    # Add the required BUCKET parameter.
+    if BUCKET not in params.keys():
+        params.update({BUCKET: iface.resource_id})
+
+    # Actually delete the resource
+    iface.delete(params)

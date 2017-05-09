@@ -12,11 +12,11 @@
 #    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
-'''
+"""
     ELB.classic.load_balancer
     ~~~~~~~~~~~~
     AWS ELB load balancer interface
-'''
+"""
 # Cloudify
 # from cloudify.exceptions import NonRecoverableError
 from cloudify_boto3.common import decorators, utils
@@ -36,9 +36,9 @@ SECGROUPS = 'SecurityGroups'
 
 
 class ELBClassicLoadBalancer(ELBBase):
-    '''
+    """
         AWS ELB classic load balancer interface
-    '''
+    """
     def __init__(self, ctx_node, resource_id=None, client=None, logger=None):
         ELBBase.__init__(
             self,
@@ -50,7 +50,7 @@ class ELBClassicLoadBalancer(ELBBase):
 
     @property
     def properties(self):
-        '''Gets the properties of an external resource'''
+        """Gets the properties of an external resource"""
         try:
             resources = self.client.describe_load_balancers(
                 LoadBalancerNames=[self.resource_id])
@@ -62,18 +62,18 @@ class ELBClassicLoadBalancer(ELBBase):
 
     @property
     def status(self):
-        '''Gets the status of an external resource'''
+        """Gets the status of an external resource"""
         props = self.properties
         if not props:
             return None
         return props['State']['Code']
 
     def create(self, params):
-        '''
+        """
             Create a new AWS ELB classic load balancer.
         .. note:
             See http://bit.ly/2qtaai1 for config details.
-        '''
+        """
         self.logger.debug('Creating %s with parameters: %s'
                           % (self.type_name, params))
         res = self.client.create_load_balancer(**params)
@@ -81,23 +81,21 @@ class ELBClassicLoadBalancer(ELBBase):
         return res['DNSName']
 
     def delete(self, params=None):
-        '''
+        """
             Deletes an existing ELB classic load balancer.
         .. note:
             See http://bit.ly/2qsY7kS for config details.
-        '''
-        if LB_ARN not in params.keys():
-            params.update({LB_NAME: self.resource_id})
+        """
         self.logger.debug('Deleting %s with parameters: %s'
                           % (self.type_name, params))
         self.client.delete_load_balancer(**params)
 
     def modify_attributes(self, params):
-        '''
+        """
             Modify a AWS ELB classic load balancer attributes.
         .. note:
             See http://bit.ly/2pwMHtb for config details.
-        '''
+        """
         self.logger.debug('Modifying %s with parameters: %s'
                           % (self.type_name, params))
         res = self.client.modify_load_balancer_attributes(**params)
@@ -105,26 +103,26 @@ class ELBClassicLoadBalancer(ELBBase):
         return res
 
     def register_instances(self, params):
-        '''
+        """
             Register a AWS ELB classic load balancer attributes.
         .. note:
             See http://bit.ly/2pIXB10 for config details.
-        '''
+        """
         self.logger.debug('Registering instances with parameters: %s'
-                          % (params))
+                          % params)
         res = \
             self.client.register_instances_with_load_balancer(**params)
         self.logger.debug('Response: %s' % res)
         return res
 
     def deregister_instances(self, params):
-        '''
+        """
             Deregister a AWS ELB classic load balancer attributes.
         .. note:
             See http://bit.ly/2pIXB10 for config details.
-        '''
+        """
         self.logger.debug('Registering instances with parameters: %s'
-                          % (params))
+                          % params)
         res = \
             self.client.deregister_instances_from_load_balancer(**params)
         self.logger.debug('Response: %s' % res)
@@ -133,18 +131,18 @@ class ELBClassicLoadBalancer(ELBBase):
 
 @decorators.aws_resource(resource_type=RESOURCE_TYPE)
 def prepare(ctx, resource_config, **_):
-    '''Prepares an ELB classic load balancer'''
+    """Prepares an ELB classic load balancer"""
     # Save the parameters
     ctx.instance.runtime_properties['resource_config'] = resource_config
 
 
 @decorators.aws_resource(ELBClassicLoadBalancer, RESOURCE_TYPE)
 def create(ctx, iface, resource_config, **_):
-    '''Creates an AWS ELB classic load balancer'''
-    # Build API params
+    """Creates an AWS ELB classic load balancer"""
+
+    # Create a copy of the resource config for clean manipulation.
     params = \
-        ctx.instance.runtime_properties['resource_config'] \
-        or resource_config
+        dict() if not resource_config else resource_config.copy()
 
     # Add Subnets
     subnets_list = params.get(SUBNETS, [])
@@ -162,13 +160,12 @@ def create(ctx, iface, resource_config, **_):
             SECGROUP_TYPE,
             secgroups_list)
 
-    if LB_NAME in params.keys():
-        lb = params.get(LB_NAME)
-        utils.update_resource_id(ctx.instance, lb)
-    elif iface.resource_id and LB_NAME not in params.keys():
+    lb = params.get(LB_NAME)
+    if iface.resource_id and not lb:
         lb = iface.resource_id
-        utils.update_resource_id(ctx.instance, lb)
-        params.update(dict(LoadBalancerName=iface.resource_id))
+        params.update(({LB_NAME: lb}))
+
+    utils.update_resource_id(ctx.instance, lb)
     ctx.instance.runtime_properties[LB_NAME] = lb
 
     # Actually create the resource
@@ -180,14 +177,19 @@ def create(ctx, iface, resource_config, **_):
                          RESOURCE_TYPE,
                          ignore_properties=True)
 def start(ctx, iface, resource_config, **_):
-    '''modify an AWS ELB load balancer attributes'''
+    """modify an AWS ELB load balancer attributes"""
 
-    lb = ctx.instance.runtime_properties.get(LB_NAME)
-    if LB_NAME not in resource_config.keys():
-        resource_config.update(dict(LoadBalancerName=lb))
+    # Create a copy of the resource config for clean manipulation.
+    params = \
+        dict() if not resource_config else resource_config.copy()
+
+    lb = params.get(LB_NAME)
+    if not lb:
+        lb = ctx.instance.runtime_properties.get(LB_NAME)
+        params.update(({LB_NAME: lb}))
 
     # Actually modify the resource
-    attributes = iface.modify_attributes(resource_config)
+    attributes = iface.modify_attributes(params)
     ctx.instance.runtime_properties['LoadBalancerAttributes'] = \
         attributes
 
@@ -196,13 +198,22 @@ def start(ctx, iface, resource_config, **_):
                          RESOURCE_TYPE,
                          ignore_properties=True)
 def delete(iface, resource_config, **_):
-    '''Deletes an AWS ELB classic load balancer'''
-    iface.delete(resource_config)
+    """Deletes an AWS ELB classic load balancer"""
+
+    # Create a copy of the resource config for clean manipulation.
+    params = \
+        dict() if not resource_config else resource_config.copy()
+
+    lb_arn = params.get(LB_ARN)
+    if not lb_arn:
+        params.update({LB_NAME: iface.resource_id})
+
+    iface.delete(params)
 
 
 @decorators.aws_relationship(None, RESOURCE_TYPE)
 def assoc(ctx,  **_):
-    '''associate instance with ELB classic LB'''
+    """associate instance with ELB classic LB"""
     instance_id = \
         ctx.source.instance.runtime_properties.get(
             EXTERNAL_RESOURCE_ID)
@@ -222,7 +233,7 @@ def assoc(ctx,  **_):
 
 @decorators.aws_relationship(None, RESOURCE_TYPE)
 def disassoc(ctx,  **_):
-    '''disassociate instance with ELB classic LB'''
+    """disassociate instance with ELB classic LB"""
     instance_id = \
         ctx.source.instance.runtime_properties.get(
             EXTERNAL_RESOURCE_ID)

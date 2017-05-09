@@ -74,7 +74,7 @@ def delete(ctx, resource_config, resource_type, **_):
 
 @decorators.aws_relationship(resource_type=RESOURCE_TYPE)
 def prepare_assoc(ctx, **_):
-    '''Prepares to associate an Route53 Resource Record Set to something else'''
+    '''Prepares to associate an Route53 Resource Record Set to something'''
     if utils.is_node_type(ctx.target.node,
                           'cloudify.nodes.aws.route53.HostedZone'):
         zone_id = utils.get_resource_id(

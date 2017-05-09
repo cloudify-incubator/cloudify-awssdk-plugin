@@ -12,11 +12,11 @@
 #    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
-'''
+"""
     EC2.Image
     ~~~~~~~~~~~~~~
     AWS EC2 Image interface
-'''
+"""
 # Cloudify
 from cloudify_boto3.common import decorators, utils
 from cloudify_boto3.ec2 import EC2Base
@@ -34,9 +34,9 @@ FILTERS = 'Filters'
 
 
 class EC2Image(EC2Base):
-    '''
+    """
         EC2 Image interface
-    '''
+    """
     def __init__(self, ctx_node, resource_id=None, client=None, logger=None):
         EC2Base.__init__(self, ctx_node, resource_id, client, logger)
         self.type_name = RESOURCE_TYPE
@@ -44,7 +44,7 @@ class EC2Image(EC2Base):
 
     @property
     def properties(self):
-        '''Gets the properties of an external resource'''
+        """Gets the properties of an external resource"""
         params = self.describe_image_filters
         try:
             resources = \
@@ -56,21 +56,24 @@ class EC2Image(EC2Base):
 
     @property
     def status(self):
-        '''Gets the status of an external resource'''
+        """Gets the status of an external resource"""
         props = self.properties
         if not props:
             return None
         return props['State']
 
     def create(self, params):
-        '''
+        """
             Create a new AWS EC2 Image.
-        '''
+        """
         self.logger.debug('Creating %s with parameters: %s'
                           % (self.type_name, params))
         res = self.client.create_image(**params)
         self.logger.debug('Response: %s' % res)
         return res
+
+    def delete(self, params=None):
+        return
 
 
 def prepare_describe_image_filter(params, iface):
@@ -86,7 +89,7 @@ def prepare_describe_image_filter(params, iface):
 
 @decorators.aws_resource(EC2Image, resource_type=RESOURCE_TYPE)
 def prepare(ctx, iface, resource_config, **_):
-    '''Prepares an AWS EC2 Image'''
+    """Prepares an AWS EC2 Image"""
     # Save the parameters
     ctx.instance.runtime_properties['resource_config'] = resource_config
     iface = \

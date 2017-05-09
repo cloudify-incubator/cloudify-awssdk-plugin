@@ -12,11 +12,11 @@
 #    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
-'''
+"""
     SQS.queue
     ~~~~~~~~
     AWS SNS Topic interface
-'''
+"""
 # Cloudify
 from cloudify_boto3.common import decorators, utils
 from cloudify_boto3.sns import SNSBase
@@ -25,19 +25,20 @@ from botocore.exceptions import ClientError
 
 RESOURCE_TYPE = 'SNS Topic'
 SUB_ARN = 'SubscriptionArn'
+TOPIC_ARN = 'TopicArn'
 
 
 class SNSTopic(SNSBase):
-    '''
+    """
         AWS SQS Queue interface
-    '''
+    """
     def __init__(self, ctx_node, resource_id=None, client=None, logger=None):
         SNSBase.__init__(self, ctx_node, resource_id, client, logger)
         self.type_name = RESOURCE_TYPE
 
     @property
     def properties(self):
-        '''Gets the properties of an external resource'''
+        """Gets the properties of an external resource"""
         try:
             resources = \
                 self.client.list_topics()
@@ -52,15 +53,15 @@ class SNSTopic(SNSBase):
 
     @property
     def status(self):
-        '''Gets the status of an external resource'''
+        """Gets the status of an external resource"""
         if self.properties:
             return 'available'
         return None
 
     def create(self, params):
-        '''
+        """
             Create a new AWS SNS Topic.
-        '''
+        """
         self.logger.debug('Creating %s with parameters: %s'
                           % (self.type_name, params))
         res = self.client.create_topic(**params)
@@ -68,9 +69,9 @@ class SNSTopic(SNSBase):
         return res['TopicArn']
 
     def subscribe(self, params):
-        '''
+        """
             Subscribing to AWS SNS Topic.
-        '''
+        """
         self.logger.debug('Subscribing %s with parameters: %s'
                           % (self.type_name, params))
         res = self.client.subscribe(**params)
@@ -78,11 +79,9 @@ class SNSTopic(SNSBase):
         return res[SUB_ARN]
 
     def delete(self, params=None):
-        '''
+        """
             Deletes an existing AWS SNS Topic.
-        '''
-        params = params or dict()
-        params.update(dict(TopicArn=self.resource_id))
+        """
         self.logger.debug('Deleting %s with parameters: %s'
                           % (self.type_name, params))
         self.client.delete_topic(**params)
@@ -90,16 +89,19 @@ class SNSTopic(SNSBase):
 
 @decorators.aws_resource(resource_type=RESOURCE_TYPE)
 def prepare(ctx, resource_config, **_):
-    '''Prepares an AWS SNS Topic'''
+    """Prepares an AWS SNS Topic"""
     # Save the parameters
     ctx.instance.runtime_properties['resource_config'] = resource_config
 
 
 @decorators.aws_resource(SNSTopic, RESOURCE_TYPE)
 def create(ctx, iface, resource_config, **_):
-    '''Creates an AWS SNS Topic'''
-    # Build API params
-    params = resource_config
+    """Creates an AWS SNS Topic"""
+
+    # Create a copy of the resource config for clean manipulation.
+    params = \
+        dict() if not resource_config else resource_config.copy()
+
     # Actually create the resource
     res_id = iface.create(params)
     utils.update_resource_id(ctx.instance, res_id)
@@ -108,6 +110,18 @@ def create(ctx, iface, resource_config, **_):
 
 @decorators.aws_resource(SNSTopic, RESOURCE_TYPE,
                          ignore_properties=True)
-def delete(iface, resource_config, **_):
-    '''Deletes an AWS SNS Topic'''
-    iface.delete(resource_config)
+def delete(ctx, iface, resource_config, **_):
+    """Deletes an AWS SNS Topic"""
+
+    # Create a copy of the resource config for clean manipulation.
+    params = \
+        dict() if not resource_config else resource_config.copy()
+    if TOPIC_ARN not in params.keys():
+        params.update(
+            {TOPIC_ARN:
+             utils.get_resource_arn(
+                 ctx.node,
+                 ctx.instance)})
+
+    # Actually delete the resource
+    iface.delete(params)

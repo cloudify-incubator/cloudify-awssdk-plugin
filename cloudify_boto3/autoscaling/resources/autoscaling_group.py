@@ -12,11 +12,11 @@
 #    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
-'''
+"""
     Autoscaling.Group
     ~~~~~~~~~~~~~~
     AWS Autoscaling Group interface
-'''
+"""
 # Cloudify
 from cloudify_boto3.common import decorators, utils
 from cloudify_boto3.autoscaling import AutoscalingBase
@@ -39,16 +39,16 @@ SUBNET_TYPE = 'cloudify.aws.nodes.Subnet'
 
 
 class AutoscalingGroup(AutoscalingBase):
-    '''
+    """
         Autoscaling Group interface
-    '''
+    """
     def __init__(self, ctx_node, resource_id=None, client=None, logger=None):
         AutoscalingBase.__init__(self, ctx_node, resource_id, client, logger)
         self.type_name = RESOURCE_TYPE
 
     @property
     def properties(self):
-        '''Gets the properties of an external resource'''
+        """Gets the properties of an external resource"""
         params = {GROUP_NAMES: [self.resource_id]}
         try:
             resources = \
@@ -60,16 +60,16 @@ class AutoscalingGroup(AutoscalingBase):
 
     @property
     def status(self):
-        '''Gets the status of an external resource'''
+        """Gets the status of an external resource"""
         props = self.properties
         if not props:
             return None
         return props.get('Status')
 
     def create(self, params):
-        '''
+        """
             Create a new AWS Autoscaling Group.
-        '''
+        """
         if not self.resource_id:
             setattr(self, 'resource_id', params.get(GROUP_NAME))
         self.logger.debug('Creating %s with parameters: %s'
@@ -82,19 +82,9 @@ class AutoscalingGroup(AutoscalingBase):
         return res_id, res_arn
 
     def delete(self, params=None):
-        '''
+        """
             Deletes an existing AWS Autoscaling Group.
-        '''
-        if GROUP_NAME not in params.keys():
-            params.update({GROUP_NAME: self.resource_id})
-
-        autoscaling_group = self.properties
-        instances = autoscaling_group.get(INSTANCES)
-        self.remove_instances(
-            {GROUP_NAME: params.get(GROUP_NAME),
-             'ShouldDecrementDesiredCapacity': False,
-             INSTANCE_IDS:
-                 [instance.get(INSTANCE_ID) for instance in instances]})
+        """
         self.logger.debug('Deleting %s with parameters: %s'
                           % (self.type_name, params))
         res = self.client.delete_auto_scaling_group(**params)
@@ -102,9 +92,9 @@ class AutoscalingGroup(AutoscalingBase):
         return res
 
     def remove_instances(self, params=None):
-        '''
+        """
             Deletes an existing AWS Autoscaling Group.
-        '''
+        """
         self.logger.debug('Removing %s with parameters: %s'
                           % (self.type_name, params))
         try:
@@ -118,14 +108,14 @@ class AutoscalingGroup(AutoscalingBase):
 
 @decorators.aws_resource(resource_type=RESOURCE_TYPE)
 def prepare(ctx, resource_config, **_):
-    '''Prepares an AWS Autoscaling Group'''
+    """Prepares an AWS Autoscaling Group"""
     # Save the parameters
     ctx.instance.runtime_properties['resource_config'] = resource_config
 
 
 @decorators.aws_resource(AutoscalingGroup, RESOURCE_TYPE)
 def create(ctx, iface, resource_config, **_):
-    '''Creates an AWS Autoscaling Group'''
+    """Creates an AWS Autoscaling Group"""
     params = resource_config.copy()
 
     # Try to populate the Launch Configuration field
@@ -172,5 +162,20 @@ def create(ctx, iface, resource_config, **_):
 @decorators.aws_resource(AutoscalingGroup, RESOURCE_TYPE,
                          ignore_properties=True)
 def delete(iface, resource_config, **_):
-    '''Deletes an AWS Autoscaling Group'''
-    iface.delete(resource_config)
+    """Deletes an AWS Autoscaling Group"""
+    # Create a copy of the resource config for clean manipulation.
+    params = \
+        dict() if not resource_config else resource_config.copy()
+
+    if GROUP_NAME not in params.keys():
+        params.update({GROUP_NAME: iface.resource_id})
+
+    autoscaling_group = iface.properties
+    instances = autoscaling_group.get(INSTANCES)
+    iface.remove_instances(
+        {GROUP_NAME: params.get(GROUP_NAME),
+         'ShouldDecrementDesiredCapacity': False,
+         INSTANCE_IDS:
+             [instance.get(INSTANCE_ID) for instance in instances]})
+
+    iface.delete(params)
