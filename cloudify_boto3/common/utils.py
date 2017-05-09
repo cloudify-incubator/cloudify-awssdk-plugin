@@ -19,6 +19,7 @@
 '''
 # Generic
 import re
+import uuid
 # Cloudify
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError
@@ -281,3 +282,7 @@ def find_resource_id_by_type(node_instance, node_type):
 def validate_arn(arn_candidate, arn_regex=constants.ARN_REGEX):
     arn_matcher = re.compile(arn_regex)
     return arn_matcher.match(arn_candidate)
+
+
+def get_uuid():
+    return str(uuid.uuid4())
