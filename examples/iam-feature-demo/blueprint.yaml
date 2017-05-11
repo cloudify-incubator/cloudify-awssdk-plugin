@@ -8,7 +8,7 @@ description: >
 imports:
 - http://www.getcloudify.org/spec/cloudify/3.4.2/types.yaml
 - http://www.getcloudify.org/spec/aws-plugin/1.4.4/plugin.yaml
-- https://raw.githubusercontent.com/cloudify-incubator/cloudify-boto3-plugin/dev/plugin.yaml
+- plugin.yaml
 
 
 inputs:
