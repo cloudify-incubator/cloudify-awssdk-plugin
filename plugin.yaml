@@ -2,7 +2,7 @@ plugins:
   awssdk:
     executor: central_deployment_agent
     package_name: cloudify-boto3-plugin
-    package_version: '1.0.0m3'
+    package_version: '1.0.0'
     source: https://github.com/cloudify-incubator/cloudify-boto3-plugin/archive/1.0.0m3.zip
 
 data_types:
