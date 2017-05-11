@@ -158,6 +158,8 @@ def prepare_assoc(ctx, iface, resource_config, **inputs):
         ctx.source.instance.runtime_properties[
             'resource_config'][inputs['iam_role_type_key']] = \
             utils.get_resource_string(
+                node=ctx.target.node,
+                instance=ctx.target.instance,
                 attribute_key=inputs['iam_role_id_key'])
 
 

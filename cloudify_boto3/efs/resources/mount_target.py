@@ -104,8 +104,8 @@ def create(ctx, iface, resource_config, **_):
             utils.find_rel_by_node_type(
                 ctx.instance,
                 FILESYSTEM_TYPE)
-        file_system_id = \
-            file_system.target.instance.runtime_properties[EXTERNAL_RESOURCE_ID]
+        file_system_id = file_system.target.instance.runtime_properties[
+            EXTERNAL_RESOURCE_ID]
         params[FILESYSTEM_ID] = file_system_id
 
     # Add Subnet

@@ -89,9 +89,8 @@ def prepare(ctx, iface, resource_config, **_):
 
 
 @decorators.aws_resource(EC2Vpc, RESOURCE_TYPE)
-@decorators.wait_for_status(
-        status_good=['available'],
-        status_pending=['pending'])
+@decorators.wait_for_status(status_good=['available'],
+                            status_pending=['pending'])
 def create(ctx, iface, resource_config, **_):
     '''Creates an AWS EC2 Vpc'''
     params = \

@@ -216,13 +216,12 @@ def delete(iface, resource_config, **_):
 
 
 @decorators.aws_relationship(None, RESOURCE_TYPE)
-def assoc(ctx,  **_):
+def assoc(ctx, **_):
     """associate instance with ELB classic LB"""
     instance_id = \
         ctx.source.instance.runtime_properties.get(
             EXTERNAL_RESOURCE_ID)
-    lb = ctx.target.instance.runtime_properties.get(
-            EXTERNAL_RESOURCE_ID)
+    lb = ctx.target.instance.runtime_properties.get(EXTERNAL_RESOURCE_ID)
     iface = \
         ELBClassicLoadBalancer(ctx.target.node, lb, logger=ctx.logger)
     iface.register_instances(
@@ -236,7 +235,7 @@ def assoc(ctx,  **_):
 
 
 @decorators.aws_relationship(None, RESOURCE_TYPE)
-def disassoc(ctx,  **_):
+def disassoc(ctx, **_):
     """disassociate instance with ELB classic LB"""
     instance_id = \
         ctx.source.instance.runtime_properties.get(

@@ -40,7 +40,11 @@ def attach_to(ctx, resource_config, **_):
     params = resource_config or rtprops.get('resource_config') or dict()
     if utils.is_node_type(ctx.target.node,
                           'cloudify.nodes.aws.rds.OptionGroup'):
-        params['OptionName'] = utils.get_resource_id(raise_on_missing=True)
+        params['OptionName'] = utils.get_resource_id(
+            raise_on_missing=True,
+            node=ctx.target.node,
+            instance=ctx.target.instance
+        )
         OptionGroup(
             ctx.target.node, logger=ctx.logger,
             resource_id=utils.get_resource_id(
@@ -63,11 +67,18 @@ def attach_to(ctx, resource_config, **_):
 @decorators.aws_relationship(resource_type=RESOURCE_TYPE)
 def detach_from(ctx, resource_config, **_):
     '''Detaches an RDS Option from something else'''
+    rtprops = ctx.source.instance.runtime_properties
+    params = resource_config or rtprops.get('resource_config') or dict()
     if utils.is_node_type(ctx.target.node,
                           'cloudify.nodes.aws.rds.OptionGroup'):
+        params['OptionName'] = utils.get_resource_id(
+            raise_on_missing=True,
+            node=ctx.target.node,
+            instance=ctx.target.instance
+        )
         OptionGroup(
             ctx.target.node, logger=ctx.logger,
             resource_id=utils.get_resource_id(
                 node=ctx.target.node,
                 instance=ctx.target.instance,
-                raise_on_missing=True)).remove_option(resource_config)
+                raise_on_missing=True)).remove_option(params)

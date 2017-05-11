@@ -18,7 +18,6 @@
     AWS EFS File System interface
 """
 # Cloudify
-from cloudify.exceptions import RecoverableError
 from cloudify_boto3.common import decorators, utils
 from cloudify_boto3.efs import EFSBase
 # Boto

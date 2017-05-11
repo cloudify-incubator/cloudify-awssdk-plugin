@@ -42,7 +42,11 @@ def attach_to(ctx, resource_config, **_):
     params = resource_config or rtprops.get('resource_config') or dict()
     if utils.is_node_type(ctx.target.node,
                           'cloudify.nodes.aws.rds.ParameterGroup'):
-        params['ParameterName'] = utils.get_resource_id(raise_on_missing=True)
+        params['ParameterName'] = utils.get_resource_id(
+            node=ctx.target.node,
+            instance=ctx.target.instance,
+            raise_on_missing=True
+        )
         ParameterGroup(
             ctx.target.node, logger=ctx.logger,
             resource_id=utils.get_resource_id(

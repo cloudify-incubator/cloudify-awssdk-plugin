@@ -92,9 +92,8 @@ def prepare(ctx, iface, resource_config, **_):
 
 
 @decorators.aws_resource(EC2Subnet, RESOURCE_TYPE)
-@decorators.wait_for_status(
-        status_good=['available'],
-        status_pending=['pending'])
+@decorators.wait_for_status(status_good=['available'],
+                            status_pending=['pending'])
 def create(ctx, iface, resource_config, **_):
     '''Creates an AWS EC2 Subnet'''
     params = dict() if not resource_config else resource_config.copy()
@@ -127,10 +126,8 @@ def create(ctx, iface, resource_config, **_):
 
     subnet = iface.create(params)
     subnet_id = subnet.get(SUBNET_ID)
-    iface.update_resource_id(
-        subnet_id)
-    utils.update_resource_id(
-            ctx.instance, subnet_id)
+    iface.update_resource_id(subnet_id)
+    utils.update_resource_id(ctx.instance, subnet_id)
 
 
 @decorators.aws_resource(EC2Subnet, RESOURCE_TYPE,

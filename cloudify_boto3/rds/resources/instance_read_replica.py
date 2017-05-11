@@ -130,10 +130,10 @@ def prepare_assoc(ctx, iface, resource_config, **inputs):
                             'cloudify.nodes.aws.rds.Instance'):
         ctx.source.instance.runtime_properties[
             'resource_config']['SourceDBInstanceIdentifier'] = \
-                utils.get_resource_id(
-                    node=ctx.target.node,
-                    instance=ctx.target.instance,
-                    raise_on_missing=True)
+            utils.get_resource_id(
+                node=ctx.target.node,
+                instance=ctx.target.instance,
+                raise_on_missing=True)
     elif utils.is_node_type(ctx.target.node,
                             'cloudify.nodes.aws.iam.Role'):
         if not inputs.get('iam_role_type_key') or \
@@ -144,6 +144,8 @@ def prepare_assoc(ctx, iface, resource_config, **inputs):
         ctx.source.instance.runtime_properties[
             'resource_config'][inputs['iam_role_type_key']] = \
             utils.get_resource_string(
+                node=ctx.target.node,
+                instance=ctx.target.instance,
                 attribute_key=inputs['iam_role_id_key'])
 
 
