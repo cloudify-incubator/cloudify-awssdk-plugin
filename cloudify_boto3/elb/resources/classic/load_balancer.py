@@ -153,7 +153,8 @@ def create(ctx, iface, resource_config, **_):
             SUBNET_TYPE,
             subnets_list) or utils.add_resources_from_rels(
             ctx.instance,
-            SUBNET_TYPE_DEPRECATED)
+            SUBNET_TYPE_DEPRECATED,
+            subnets_list)
 
     # Add Security Groups
     secgroups_list = params.get(SECGROUPS, [])
