@@ -30,7 +30,7 @@ NATGATEWAY_IDS = 'NatGatewayIds'
 SUBNET_ID = 'SubnetId'
 ALLOCATION_ID = 'AllocationId'
 ALLOCATION_ID_DEPRECATED = 'allocation_id'
-SUBNET_TYPE = 'cloudify.aws.nodes.Subnet'
+SUBNET_TYPE = ['cloudify.aws.nodes.Subnet', 'cloudify.nodes.aws.ec2.Subnet']
 ELASTICIP_TYPE = 'cloudify.aws.nodes.ElasticIP'
 
 
@@ -105,7 +105,9 @@ def create(ctx, iface, resource_config, **_):
     if not subnet_id:
         subnet_id = \
             utils.find_resource_id_by_type(
-                ctx.instance, SUBNET_TYPE)
+                ctx.instance, SUBNET_TYPE[0]) or \
+            utils.find_resource_id_by_type(
+                ctx.instance, SUBNET_TYPE[1])
         params.update({SUBNET_ID: subnet_id})
 
     allocation_id = params.get(ALLOCATION_ID)
