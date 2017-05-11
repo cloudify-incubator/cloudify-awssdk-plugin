@@ -33,7 +33,8 @@ RESOURCE_TYPE = 'ELB Load Balancer'
 LB_NAME = 'LoadBalancerName'
 LB_ARN = 'LoadBalancerArn'
 LB_ATTR = 'Attributes'
-SUBNET_TYPE = 'cloudify.aws.nodes.Subnet'
+SUBNET_TYPE = 'cloudify.nodes.aws.ec2.Subnet'
+SUBNET_TYPE_DEPRECATED = 'cloudify.aws.nodes.Subnet'
 SECGROUP_TYPE = 'cloudify.aws.nodes.SecurityGroup'
 SUBNETS = 'Subnets'
 SECGROUPS = 'SecurityGroups'
@@ -134,7 +135,9 @@ def create(ctx, iface, resource_config, **_):
     subnets = \
         utils.find_rels_by_node_type(
             ctx.instance,
-            SUBNET_TYPE)
+            SUBNET_TYPE) or utils.find_rels_by_node_name(
+            ctx.instance,
+            SUBNET_TYPE_DEPRECATED)
     for subnet in subnets:
         subnet_id = \
             subnet.target.instance.runtime_properties[EXTERNAL_RESOURCE_ID]

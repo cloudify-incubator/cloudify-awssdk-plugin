@@ -28,7 +28,8 @@ from botocore.exceptions import ClientError
 RESOURCE_TYPE = 'ELB Target Group'
 TARGETGROUP_ARN = 'TargetGroupArn'
 VPC_ID = 'VpcId'
-VPC_TYPE = 'cloudify.aws.nodes.VPC'
+VPC_TYPE = 'cloudify.nodes.aws.ec2.Vpc'
+VPC_TYPE_DEPRECATED = 'cloudify.aws.nodes.VPC'
 GRP_ATTR = 'Attributes'
 
 
@@ -122,7 +123,10 @@ def create(ctx, iface, resource_config, **_):
     if VPC_ID not in params.keys():
         targs = \
             utils.find_rels_by_node_type(
-                ctx.instance, VPC_TYPE)
+                ctx.instance,
+                VPC_TYPE) or utils.find_rels_by_node_name(
+                ctx.instance,
+                VPC_TYPE_DEPRECATED)
         tg_attr = targs[0].target.instance.runtime_properties
         params[VPC_ID] = \
             tg_attr.get(EXTERNAL_RESOURCE_ID)

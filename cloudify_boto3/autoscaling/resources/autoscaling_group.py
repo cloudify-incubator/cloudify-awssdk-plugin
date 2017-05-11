@@ -35,7 +35,8 @@ INSTANCE_IDS = 'InstanceIds'
 INSTANCE_TYPE = 'cloudify.aws.nodes.Instance'
 INSTANCES = 'Instances'
 SUBNET_LIST = 'VPCZoneIdentifier'
-SUBNET_TYPE = 'cloudify.aws.nodes.Subnet'
+SUBNET_TYPE = 'cloudify.nodes.aws.ec2.Subnet'
+SUBNET_TYPE_DEPRECATED = 'cloudify.aws.nodes.Subnet'
 
 
 class AutoscalingGroup(AutoscalingBase):
@@ -145,6 +146,11 @@ def create(ctx, iface, resource_config, **_):
         utils.add_resources_from_rels(
             ctx.instance,
             SUBNET_TYPE,
+            subnet_list.split(', ') if subnet_list else [])
+    subnet_list = \
+        utils.add_resources_from_rels(
+            ctx.instance,
+            SUBNET_TYPE_DEPRECATED,
             subnet_list.split(', ') if subnet_list else [])
     if subnet_list:
         params[SUBNET_LIST] = ', '.join(subnet_list)
