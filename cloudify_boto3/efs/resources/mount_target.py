@@ -29,7 +29,8 @@ MOUNTTARGET_ID = 'MountTargetId'
 FILESYSTEM_ID = 'FileSystemId'
 FILESYSTEM_TYPE = 'cloudify.nodes.aws.efs.FileSystem'
 SUBNET_ID = 'SubnetId'
-SUBNET_TYPE = 'cloudify.aws.nodes.Subnet'
+SUBNET_TYPE = 'cloudify.nodes.aws.ec2.Subnet'
+SUBNET_TYPE_DEPRECATED = 'cloudify.aws.nodes.Subnet'
 SECGROUP_TYPE = 'cloudify.aws.nodes.SecurityGroup'
 SECGROUPS = 'SecurityGroups'
 IP_ADDRESS = 'IpAddress'
@@ -113,7 +114,10 @@ def create(ctx, iface, resource_config, **_):
         subnet = \
             utils.find_rel_by_node_type(
                 ctx.instance,
-                SUBNET_TYPE)
+                SUBNET_TYPE) or utils.find_rel_by_node_type(
+                ctx.instance,
+                SUBNET_TYPE_DEPRECATED)
+
         subnet_id = \
             subnet.target.instance.runtime_properties[EXTERNAL_RESOURCE_ID]
         params[SUBNET_ID] = subnet_id
