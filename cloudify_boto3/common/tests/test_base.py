@@ -128,6 +128,39 @@ class TestBase(unittest.TestCase):
             )
         )
 
+    def _fake_kms(self, fake_client, client_type):
+        fake_client.create_alias = self._get_unknowservice(client_type)
+        fake_client.create_grant = self._get_unknowservice(client_type)
+        fake_client.create_key = self._get_unknowservice(client_type)
+
+        fake_client.describe_key = self._gen_client_error(
+            "describe_key"
+        )
+
+        fake_client.enable_key = self._get_unknowservice(client_type)
+        fake_client.disable_key = self._get_unknowservice(client_type)
+
+        fake_client.delete_alias = self._get_unknowservice(client_type)
+        fake_client.revoke_grant = self._get_unknowservice(client_type)
+        fake_client.schedule_key_deletion = self._get_unknowservice(
+            client_type
+        )
+
+    def _fake_sqs(self, fake_client, client_type):
+        fake_client.create_queue = self._get_unknowservice(
+            client_type
+        )
+
+        fake_client.list_queues = self._gen_client_error(
+            "list_queues"
+        )
+
+        fake_client.get_queue_attributes = self._gen_client_error(
+            "list_queues"
+        )
+
+        fake_client.delete_queue = self._get_unknowservice(client_type)
+
     def _fake_rds(self, fake_client, client_type):
 
         fake_client.create_db_instance_read_replica = self._get_unknowservice(
@@ -201,6 +234,10 @@ class TestBase(unittest.TestCase):
         fake_client = MagicMock()
         if client_type == "rds":
             self._fake_rds(fake_client, client_type)
+        elif client_type == "sqs":
+            self._fake_sqs(fake_client, client_type)
+        elif client_type == "kms":
+            self._fake_kms(fake_client, client_type)
         return MagicMock(return_value=fake_client), fake_client
 
     def mock_return(self, value):

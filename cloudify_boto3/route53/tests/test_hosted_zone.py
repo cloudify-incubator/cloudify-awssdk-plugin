@@ -60,9 +60,13 @@ class TestHostedZone(TestBase):
                       mock_decorator)
         mock3 = patch('cloudify_boto3.common.decorators.aws_relationship',
                       mock_decorator)
+        mock_sleep = MagicMock()
+        mock4 = patch('time.sleep',
+                      mock_sleep)
         mock1.start()
         mock2.start()
         mock3.start()
+        mock4.start()
         reload(hosted_zone)
 
     def test_class_properties(self):
