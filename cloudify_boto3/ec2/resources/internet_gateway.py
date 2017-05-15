@@ -115,8 +115,8 @@ def create(ctx, iface, resource_config, **_):
     params = dict() if not resource_config else resource_config.copy()
 
     internet_gateway = iface.create(params)
-    utils.update_resource_id(ctx.instance,
-                             internet_gateway.get(INTERNETGATEWAY_ID))
+    utils.update_resource_id(
+            ctx.instance, internet_gateway.get(INTERNETGATEWAY_ID))
 
 
 @decorators.aws_resource(EC2InternetGateway, RESOURCE_TYPE,
@@ -134,7 +134,8 @@ def delete(iface, resource_config, **_):
 
 
 @decorators.aws_resource(EC2InternetGateway, RESOURCE_TYPE)
-@decorators.wait_for_status(status_good=['available'])
+@decorators.wait_for_status(
+        status_good=['available'])
 def attach(ctx, iface, resource_config, **_):
     '''Attach an AWS EC2 Internet Gateway to a VPC'''
     params = dict() if not resource_config else resource_config.copy()
@@ -157,7 +158,8 @@ def attach(ctx, iface, resource_config, **_):
         # Fallback to connected VPC.
         params[VPC_ID] = \
             vpc_id or \
-            targ.target.instance.runtime_properties.get(EXTERNAL_RESOURCE_ID)
+            targ.target.instance.runtime_properties.get(
+                    EXTERNAL_RESOURCE_ID)
 
     # Actually create the resource
     iface.attach(params)
