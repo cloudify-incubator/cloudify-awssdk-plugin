@@ -127,23 +127,11 @@ class TestRDSSubnetGroup(TestBase):
             )
 
     def test_prepare(self):
-        _ctx = self.get_mock_ctx(
-            'test_prepare',
-            test_properties=NODE_PROPERTIES,
-            test_runtime_properties=RUNTIME_PROPERTIES,
-            type_hierarchy=SUBNET_GROUP_TH
+        self._prepare_check(
+            type_hierarchy=SUBNET_GROUP_TH,
+            type_name='rds',
+            type_class=subnet_group
         )
-
-        current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('rds')
-
-        with patch('boto3.client', fake_boto):
-            subnet_group.prepare(ctx=_ctx, resource_config=None, iface=None)
-            self.assertEqual(
-                _ctx.instance.runtime_properties, {
-                    'resource_config': {}
-                }
-            )
 
     def test_delete(self):
         _ctx = self.get_mock_ctx(

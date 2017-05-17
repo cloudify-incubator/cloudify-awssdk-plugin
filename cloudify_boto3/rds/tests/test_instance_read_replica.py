@@ -135,28 +135,11 @@ class TestRDSInstanceReadReplica(TestBase):
             )
 
     def test_prepare(self):
-        _ctx = self.get_mock_ctx(
-            'test_prepare',
-            test_properties=NODE_PROPERTIES,
-            test_runtime_properties=RUNTIME_PROPERTIES,
-            type_hierarchy=INSTANCE_READ_REPLICA_TH
+        self._prepare_check(
+            type_hierarchy=INSTANCE_READ_REPLICA_TH,
+            type_name='rds',
+            type_class=instance_read_replica
         )
-
-        current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('rds')
-
-        with patch('boto3.client', fake_boto):
-            instance_read_replica.prepare(
-                ctx=_ctx, resource_config=None, iface=None
-            )
-            self.assertEqual(
-                _ctx.instance.runtime_properties, {
-                    'resource_config': {
-                        'DBInstanceClass': 'db.t2.small',
-                        'AvailabilityZone': 'us-east-1d'
-                    }
-                }
-            )
 
     def test_delete(self):
         _test_name = 'test_delete'
@@ -202,44 +185,12 @@ class TestRDSInstanceReadReplica(TestBase):
                 }
             )
 
-    def _create_instance_relationships(self, node_id, type_hierarchy):
-        _source_ctx = self.get_mock_ctx(
-            'test_attach_source',
-            test_properties={},
-            test_runtime_properties={
-                'resource_id': 'prepare_attach_source',
-                'aws_resource_id': 'aws_resource_mock_id',
-                '_set_changed': True,
-                'resource_config': {}
-            },
-            type_hierarchy=INSTANCE_READ_REPLICA_TH
-        )
-
-        _target_ctx = self.get_mock_ctx(
-            'test_attach_target',
-            test_properties={},
-            test_runtime_properties={
-                'resource_id': 'prepare_attach_target',
-                'aws_resource_id': 'aws_target_mock_id',
-            },
-            type_hierarchy=type_hierarchy
-        )
-
-        _ctx = self.get_mock_relationship_ctx(
-            node_id,
-            test_properties={},
-            test_runtime_properties={},
-            test_source=_source_ctx,
-            test_target=_target_ctx,
-            type_hierarchy=['cloudify.nodes.Root']
-        )
-
-        return _source_ctx, _target_ctx, _ctx
-
     def test_prepare_assoc_SubnetGroup(self):
-        _source_ctx, _target_ctx, _ctx = self._create_instance_relationships(
+        _source_ctx, _target_ctx, _ctx = self._create_common_relationships(
             'test_prepare_assoc',
-            ['cloudify.nodes.Root', 'cloudify.nodes.aws.rds.SubnetGroup']
+            source_type_hierarchy=INSTANCE_READ_REPLICA_TH,
+            target_type_hierarchy=['cloudify.nodes.Root',
+                                   'cloudify.nodes.aws.rds.SubnetGroup']
         )
         current_ctx.set(_ctx)
         fake_boto, fake_client = self.fake_boto_client('rds')
@@ -260,9 +211,11 @@ class TestRDSInstanceReadReplica(TestBase):
             )
 
     def test_prepare_assoc_OptionGroup(self):
-        _source_ctx, _target_ctx, _ctx = self._create_instance_relationships(
+        _source_ctx, _target_ctx, _ctx = self._create_common_relationships(
             'test_prepare_assoc',
-            ['cloudify.nodes.Root', 'cloudify.nodes.aws.rds.OptionGroup']
+            source_type_hierarchy=INSTANCE_READ_REPLICA_TH,
+            target_type_hierarchy=['cloudify.nodes.Root',
+                                   'cloudify.nodes.aws.rds.OptionGroup']
         )
         current_ctx.set(_ctx)
         fake_boto, fake_client = self.fake_boto_client('rds')
@@ -283,9 +236,11 @@ class TestRDSInstanceReadReplica(TestBase):
             )
 
     def test_prepare_assoc_Instance(self):
-        _source_ctx, _target_ctx, _ctx = self._create_instance_relationships(
+        _source_ctx, _target_ctx, _ctx = self._create_common_relationships(
             'test_prepare_assoc',
-            ['cloudify.nodes.Root', 'cloudify.nodes.aws.rds.Instance']
+            source_type_hierarchy=INSTANCE_READ_REPLICA_TH,
+            target_type_hierarchy=['cloudify.nodes.Root',
+                                   'cloudify.nodes.aws.rds.Instance']
         )
         current_ctx.set(_ctx)
         fake_boto, fake_client = self.fake_boto_client('rds')
@@ -306,9 +261,11 @@ class TestRDSInstanceReadReplica(TestBase):
             )
 
     def test_prepare_assoc_Role_NonRecoverableError(self):
-        _source_ctx, _target_ctx, _ctx = self._create_instance_relationships(
+        _source_ctx, _target_ctx, _ctx = self._create_common_relationships(
             'test_prepare_assoc',
-            ['cloudify.nodes.Root', 'cloudify.nodes.aws.iam.Role']
+            source_type_hierarchy=INSTANCE_READ_REPLICA_TH,
+            target_type_hierarchy=['cloudify.nodes.Root',
+                                   'cloudify.nodes.aws.iam.Role']
         )
         current_ctx.set(_ctx)
         fake_boto, fake_client = self.fake_boto_client('rds')
@@ -327,9 +284,11 @@ class TestRDSInstanceReadReplica(TestBase):
             )
 
     def test_prepare_assoc_Role(self):
-        _source_ctx, _target_ctx, _ctx = self._create_instance_relationships(
+        _source_ctx, _target_ctx, _ctx = self._create_common_relationships(
             'test_prepare_assoc',
-            ['cloudify.nodes.Root', 'cloudify.nodes.aws.iam.Role']
+            source_type_hierarchy=INSTANCE_READ_REPLICA_TH,
+            target_type_hierarchy=['cloudify.nodes.Root',
+                                   'cloudify.nodes.aws.iam.Role']
         )
         current_ctx.set(_ctx)
         fake_boto, fake_client = self.fake_boto_client('rds')
@@ -354,9 +313,11 @@ class TestRDSInstanceReadReplica(TestBase):
             )
 
     def test_detach_from_Instance(self):
-        _source_ctx, _target_ctx, _ctx = self._create_instance_relationships(
+        _source_ctx, _target_ctx, _ctx = self._create_common_relationships(
             'test_detach_from',
-            ['cloudify.nodes.Root', 'cloudify.nodes.aws.rds.Instance']
+            source_type_hierarchy=INSTANCE_READ_REPLICA_TH,
+            target_type_hierarchy=['cloudify.nodes.Root',
+                                   'cloudify.nodes.aws.rds.Instance']
         )
         current_ctx.set(_ctx)
         fake_boto, fake_client = self.fake_boto_client('rds')

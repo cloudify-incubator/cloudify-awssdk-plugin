@@ -12,7 +12,7 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-from mock import MagicMock
+from mock import MagicMock, patch
 import unittest
 import copy
 from functools import wraps
@@ -43,6 +43,17 @@ DELETE_RESPONSE = {
             'content-type': 'text/xml'
         }
     }
+}
+
+DEFAULT_NODE_PROPERTIES = {
+    'use_external_resource': False,
+    'resource_config': {},
+    'client_config': CLIENT_CONFIG
+}
+
+DEFAULT_RUNTIME_PROPERTIES = {
+    'aws_resource_id': 'aws_resource',
+    'resource_config': {}
 }
 
 
@@ -127,6 +138,69 @@ class TestBase(unittest.TestCase):
                 known_service_names=['rds']
             )
         )
+
+    def _fake_cloudwatch(self, fake_client, client_type):
+        fake_client.put_metric_alarm = self._get_unknowservice(client_type)
+        fake_client.describe_alarms = self._gen_client_error(
+            "describe_alarms"
+        )
+        fake_client.delete_alarms = self._get_unknowservice(client_type)
+
+    def _fake_events(self, fake_client, client_type):
+        fake_client.put_events = self._get_unknowservice(client_type)
+        fake_client.put_rule = self._get_unknowservice(client_type)
+        fake_client.put_targets = self._get_unknowservice(client_type)
+
+        fake_client.describe_rule = self._gen_client_error(
+            "describe_alarms"
+        )
+
+        fake_client.delete_rule = self._get_unknowservice(client_type)
+        fake_client.remove_targets = self._get_unknowservice(client_type)
+
+    def _fake_dynamodb(self, fake_client, client_type):
+        fake_client.create_table = self._get_unknowservice(client_type)
+
+        fake_client.describe_table = self._gen_client_error(
+            "describe_table"
+        )
+
+        fake_client.delete_table = self._get_unknowservice(client_type)
+
+    def _fake_iam(self, fake_client, client_type):
+        fake_client.add_user_to_group = self._get_unknowservice(client_type)
+        fake_client.attach_group_policy = self._get_unknowservice(client_type)
+        fake_client.attach_role_policy = self._get_unknowservice(client_type)
+        fake_client.attach_user_policy = self._get_unknowservice(client_type)
+        fake_client.create_access_key = self._get_unknowservice(client_type)
+        fake_client.create_group = self._get_unknowservice(client_type)
+        fake_client.create_login_profile = self._get_unknowservice(client_type)
+        fake_client.create_policy = self._get_unknowservice(client_type)
+        fake_client.create_role = self._get_unknowservice(client_type)
+        fake_client.create_user = self._get_unknowservice(client_type)
+
+        fake_client.delete_access_key = self._get_unknowservice(client_type)
+        fake_client.delete_group = self._get_unknowservice(client_type)
+        fake_client.delete_login_profile = self._get_unknowservice(client_type)
+        fake_client.delete_policy = self._get_unknowservice(client_type)
+        fake_client.delete_role = self._get_unknowservice(client_type)
+        fake_client.delete_user = self._get_unknowservice(client_type)
+        fake_client.detach_group_policy = self._get_unknowservice(client_type)
+        fake_client.detach_role_policy = self._get_unknowservice(client_type)
+        fake_client.detach_user_policy = self._get_unknowservice(client_type)
+
+        fake_client.get_group = self._gen_client_error("get_group")
+        fake_client.get_login_profile = self._gen_client_error(
+            "get_login_profile"
+        )
+        fake_client.get_policy = self._gen_client_error("get_policy")
+        fake_client.get_role = self._gen_client_error("get_role")
+        fake_client.get_user = self._gen_client_error("get_user")
+
+        fake_client.remove_user_from_group = self._get_unknowservice(
+            client_type
+        )
+        fake_client.update_login_profile = self._get_unknowservice(client_type)
 
     def _fake_kms(self, fake_client, client_type):
         fake_client.create_alias = self._get_unknowservice(client_type)
@@ -232,16 +306,132 @@ class TestBase(unittest.TestCase):
 
     def fake_boto_client(self, client_type):
         fake_client = MagicMock()
+
         if client_type == "rds":
             self._fake_rds(fake_client, client_type)
         elif client_type == "sqs":
             self._fake_sqs(fake_client, client_type)
         elif client_type == "kms":
             self._fake_kms(fake_client, client_type)
+        elif client_type == "iam":
+            self._fake_iam(fake_client, client_type)
+        elif client_type == "dynamodb":
+            self._fake_dynamodb(fake_client, client_type)
+        elif client_type == "events":
+            self._fake_events(fake_client, client_type)
+        elif client_type == "cloudwatch":
+            self._fake_cloudwatch(fake_client, client_type)
+
         return MagicMock(return_value=fake_client), fake_client
 
     def mock_return(self, value):
         return MagicMock(return_value=value)
+
+    def _prepare_create_raises_UnknownServiceError(
+        self, type_hierarchy, type_name, type_class
+    ):
+        _ctx = self.get_mock_ctx(
+            'test_create',
+            test_properties=DEFAULT_NODE_PROPERTIES,
+            test_runtime_properties=DEFAULT_RUNTIME_PROPERTIES,
+            type_hierarchy=type_hierarchy
+        )
+
+        current_ctx.set(_ctx)
+        fake_boto, fake_client = self.fake_boto_client(type_name)
+
+        with patch('boto3.client', fake_boto):
+            with self.assertRaises(UnknownServiceError) as error:
+                type_class.create(ctx=_ctx, resource_config=None, iface=None)
+
+            self.assertEqual(
+                str(error.exception),
+                (
+                    "Unknown service: '" +
+                    type_name +
+                    "'. Valid service names are: ['rds']"
+                )
+            )
+
+            fake_boto.assert_called_with(type_name, **CLIENT_CONFIG)
+
+    def _create_common_relationships(self, node_id, source_type_hierarchy,
+                                     target_type_hierarchy):
+        _source_ctx = self.get_mock_ctx(
+            'test_attach_source',
+            test_properties={},
+            test_runtime_properties={
+                'resource_id': 'prepare_attach_source',
+                'aws_resource_id': 'aws_resource_mock_id',
+                '_set_changed': True,
+                'resource_config': {}
+            },
+            type_hierarchy=source_type_hierarchy
+        )
+
+        _target_ctx = self.get_mock_ctx(
+            'test_attach_target',
+            test_properties={},
+            test_runtime_properties={
+                'resource_id': 'prepare_attach_target',
+                'aws_resource_id': 'aws_target_mock_id',
+                'aws_resource_arn': 'aws_resource_mock_arn'
+            },
+            type_hierarchy=target_type_hierarchy
+        )
+
+        _ctx = self.get_mock_relationship_ctx(
+            node_id,
+            test_properties={},
+            test_runtime_properties={},
+            test_source=_source_ctx,
+            test_target=_target_ctx,
+            type_hierarchy=['cloudify.nodes.Root']
+        )
+
+        return _source_ctx, _target_ctx, _ctx
+
+    def _prepare_check(self, type_hierarchy, type_name, type_class):
+        _ctx = self.get_mock_ctx(
+            'test_prepare',
+            test_properties=DEFAULT_NODE_PROPERTIES,
+            test_runtime_properties=DEFAULT_RUNTIME_PROPERTIES,
+            type_hierarchy=type_hierarchy
+        )
+
+        current_ctx.set(_ctx)
+        fake_boto, fake_client = self.fake_boto_client(type_name)
+
+        with patch('boto3.client', fake_boto):
+            type_class.prepare(ctx=_ctx, resource_config=None, iface=None)
+
+            self.assertEqual(
+                _ctx.instance.runtime_properties, {
+                    'aws_resource_id': 'aws_resource',
+                    'resource_config': {}
+                }
+            )
+
+    def _prepare_configure(self, type_hierarchy, type_name, type_class):
+        _ctx = self.get_mock_ctx(
+            'test_configure',
+            test_properties=DEFAULT_NODE_PROPERTIES,
+            test_runtime_properties=DEFAULT_RUNTIME_PROPERTIES,
+            type_hierarchy=type_hierarchy
+        )
+
+        current_ctx.set(_ctx)
+        fake_boto, fake_client = self.fake_boto_client(type_name)
+
+        with patch('boto3.client', fake_boto):
+            type_class.configure(ctx=_ctx, resource_config=None, iface=None)
+
+            self.assertEqual(
+                _ctx.instance.runtime_properties, {
+                    'aws_resource_id': 'aws_resource',
+                    'resource_config': {}
+                }
+            )
 
 
 class TestServiceBase(TestBase):

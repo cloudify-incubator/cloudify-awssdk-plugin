@@ -15,8 +15,6 @@
 from mock import patch, MagicMock
 import unittest
 
-from cloudify.state import current_ctx
-
 from botocore.exceptions import UnknownServiceError
 
 from cloudify_boto3.common.tests.test_base import CLIENT_CONFIG
@@ -56,27 +54,11 @@ RUNTIME_PROPERTIES_AFTER_CREATE = {
 class TestKMSGrant(TestKMS):
 
     def test_prepare(self):
-        _ctx = self.get_mock_ctx(
-            'test_prepare',
-            test_properties=NODE_PROPERTIES,
-            test_runtime_properties=RUNTIME_PROPERTIES,
-            type_hierarchy=GRANT_TH
+        self._prepare_check(
+            type_hierarchy=GRANT_TH,
+            type_name='kms',
+            type_class=grant
         )
-
-        current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('kms')
-
-        with patch('boto3.client', fake_boto):
-            grant.prepare(ctx=_ctx, resource_config=None, iface=None)
-            self.assertEqual(
-                _ctx.instance.runtime_properties, {
-                    'resource_config': {
-                        "Name": "TestGrant",
-                        "GranteePrincipal": "ami_arn",
-                        "Operations": ["Encrypt", "Decrypt"]
-                    }
-                }
-            )
 
     def test_KMSKeyGrant_status(self):
         fake_boto, fake_client = self.fake_boto_client('sqs')

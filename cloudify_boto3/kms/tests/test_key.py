@@ -14,9 +14,6 @@
 
 from mock import patch, MagicMock
 import unittest
-
-from cloudify.state import current_ctx
-from botocore.exceptions import UnknownServiceError
 from cloudify_boto3.common.tests.test_base import CLIENT_CONFIG
 from cloudify_boto3.kms.tests.test_kms import TestKMS
 from cloudify_boto3.kms.resources import key
@@ -54,43 +51,18 @@ RUNTIME_PROPERTIES_AFTER_CREATE = {
 class TestKMSKey(TestKMS):
 
     def test_prepare(self):
-        _ctx = self.get_mock_ctx(
-            'test_prepare',
-            test_properties=NODE_PROPERTIES,
-            test_runtime_properties=RUNTIME_PROPERTIES,
-            type_hierarchy=KEY_TH
+        self._prepare_check(
+            type_hierarchy=KEY_TH,
+            type_name='kms',
+            type_class=key
         )
 
-        current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('kms')
-
-        with patch('boto3.client', fake_boto):
-            key.prepare(ctx=_ctx, resource_config=None, iface=None)
-            self.assertEqual(
-                _ctx.instance.runtime_properties, {
-                    'resource_config': {
-                        'Tags': [{
-                            'TagValue': 'Example',
-                            'TagKey': 'Cloudify'
-                        }],
-                        'Description': 'An example CMK.'
-                    }
-                }
-            )
-
     def test_create_raises_UnknownServiceError(self):
-        _ctx, fake_boto, fake_client = self._prepare_context(KEY_TH)
-
-        with patch('boto3.client', fake_boto):
-            with self.assertRaises(UnknownServiceError) as error:
-                key.create(ctx=_ctx, resource_config=None, iface=None)
-
-            self.assertEqual(
-                str(error.exception),
-                "Unknown service: 'kms'. Valid service names are: ['rds']"
-            )
-
-            fake_boto.assert_called_with('kms', **CLIENT_CONFIG)
+        self._prepare_create_raises_UnknownServiceError(
+            type_hierarchy=KEY_TH,
+            type_name='kms',
+            type_class=key
+        )
 
     def test_create(self):
         _ctx, fake_boto, fake_client = self._prepare_context(
