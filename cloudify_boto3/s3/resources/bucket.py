@@ -76,6 +76,15 @@ class S3Bucket(S3Base):
                           % (self.type_name, params))
         self.client.delete_bucket(**params)
 
+    def delete_objects(self, bucket):
+        list_objects = self.client.list_objects(Bucket=bucket)
+        for object in list_objects.get('Contents', []):
+            key = object.get('Key')
+            if key:
+                self.logger.debug('Deleting object {0} from bucket {1}.'.format(key, bucket))
+                delete_object = self.client.delete_object(Bucket=bucket, Key=key)
+                self.logger.debug('Response {0}'.format(delete_object))
+
 
 @decorators.aws_resource(resource_type=RESOURCE_TYPE)
 def prepare(ctx, resource_config, **_):
@@ -110,9 +119,12 @@ def delete(iface, resource_config, **_):
     params = \
         dict() if not resource_config else resource_config.copy()
 
+    bucket = params.get(BUCKET)
     # Add the required BUCKET parameter.
-    if BUCKET not in params.keys():
-        params.update({BUCKET: iface.resource_id})
+    if not bucket:
+        bucket = iface.resource_id
+        params.update({BUCKET: bucket})
 
     # Actually delete the resource
+    iface.delete_objects(bucket)
     iface.delete(params)

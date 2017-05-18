@@ -65,7 +65,7 @@ node_templates:
                   "Action": [
                     "s3:GetObject"
                   ],
-                  "Resource": "arn:aws:s3:::boto3-plugin/*"
+                  "Resource": "arn:aws:s3:::cloudify-bucket/*"
                 }
               ]
             }
@@ -82,7 +82,7 @@ node_templates:
           Tagging:
             TagSet:
             - Key: Name
-              Value: bucket_tagging
+              Value: cloudify-bucket-bucket_tagging
       client_config: *client_config
     relationships:
     - type: cloudify.relationships.depends_on
@@ -94,7 +94,7 @@ node_templates:
       resource_config:
         kwargs:
           ACL: public-read-write
-          Bucket: boto3-plugin
+          Bucket: cloudify-bucket
           CreateBucketConfiguration:
             LocationConstraint: { get_input: aws_region_name }
       client_config: *client_config

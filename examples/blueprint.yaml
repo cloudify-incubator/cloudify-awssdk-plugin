@@ -345,7 +345,7 @@ node_templates:
       resource_config:
         kwargs:
           ACL: public-read-write
-          Bucket: boto3-plugin-bucket1
+          Bucket: boto3-plugin-bucket
           CreateBucketConfiguration:
             LocationConstraint: { get_input: aws_region_name }
       client_config: *client_config
