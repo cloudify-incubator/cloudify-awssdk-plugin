@@ -81,9 +81,14 @@ class S3Bucket(S3Base):
         for object in list_objects.get('Contents', []):
             key = object.get('Key')
             if key:
-                self.logger.debug('Deleting object {0} from bucket {1}.'.format(key, bucket))
-                delete_object = self.client.delete_object(Bucket=bucket, Key=key)
-                self.logger.debug('Response {0}'.format(delete_object))
+                self.logger.debug(
+                    'Deleting object {0} from bucket {1}.'
+                    .format(key, bucket))
+                delete_object = \
+                    self.client.delete_object(
+                        Bucket=bucket, Key=key)
+                self.logger.debug(
+                    'Response {0}'.format(delete_object))
 
 
 @decorators.aws_resource(resource_type=RESOURCE_TYPE)
