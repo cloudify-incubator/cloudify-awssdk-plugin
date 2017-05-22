@@ -75,6 +75,21 @@ RUNTIME_PROPERTIES_AFTER_CREATE = {
 
 class TestIAMRole(TestBase):
 
+    def setUp(self):
+        super(TestIAMRole, self).setUp()
+
+        self.fake_boto, self.fake_client = self.fake_boto_client('iam')
+
+        self.mock_patch = patch('boto3.client', self.fake_boto)
+        self.mock_patch.start()
+
+    def tearDown(self):
+        self.mock_patch.stop()
+        self.fake_boto = None
+        self.fake_client = None
+
+        super(TestIAMRole, self).tearDown()
+
     def test_create_raises_UnknownServiceError(self):
         self._prepare_create_raises_UnknownServiceError(
             type_hierarchy=ROLE_TH,
@@ -91,24 +106,22 @@ class TestIAMRole(TestBase):
         )
 
         current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('iam')
 
-        with patch('boto3.client', fake_boto):
-            fake_client.create_role = MagicMock(return_value={
-                'Role': {
-                    'RoleName': "role_name_id",
-                    'Arn': "arn_id"
-                }
-            })
+        self.fake_client.create_role = MagicMock(return_value={
+            'Role': {
+                'RoleName': "role_name_id",
+                'Arn': "arn_id"
+            }
+        })
 
-            role.create(ctx=_ctx, resource_config=None, iface=None)
+        role.create(ctx=_ctx, resource_config=None, iface=None)
 
-            fake_boto.assert_called_with('iam', **CLIENT_CONFIG)
+        self.fake_boto.assert_called_with('iam', **CLIENT_CONFIG)
 
-            self.assertEqual(
-                _ctx.instance.runtime_properties,
-                RUNTIME_PROPERTIES_AFTER_CREATE
-            )
+        self.assertEqual(
+            _ctx.instance.runtime_properties,
+            RUNTIME_PROPERTIES_AFTER_CREATE
+        )
 
     def test_create_assume_str(self):
         _ctx = self.get_mock_ctx(
@@ -119,30 +132,28 @@ class TestIAMRole(TestBase):
         )
 
         current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('iam')
 
-        with patch('boto3.client', fake_boto):
-            fake_client.create_role = MagicMock(return_value={
-                'Role': {
-                    'RoleName': "role_name_id",
-                    'Arn': "arn_id"
-                }
-            })
+        self.fake_client.create_role = MagicMock(return_value={
+            'Role': {
+                'RoleName': "role_name_id",
+                'Arn': "arn_id"
+            }
+        })
 
-            role.create(ctx=_ctx, resource_config=None, iface=None)
+        role.create(ctx=_ctx, resource_config=None, iface=None)
 
-            fake_boto.assert_called_with('iam', **CLIENT_CONFIG)
+        self.fake_boto.assert_called_with('iam', **CLIENT_CONFIG)
 
-            fake_client.create_role.assert_called_with(
-                AssumeRolePolicyDocument=ASSUME_STR,
-                Path='/service-role/',
-                RoleName='aws_resource'
-            )
+        self.fake_client.create_role.assert_called_with(
+            AssumeRolePolicyDocument=ASSUME_STR,
+            Path='/service-role/',
+            RoleName='aws_resource'
+        )
 
-            self.assertEqual(
-                _ctx.instance.runtime_properties,
-                RUNTIME_PROPERTIES_AFTER_CREATE
-            )
+        self.assertEqual(
+            _ctx.instance.runtime_properties,
+            RUNTIME_PROPERTIES_AFTER_CREATE
+        )
 
     def test_delete(self):
         _ctx = self.get_mock_ctx(
@@ -153,71 +164,65 @@ class TestIAMRole(TestBase):
         )
 
         current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('iam')
 
-        with patch('boto3.client', fake_boto):
-            fake_client.delete_role = MagicMock(
-                return_value=DELETE_RESPONSE
-            )
+        self.fake_client.delete_role = MagicMock(
+            return_value=DELETE_RESPONSE
+        )
 
-            role.delete(ctx=_ctx, resource_config=None, iface=None)
+        role.delete(ctx=_ctx, resource_config=None, iface=None)
 
-            fake_boto.assert_called_with('iam', **CLIENT_CONFIG)
+        self.fake_boto.assert_called_with('iam', **CLIENT_CONFIG)
 
-            fake_client.delete_role.assert_called_with(
-                RoleName='role_name_id'
-            )
+        self.fake_client.delete_role.assert_called_with(
+            RoleName='role_name_id'
+        )
 
-            self.assertEqual(
-                _ctx.instance.runtime_properties,
-                {
-                    '__deleted': True,
-                    'aws_resource_arn': 'arn_id',
-                    'aws_resource_id': 'role_name_id',
-                    'resource_config': {}
-                }
-            )
+        self.assertEqual(
+            _ctx.instance.runtime_properties,
+            {
+                '__deleted': True,
+                'aws_resource_arn': 'arn_id',
+                'aws_resource_id': 'role_name_id',
+                'resource_config': {}
+            }
+        )
 
     def test_IAMRoleClass_properties(self):
-        fake_boto, fake_client = self.fake_boto_client('iam')
-        with patch('boto3.client', fake_boto):
-            fake_client.get_role = MagicMock(return_value={
-                'Role': {
-                    'RoleName': "role_name_id",
-                    'Arn': "arn_id"
-                }
-            })
-
-            test_instance = role.IAMRole("ctx_node", resource_id='role_id',
-                                         client=fake_client, logger=None)
-
-            self.assertEqual(test_instance.properties, {
+        self.fake_client.get_role = MagicMock(return_value={
+            'Role': {
                 'RoleName': "role_name_id",
                 'Arn': "arn_id"
-            })
+            }
+        })
 
-            fake_client.get_role.assert_called_with(
-                RoleName='role_id'
-            )
+        test_instance = role.IAMRole("ctx_node", resource_id='role_id',
+                                     client=self.fake_client, logger=None)
+
+        self.assertEqual(test_instance.properties, {
+            'RoleName': "role_name_id",
+            'Arn': "arn_id"
+        })
+
+        self.fake_client.get_role.assert_called_with(
+            RoleName='role_id'
+        )
 
     def test_IAMRoleClass_status(self):
-        fake_boto, fake_client = self.fake_boto_client('iam')
-        with patch('boto3.client', fake_boto):
-            fake_client.get_role = MagicMock(return_value={
-                'Role': {
-                    'RoleName': "role_name_id",
-                    'Arn': "arn_id"
-                }
-            })
+        self.fake_client.get_role = MagicMock(return_value={
+            'Role': {
+                'RoleName': "role_name_id",
+                'Arn': "arn_id"
+            }
+        })
 
-            test_instance = role.IAMRole("ctx_node", resource_id='role_id',
-                                         client=fake_client, logger=None)
+        test_instance = role.IAMRole("ctx_node", resource_id='role_id',
+                                     client=self.fake_client, logger=None)
 
-            self.assertEqual(test_instance.status, 'available')
+        self.assertEqual(test_instance.status, 'available')
 
-            fake_client.get_role.assert_called_with(
-                RoleName='role_id'
-            )
+        self.fake_client.get_role.assert_called_with(
+            RoleName='role_id'
+        )
 
     def test_attach_to(self):
         _source_ctx, _target_ctx, _ctx = self._create_common_relationships(
@@ -226,28 +231,26 @@ class TestIAMRole(TestBase):
             ['cloudify.nodes.Root', 'cloudify.nodes.aws.iam.Policy']
         )
         current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('iam')
 
-        with patch('boto3.client', fake_boto):
-            fake_client.attach_role_policy = MagicMock(return_value={})
+        self.fake_client.attach_role_policy = MagicMock(return_value={})
 
-            role.attach_to(
-                ctx=_ctx, resource_config=None, iface=None
-            )
+        role.attach_to(
+            ctx=_ctx, resource_config=None, iface=None
+        )
 
-            fake_client.attach_role_policy.assert_called_with(
-                PolicyArn='aws_resource_mock_arn',
-                RoleName='aws_resource_mock_id'
-            )
+        self.fake_client.attach_role_policy.assert_called_with(
+            PolicyArn='aws_resource_mock_arn',
+            RoleName='aws_resource_mock_id'
+        )
 
-            self.assertEqual(
-                _source_ctx.instance.runtime_properties, {
-                    '_set_changed': True,
-                    'aws_resource_id': 'aws_resource_mock_id',
-                    'resource_config': {},
-                    'resource_id': 'prepare_attach_source'
-                }
-            )
+        self.assertEqual(
+            _source_ctx.instance.runtime_properties, {
+                '_set_changed': True,
+                'aws_resource_id': 'aws_resource_mock_id',
+                'resource_config': {},
+                'resource_id': 'prepare_attach_source'
+            }
+        )
 
     def test_detach_from(self):
         _source_ctx, _target_ctx, _ctx = self._create_common_relationships(
@@ -256,28 +259,26 @@ class TestIAMRole(TestBase):
             ['cloudify.nodes.Root', 'cloudify.nodes.aws.iam.Policy']
         )
         current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('iam')
 
-        with patch('boto3.client', fake_boto):
-            fake_client.detach_role_policy = MagicMock(return_value={})
+        self.fake_client.detach_role_policy = MagicMock(return_value={})
 
-            role.detach_from(
-                ctx=_ctx, resource_config=None, iface=None
-            )
+        role.detach_from(
+            ctx=_ctx, resource_config=None, iface=None
+        )
 
-            fake_client.detach_role_policy.assert_called_with(
-                PolicyArn='aws_resource_mock_arn',
-                RoleName='aws_resource_mock_id'
-            )
+        self.fake_client.detach_role_policy.assert_called_with(
+            PolicyArn='aws_resource_mock_arn',
+            RoleName='aws_resource_mock_id'
+        )
 
-            self.assertEqual(
-                _source_ctx.instance.runtime_properties, {
-                    '_set_changed': True,
-                    'aws_resource_id': 'aws_resource_mock_id',
-                    'resource_config': {},
-                    'resource_id': 'prepare_attach_source'
-                }
-            )
+        self.assertEqual(
+            _source_ctx.instance.runtime_properties, {
+                '_set_changed': True,
+                'aws_resource_id': 'aws_resource_mock_id',
+                'resource_config': {},
+                'resource_id': 'prepare_attach_source'
+            }
+        )
 
 
 if __name__ == '__main__':

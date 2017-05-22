@@ -81,6 +81,21 @@ RUNTIME_PROPERTIES_AFTER_CREATE = {
 
 class TestIAMPolicy(TestBase):
 
+    def setUp(self):
+        super(TestIAMPolicy, self).setUp()
+
+        self.fake_boto, self.fake_client = self.fake_boto_client('iam')
+
+        self.mock_patch = patch('boto3.client', self.fake_boto)
+        self.mock_patch.start()
+
+    def tearDown(self):
+        self.mock_patch.stop()
+        self.fake_boto = None
+        self.fake_client = None
+
+        super(TestIAMPolicy, self).tearDown()
+
     def test_create_raises_UnknownServiceError(self):
         self._prepare_create_raises_UnknownServiceError(
             type_hierarchy=POLICY_TH,
@@ -97,24 +112,22 @@ class TestIAMPolicy(TestBase):
         )
 
         current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('iam')
 
-        with patch('boto3.client', fake_boto):
-            fake_client.create_policy = MagicMock(return_value={
-                'Policy': {
-                    'PolicyName': 'policy_name_id',
-                    'Arn': 'arn_id'
-                }
-            })
+        self.fake_client.create_policy = MagicMock(return_value={
+            'Policy': {
+                'PolicyName': 'policy_name_id',
+                'Arn': 'arn_id'
+            }
+        })
 
-            policy.create(ctx=_ctx, resource_config=None, iface=None)
+        policy.create(ctx=_ctx, resource_config=None, iface=None)
 
-            fake_boto.assert_called_with('iam', **CLIENT_CONFIG)
+        self.fake_boto.assert_called_with('iam', **CLIENT_CONFIG)
 
-            self.assertEqual(
-                _ctx.instance.runtime_properties,
-                RUNTIME_PROPERTIES_AFTER_CREATE
-            )
+        self.assertEqual(
+            _ctx.instance.runtime_properties,
+            RUNTIME_PROPERTIES_AFTER_CREATE
+        )
 
     def test_create_policy_str(self):
         _ctx = self.get_mock_ctx(
@@ -125,31 +138,29 @@ class TestIAMPolicy(TestBase):
         )
 
         current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('iam')
 
-        with patch('boto3.client', fake_boto):
-            fake_client.create_policy = MagicMock(return_value={
-                'Policy': {
-                    'PolicyName': 'policy_name_id',
-                    'Arn': 'arn_id'
-                }
-            })
+        self.fake_client.create_policy = MagicMock(return_value={
+            'Policy': {
+                'PolicyName': 'policy_name_id',
+                'Arn': 'arn_id'
+            }
+        })
 
-            policy.create(ctx=_ctx, resource_config=None, iface=None)
+        policy.create(ctx=_ctx, resource_config=None, iface=None)
 
-            fake_boto.assert_called_with('iam', **CLIENT_CONFIG)
+        self.fake_boto.assert_called_with('iam', **CLIENT_CONFIG)
 
-            fake_client.create_policy.assert_called_with(
-                Description='Grants access to EC2 network components',
-                Path='/service-role/',
-                PolicyDocument=POLICY_STR,
-                PolicyName='aws_resource'
-            )
+        self.fake_client.create_policy.assert_called_with(
+            Description='Grants access to EC2 network components',
+            Path='/service-role/',
+            PolicyDocument=POLICY_STR,
+            PolicyName='aws_resource'
+        )
 
-            self.assertEqual(
-                _ctx.instance.runtime_properties,
-                RUNTIME_PROPERTIES_AFTER_CREATE
-            )
+        self.assertEqual(
+            _ctx.instance.runtime_properties,
+            RUNTIME_PROPERTIES_AFTER_CREATE
+        )
 
     def test_delete(self):
         _ctx = self.get_mock_ctx(
@@ -160,71 +171,69 @@ class TestIAMPolicy(TestBase):
         )
 
         current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('iam')
 
-        with patch('boto3.client', fake_boto):
-            fake_client.delete_policy = MagicMock(
-                return_value=DELETE_RESPONSE
-            )
+        self.fake_client.delete_policy = MagicMock(
+            return_value=DELETE_RESPONSE
+        )
 
-            policy.delete(ctx=_ctx, resource_config=None, iface=None)
+        policy.delete(ctx=_ctx, resource_config=None, iface=None)
 
-            fake_boto.assert_called_with('iam', **CLIENT_CONFIG)
+        self.fake_boto.assert_called_with('iam', **CLIENT_CONFIG)
 
-            fake_client.delete_policy.assert_called_with(PolicyArn='arn_id')
+        self.fake_client.delete_policy.assert_called_with(
+            PolicyArn='arn_id'
+        )
 
-            self.assertEqual(
-                _ctx.instance.runtime_properties,
-                {
-                    'aws_resource_id': 'policy_name_id',
-                    'aws_resource_arn': 'arn_id',
-                    'resource_config': {},
-                    '__deleted': True
-                }
-            )
+        self.assertEqual(
+            _ctx.instance.runtime_properties,
+            {
+                'aws_resource_id': 'policy_name_id',
+                'aws_resource_arn': 'arn_id',
+                'resource_config': {},
+                '__deleted': True
+            }
+        )
 
     def test_IAMPolicyClass_properties(self):
-        fake_boto, fake_client = self.fake_boto_client('iam')
-        with patch('boto3.client', fake_boto):
-            fake_client.get_policy = MagicMock(return_value={
-                'Policy': {
-                    'PolicyName': 'policy_name_id',
-                    'Arn': 'arn_id'
-                }
-            })
-
-            test_instance = policy.IAMPolicy("ctx_node",
-                                             resource_id='queue_id',
-                                             client=fake_client, logger=None)
-
-            self.assertEqual(test_instance.properties, {
+        self.fake_client.get_policy = MagicMock(return_value={
+            'Policy': {
                 'PolicyName': 'policy_name_id',
                 'Arn': 'arn_id'
-            })
+            }
+        })
 
-            fake_client.get_policy.assert_called_with(
-                PolicyArn='queue_id'
-            )
+        test_instance = policy.IAMPolicy("ctx_node",
+                                         resource_id='queue_id',
+                                         client=self.fake_client,
+                                         logger=None)
+
+        self.assertEqual(test_instance.properties, {
+            'PolicyName': 'policy_name_id',
+            'Arn': 'arn_id'
+        })
+
+        self.fake_client.get_policy.assert_called_with(
+            PolicyArn='queue_id'
+        )
 
     def test_IAMPolicyClass_status(self):
-        fake_boto, fake_client = self.fake_boto_client('iam')
-        with patch('boto3.client', fake_boto):
-            fake_client.get_policy = MagicMock(return_value={
-                'Policy': {
-                    'PolicyName': 'policy_name_id',
-                    'Arn': 'arn_id'
-                }
-            })
+        self.fake_client.get_policy = MagicMock(return_value={
+            'Policy': {
+                'PolicyName': 'policy_name_id',
+                'Arn': 'arn_id'
+            }
+        })
 
-            test_instance = policy.IAMPolicy("ctx_node",
-                                             resource_id='queue_id',
-                                             client=fake_client, logger=None)
+        test_instance = policy.IAMPolicy("ctx_node",
+                                         resource_id='queue_id',
+                                         client=self.fake_client,
+                                         logger=None)
 
-            self.assertEqual(test_instance.status, 'available')
+        self.assertEqual(test_instance.status, 'available')
 
-            fake_client.get_policy.assert_called_with(
-                PolicyArn='queue_id'
-            )
+        self.fake_client.get_policy.assert_called_with(
+            PolicyArn='queue_id'
+        )
 
 
 if __name__ == '__main__':

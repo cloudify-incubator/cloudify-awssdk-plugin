@@ -47,6 +47,21 @@ RUNTIME_PROPERTIES_AFTER_CREATE = {
 
 class TestRDSParameterGroup(TestBase):
 
+    def setUp(self):
+        super(TestRDSParameterGroup, self).setUp()
+
+        self.fake_boto, self.fake_client = self.fake_boto_client('rds')
+
+        self.mock_patch = patch('boto3.client', self.fake_boto)
+        self.mock_patch.start()
+
+    def tearDown(self):
+        self.mock_patch.stop()
+        self.fake_boto = None
+        self.fake_client = None
+
+        super(TestRDSParameterGroup, self).tearDown()
+
     def test_create_raises_UnknownServiceError(self):
         _test_name = 'test_create_UnknownServiceError'
         _test_node_properties = {
@@ -62,19 +77,18 @@ class TestRDSParameterGroup(TestBase):
             type_hierarchy=PARAMETER_GROUP_TH
         )
         current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('rds')
-        with patch('boto3.client', fake_boto):
-            with self.assertRaises(UnknownServiceError) as error:
-                parameter_group.create(
-                    ctx=_ctx, resource_config=None, iface=None
-                )
 
-            self.assertEqual(
-                str(error.exception),
-                "Unknown service: 'rds'. Valid service names are: ['rds']"
+        with self.assertRaises(UnknownServiceError) as error:
+            parameter_group.create(
+                ctx=_ctx, resource_config=None, iface=None
             )
 
-            fake_boto.assert_called_with('rds', region_name=None)
+        self.assertEqual(
+            str(error.exception),
+            "Unknown service: 'rds'. Valid service names are: ['rds']"
+        )
+
+        self.fake_boto.assert_called_with('rds', region_name=None)
 
     def test_configure_empty(self):
         _test_name = 'test_configure'
@@ -85,16 +99,15 @@ class TestRDSParameterGroup(TestBase):
             type_hierarchy=PARAMETER_GROUP_TH
         )
         current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('rds')
-        with patch('boto3.client', fake_boto):
-            parameter_group.configure(
-                ctx=_ctx, resource_config=None, iface=None
-            )
 
-            self.assertEqual(
-                _ctx.instance.runtime_properties,
-                RUNTIME_PROPERTIES_AFTER_CREATE
-            )
+        parameter_group.configure(
+            ctx=_ctx, resource_config=None, iface=None
+        )
+
+        self.assertEqual(
+            _ctx.instance.runtime_properties,
+            RUNTIME_PROPERTIES_AFTER_CREATE
+        )
 
     def test_configure(self):
         _test_name = 'test_configure'
@@ -105,44 +118,43 @@ class TestRDSParameterGroup(TestBase):
             type_hierarchy=PARAMETER_GROUP_TH
         )
         current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('rds')
-        with patch('boto3.client', fake_boto):
-            fake_client.modify_db_parameter_group = MagicMock(
-                return_value={'DBParameterGroupName': 'abc'}
-            )
-            parameter_group.configure(
-                ctx=_ctx, resource_config={
-                    "Parameters": [
-                        {
-                            "ParameterName": "time_zone",
-                            "ParameterValue": "US/Eastern",
-                            "ApplyMethod": "immediate"
-                        }, {
-                            "ParameterName": "lc_time_names",
-                            "ParameterValue": "en_US",
-                            "ApplyMethod": "immediate"
-                        }
-                    ]
-                }, iface=None
-            )
 
-            fake_client.modify_db_parameter_group.assert_called_with(
-                DBParameterGroupName='dev-db-param-group',
-                Parameters=[{
-                    'ParameterName': 'time_zone',
-                    'ParameterValue': 'US/Eastern',
-                    'ApplyMethod': 'immediate'
-                }, {
-                    'ParameterName': 'lc_time_names',
-                    'ParameterValue': 'en_US',
-                    'ApplyMethod': 'immediate'
-                }]
-            )
+        self.fake_client.modify_db_parameter_group = MagicMock(
+            return_value={'DBParameterGroupName': 'abc'}
+        )
+        parameter_group.configure(
+            ctx=_ctx, resource_config={
+                "Parameters": [
+                    {
+                        "ParameterName": "time_zone",
+                        "ParameterValue": "US/Eastern",
+                        "ApplyMethod": "immediate"
+                    }, {
+                        "ParameterName": "lc_time_names",
+                        "ParameterValue": "en_US",
+                        "ApplyMethod": "immediate"
+                    }
+                ]
+            }, iface=None
+        )
 
-            self.assertEqual(
-                _ctx.instance.runtime_properties,
-                RUNTIME_PROPERTIES_AFTER_CREATE
-            )
+        self.fake_client.modify_db_parameter_group.assert_called_with(
+            DBParameterGroupName='dev-db-param-group',
+            Parameters=[{
+                'ParameterName': 'time_zone',
+                'ParameterValue': 'US/Eastern',
+                'ApplyMethod': 'immediate'
+            }, {
+                'ParameterName': 'lc_time_names',
+                'ParameterValue': 'en_US',
+                'ApplyMethod': 'immediate'
+            }]
+        )
+
+        self.assertEqual(
+            _ctx.instance.runtime_properties,
+            RUNTIME_PROPERTIES_AFTER_CREATE
+        )
 
     def test_create(self):
         _test_name = 'test_create_UnknownServiceError'
@@ -156,30 +168,29 @@ class TestRDSParameterGroup(TestBase):
             type_hierarchy=PARAMETER_GROUP_TH
         )
         current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('rds')
-        with patch('boto3.client', fake_boto):
-            fake_client.create_db_parameter_group = MagicMock(
-                return_value={
-                    'DBParameterGroup': {
-                        'DBParameterGroupName': 'dev-db-param-group',
-                        'DBParameterGroupArn': 'DBParameterGroupArn'
-                    }
+
+        self.fake_client.create_db_parameter_group = MagicMock(
+            return_value={
+                'DBParameterGroup': {
+                    'DBParameterGroupName': 'dev-db-param-group',
+                    'DBParameterGroupArn': 'DBParameterGroupArn'
                 }
-            )
-            parameter_group.create(
-                ctx=_ctx, resource_config=None, iface=None
-            )
+            }
+        )
+        parameter_group.create(
+            ctx=_ctx, resource_config=None, iface=None
+        )
 
-            fake_client.create_db_parameter_group.assert_called_with(
-                DBParameterGroupFamily='mysql5.7',
-                DBParameterGroupName='dev-db-param-group',
-                Description='MySQL5.7 Parameter Group for Dev'
-            )
+        self.fake_client.create_db_parameter_group.assert_called_with(
+            DBParameterGroupFamily='mysql5.7',
+            DBParameterGroupName='dev-db-param-group',
+            Description='MySQL5.7 Parameter Group for Dev'
+        )
 
-            self.assertEqual(
-                _ctx.instance.runtime_properties,
-                RUNTIME_PROPERTIES_AFTER_CREATE
-            )
+        self.assertEqual(
+            _ctx.instance.runtime_properties,
+            RUNTIME_PROPERTIES_AFTER_CREATE
+        )
 
     def test_delete(self):
         _test_name = 'test_delete'
@@ -190,27 +201,26 @@ class TestRDSParameterGroup(TestBase):
             type_hierarchy=PARAMETER_GROUP_TH
         )
         current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('rds')
-        with patch('boto3.client', fake_boto):
-            fake_client.delete_db_parameter_group = MagicMock(
-                return_value={}
-            )
-            parameter_group.delete(
-                ctx=_ctx, resource_config=None, iface=None
-            )
 
-            fake_client.delete_db_parameter_group.assert_called_with(
-                DBParameterGroupName='dev-db-param-group'
-            )
+        self.fake_client.delete_db_parameter_group = MagicMock(
+            return_value={}
+        )
+        parameter_group.delete(
+            ctx=_ctx, resource_config=None, iface=None
+        )
 
-            self.assertEqual(
-                _ctx.instance.runtime_properties, {
-                    'aws_resource_arn': 'DBParameterGroupArn',
-                    '__deleted': True,
-                    'aws_resource_id': 'dev-db-param-group',
-                    'resource_config': {}
-                }
-            )
+        self.fake_client.delete_db_parameter_group.assert_called_with(
+            DBParameterGroupName='dev-db-param-group'
+        )
+
+        self.assertEqual(
+            _ctx.instance.runtime_properties, {
+                'aws_resource_arn': 'DBParameterGroupArn',
+                '__deleted': True,
+                'aws_resource_id': 'dev-db-param-group',
+                'resource_config': {}
+            }
+        )
 
     def test_immortal_delete(self):
         _test_name = 'test_immortal_delete'
@@ -221,31 +231,30 @@ class TestRDSParameterGroup(TestBase):
             type_hierarchy=PARAMETER_GROUP_TH
         )
         current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('rds')
-        with patch('boto3.client', fake_boto):
-            fake_client.delete_db_parameter_group = MagicMock(
-                return_value={}
-            )
-            fake_client.describe_db_parameter_groups = MagicMock(
-                return_value={
-                    'DBParameterGroups': [{
-                        'DBParameterGroupName': 'dev-db-param-group',
-                        'DBParameterGroupArn': 'DBParameterGroupArn'
-                    }]
-                }
-            )
-            with self.assertRaises(OperationRetry) as error:
-                parameter_group.delete(
-                    ctx=_ctx, resource_config=None, iface=None
-                )
 
-            self.assertEqual(
-                str(error.exception),
-                (
-                    'RDS Parameter Group ID# "dev-db-param-group"' +
-                    ' is still in a pending state.'
-                )
+        self.fake_client.delete_db_parameter_group = MagicMock(
+            return_value={}
+        )
+        self.fake_client.describe_db_parameter_groups = MagicMock(
+            return_value={
+                'DBParameterGroups': [{
+                    'DBParameterGroupName': 'dev-db-param-group',
+                    'DBParameterGroupArn': 'DBParameterGroupArn'
+                }]
+            }
+        )
+        with self.assertRaises(OperationRetry) as error:
+            parameter_group.delete(
+                ctx=_ctx, resource_config=None, iface=None
             )
+
+        self.assertEqual(
+            str(error.exception),
+            (
+                'RDS Parameter Group ID# "dev-db-param-group"' +
+                ' is still in a pending state.'
+            )
+        )
 
     def _create_parameter_relationships(self, node_id):
         _source_ctx = self.get_mock_ctx(
@@ -286,41 +295,37 @@ class TestRDSParameterGroup(TestBase):
             'test_attach_to'
         )
         current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('rds')
 
-        with patch('boto3.client', fake_boto):
-            fake_client.modify_db_parameter_group = MagicMock(
-                return_value={
-                    'DBParameterGroupName': 'abc'
-                }
-            )
-            parameter_group.attach_to(
-                ctx=_ctx, resource_config=None, iface=None
-            )
-            self.assertEqual(_target_ctx.instance.runtime_properties, {
-                'aws_resource_id': 'aws_target_mock_id',
-                'resource_id': 'prepare_attach_target'
-            })
-            fake_client.modify_db_parameter_group.assert_called_with(
-                DBParameterGroupName='aws_resource_mock_id',
-                Parameters=[{'ParameterName': 'aws_target_mock_id'}]
-            )
+        self.fake_client.modify_db_parameter_group = MagicMock(
+            return_value={
+                'DBParameterGroupName': 'abc'
+            }
+        )
+        parameter_group.attach_to(
+            ctx=_ctx, resource_config=None, iface=None
+        )
+        self.assertEqual(_target_ctx.instance.runtime_properties, {
+            'aws_resource_id': 'aws_target_mock_id',
+            'resource_id': 'prepare_attach_target'
+        })
+        self.fake_client.modify_db_parameter_group.assert_called_with(
+            DBParameterGroupName='aws_resource_mock_id',
+            Parameters=[{'ParameterName': 'aws_target_mock_id'}]
+        )
 
     def test_detach_from(self):
         _source_ctx, _target_ctx, _ctx = self._create_parameter_relationships(
             'test_detach_from'
         )
         current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('rds')
 
-        with patch('boto3.client', fake_boto):
-            parameter_group.detach_from(
-                ctx=_ctx, resource_config=None, iface=None
-            )
-            self.assertEqual(_target_ctx.instance.runtime_properties, {
-                'aws_resource_id': 'aws_target_mock_id',
-                'resource_id': 'prepare_attach_target'
-            })
+        parameter_group.detach_from(
+            ctx=_ctx, resource_config=None, iface=None
+        )
+        self.assertEqual(_target_ctx.instance.runtime_properties, {
+            'aws_resource_id': 'aws_target_mock_id',
+            'resource_id': 'prepare_attach_target'
+        })
 
 
 if __name__ == '__main__':

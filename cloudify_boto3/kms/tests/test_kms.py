@@ -13,7 +13,7 @@
 #    * limitations under the License.
 
 import unittest
-from mock import MagicMock
+from mock import patch, MagicMock
 
 from cloudify.state import current_ctx
 
@@ -41,6 +41,20 @@ class TestKMSBase(TestServiceBase):
 
 
 class TestKMS(TestBase):
+
+    def setUp(self):
+        super(TestKMS, self).setUp()
+
+        self.fake_boto, self.fake_client = self.fake_boto_client('kms')
+        self.mock_patch = patch('boto3.client', self.fake_boto)
+        self.mock_patch.start()
+
+    def tearDown(self):
+        self.mock_patch.stop()
+        self.fake_boto = None
+        self.fake_client = None
+
+        super(TestKMS, self).tearDown()
 
     def _prepare_context(self, type_hierarchy, node_prop=None,
                          runtime_prop=None):
@@ -71,8 +85,7 @@ class TestKMS(TestBase):
         )
 
         current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('kms')
-        return _ctx, fake_boto, fake_client
+        return _ctx
 
 
 if __name__ == '__main__':

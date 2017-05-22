@@ -44,6 +44,21 @@ RUNTIME_PROPERTIES_AFTER_CREATE = {
 
 class TestDynamoDBTable(TestBase):
 
+    def setUp(self):
+        super(TestDynamoDBTable, self).setUp()
+
+        self.fake_boto, self.fake_client = self.fake_boto_client('dynamodb')
+
+        self.mock_patch = patch('boto3.client', self.fake_boto)
+        self.mock_patch.start()
+
+    def tearDown(self):
+        self.mock_patch.stop()
+        self.fake_boto = None
+        self.fake_client = None
+
+        super(TestDynamoDBTable, self).tearDown()
+
     def test_create_raises_UnknownServiceError(self):
         self._prepare_create_raises_UnknownServiceError(
             type_hierarchy=TABLE_TH,
@@ -60,64 +75,62 @@ class TestDynamoDBTable(TestBase):
         )
 
         current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('dynamodb')
 
-        with patch('boto3.client', fake_boto):
-            fake_client.create_table = MagicMock(return_value={
-                'TableDescription': {
-                    'TableName': 'aws_table_name',
-                    'TableArn': 'aws_table_arn'
-                }
-            })
+        self.fake_client.create_table = MagicMock(return_value={
+            'TableDescription': {
+                'TableName': 'aws_table_name',
+                'TableArn': 'aws_table_arn'
+            }
+        })
 
-            fake_client.describe_table = MagicMock(return_value={
-                'Table': {
-                    'TableStatus': 'ACTIVE'
-                }
-            })
+        self.fake_client.describe_table = MagicMock(return_value={
+            'Table': {
+                'TableStatus': 'ACTIVE'
+            }
+        })
 
-            table.create(
-                ctx=_ctx, resource_config={
-                    "AttributeDefinitions": [{
-                        "AttributeName": "RandomKeyUUID",
-                        "AttributeType": "S"
-                    }],
-                    "KeySchema": [{
-                        "AttributeName": "RandomKeyUUID",
-                        "KeyType": "HASH"
-                    }],
-                    "ProvisionedThroughput": {
-                        "ReadCapacityUnits": "5",
-                        "WriteCapacityUnits": "5"
-                    }
-                }, iface=None
-            )
-
-            fake_boto.assert_called_with('dynamodb', **CLIENT_CONFIG)
-
-            fake_client.create_table.assert_called_with(
-                AttributeDefinitions=[{
-                    'AttributeName': 'RandomKeyUUID', 'AttributeType': 'S'
+        table.create(
+            ctx=_ctx, resource_config={
+                "AttributeDefinitions": [{
+                    "AttributeName": "RandomKeyUUID",
+                    "AttributeType": "S"
                 }],
-                KeySchema=[{
-                    'KeyType': 'HASH',
-                    'AttributeName': 'RandomKeyUUID'
+                "KeySchema": [{
+                    "AttributeName": "RandomKeyUUID",
+                    "KeyType": "HASH"
                 }],
-                ProvisionedThroughput={
-                    'ReadCapacityUnits': '5',
-                    'WriteCapacityUnits': '5'
-                },
-                TableName='aws_resource'
-            )
+                "ProvisionedThroughput": {
+                    "ReadCapacityUnits": "5",
+                    "WriteCapacityUnits": "5"
+                }
+            }, iface=None
+        )
 
-            fake_client.describe_table.assert_called_with(
-                TableName='aws_table_name'
-            )
+        self.fake_boto.assert_called_with('dynamodb', **CLIENT_CONFIG)
 
-            self.assertEqual(
-                _ctx.instance.runtime_properties,
-                RUNTIME_PROPERTIES_AFTER_CREATE
-            )
+        self.fake_client.create_table.assert_called_with(
+            AttributeDefinitions=[{
+                'AttributeName': 'RandomKeyUUID', 'AttributeType': 'S'
+            }],
+            KeySchema=[{
+                'KeyType': 'HASH',
+                'AttributeName': 'RandomKeyUUID'
+            }],
+            ProvisionedThroughput={
+                'ReadCapacityUnits': '5',
+                'WriteCapacityUnits': '5'
+            },
+            TableName='aws_resource'
+        )
+
+        self.fake_client.describe_table.assert_called_with(
+            TableName='aws_table_name'
+        )
+
+        self.assertEqual(
+            _ctx.instance.runtime_properties,
+            RUNTIME_PROPERTIES_AFTER_CREATE
+        )
 
     def test_delete(self):
         _ctx = self.get_mock_ctx(
@@ -128,30 +141,28 @@ class TestDynamoDBTable(TestBase):
         )
 
         current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('dynamodb')
 
-        with patch('boto3.client', fake_boto):
-            fake_client.delete_table = MagicMock(
-                return_value=DELETE_RESPONSE
-            )
+        self.fake_client.delete_table = MagicMock(
+            return_value=DELETE_RESPONSE
+        )
 
-            table.delete(ctx=_ctx, resource_config=None, iface=None)
+        table.delete(ctx=_ctx, resource_config=None, iface=None)
 
-            fake_boto.assert_called_with('dynamodb', **CLIENT_CONFIG)
+        self.fake_boto.assert_called_with('dynamodb', **CLIENT_CONFIG)
 
-            fake_client.delete_table.assert_called_with(
-                TableName='aws_table_name'
-            )
+        self.fake_client.delete_table.assert_called_with(
+            TableName='aws_table_name'
+        )
 
-            self.assertEqual(
-                _ctx.instance.runtime_properties,
-                {
-                    'aws_resource_arn': 'aws_table_arn',
-                    '__deleted': True,
-                    'resource_config': {},
-                    'aws_resource_id': 'aws_table_name'
-                }
-            )
+        self.assertEqual(
+            _ctx.instance.runtime_properties,
+            {
+                'aws_resource_arn': 'aws_table_arn',
+                '__deleted': True,
+                'resource_config': {},
+                'aws_resource_id': 'aws_table_name'
+            }
+        )
 
 
 if __name__ == '__main__':

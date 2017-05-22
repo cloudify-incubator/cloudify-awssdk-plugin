@@ -59,6 +59,21 @@ RUNTIME_PROPERTIES_AFTER_CREATE = {
 
 class TestCloudwatchAlarm(TestBase):
 
+    def setUp(self):
+        super(TestCloudwatchAlarm, self).setUp()
+
+        self.fake_boto, self.fake_client = self.fake_boto_client('cloudwatch')
+
+        self.mock_patch = patch('boto3.client', self.fake_boto)
+        self.mock_patch.start()
+
+    def tearDown(self):
+        self.mock_patch.stop()
+        self.fake_boto = None
+        self.fake_client = None
+
+        super(TestCloudwatchAlarm, self).tearDown()
+
     def test_prepare(self):
         self._prepare_check(
             type_hierarchy=ALARM_TH,
@@ -82,34 +97,32 @@ class TestCloudwatchAlarm(TestBase):
         )
 
         current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('cloudwatch')
 
-        with patch('boto3.client', fake_boto):
-            fake_client.put_metric_alarm = MagicMock(return_value={
-                'metric': 'alarm'
-            })
+        self.fake_client.put_metric_alarm = MagicMock(return_value={
+            'metric': 'alarm'
+        })
 
-            alarm.create(ctx=_ctx, resource_config=None, iface=None)
+        alarm.create(ctx=_ctx, resource_config=None, iface=None)
 
-            fake_boto.assert_called_with('cloudwatch', **CLIENT_CONFIG)
+        self.fake_boto.assert_called_with('cloudwatch', **CLIENT_CONFIG)
 
-            fake_client.put_metric_alarm.assert_called_with(
-                ActionsEnabled='true',
-                AlarmActions=['arn:aws:automate:region:ec2:terminate'],
-                AlarmName='test-cloudwatch1',
-                ComparisonOperator='LessThanThreshold',
-                EvaluationPeriods='5',
-                MetricName='CPUUtilization',
-                Namespace='AWS/EC2',
-                Period='60',
-                Statistic='Minimum',
-                Threshold='60'
-            )
+        self.fake_client.put_metric_alarm.assert_called_with(
+            ActionsEnabled='true',
+            AlarmActions=['arn:aws:automate:region:ec2:terminate'],
+            AlarmName='test-cloudwatch1',
+            ComparisonOperator='LessThanThreshold',
+            EvaluationPeriods='5',
+            MetricName='CPUUtilization',
+            Namespace='AWS/EC2',
+            Period='60',
+            Statistic='Minimum',
+            Threshold='60'
+        )
 
-            self.assertEqual(
-                _ctx.instance.runtime_properties,
-                RUNTIME_PROPERTIES_AFTER_CREATE
-            )
+        self.assertEqual(
+            _ctx.instance.runtime_properties,
+            RUNTIME_PROPERTIES_AFTER_CREATE
+        )
 
     def test_delete(self):
         _ctx = self.get_mock_ctx(
@@ -120,92 +133,82 @@ class TestCloudwatchAlarm(TestBase):
         )
 
         current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('cloudwatch')
 
-        with patch('boto3.client', fake_boto):
-            fake_client.delete_alarms = MagicMock(
-                return_value=DELETE_RESPONSE
-            )
+        self.fake_client.delete_alarms = MagicMock(
+            return_value=DELETE_RESPONSE
+        )
 
-            alarm.delete(ctx=_ctx, resource_config=None, iface=None)
+        alarm.delete(ctx=_ctx, resource_config=None, iface=None)
 
-            fake_boto.assert_called_with('cloudwatch', **CLIENT_CONFIG)
+        self.fake_boto.assert_called_with('cloudwatch', **CLIENT_CONFIG)
 
-            fake_client.delete_alarms.assert_called_with(
-                AlarmNames=['test-cloudwatch1']
-            )
+        self.fake_client.delete_alarms.assert_called_with(
+            AlarmNames=['test-cloudwatch1']
+        )
 
-            self.assertEqual(
-                _ctx.instance.runtime_properties,
-                {
-                    'aws_resource_id': 'test-cloudwatch1',
-                    'resource_config': {}
-                }
-            )
+        self.assertEqual(
+            _ctx.instance.runtime_properties,
+            {
+                'aws_resource_id': 'test-cloudwatch1',
+                'resource_config': {}
+            }
+        )
 
     def test_CloudwatchAlarmClass_properties(self):
-        fake_boto, fake_client = self.fake_boto_client('cloudwatch')
-        with patch('boto3.client', fake_boto):
-            fake_client.describe_alarms = MagicMock(return_value={
-                'MetricAlarms': ['FirstAlarm']
-            })
+        self.fake_client.describe_alarms = MagicMock(return_value={
+            'MetricAlarms': ['FirstAlarm']
+        })
 
-            test_instance = alarm.CloudwatchAlarm("ctx_node",
-                                                  resource_id='alarm_id',
-                                                  client=fake_client,
-                                                  logger=None)
+        test_instance = alarm.CloudwatchAlarm("ctx_node",
+                                              resource_id='alarm_id',
+                                              client=self.fake_client,
+                                              logger=None)
 
-            self.assertEqual(test_instance.properties, 'FirstAlarm')
+        self.assertEqual(test_instance.properties, 'FirstAlarm')
 
-            fake_client.describe_alarms.assert_called_with(
-                AlarmNames=['alarm_id']
-            )
+        self.fake_client.describe_alarms.assert_called_with(
+            AlarmNames=['alarm_id']
+        )
 
     def test_CloudwatchAlarmClass_properties_empty(self):
-        fake_boto, fake_client = self.fake_boto_client('cloudwatch')
-        with patch('boto3.client', fake_boto):
-            test_instance = alarm.CloudwatchAlarm("ctx_node",
-                                                  resource_id='alarm_id',
-                                                  client=fake_client,
-                                                  logger=None)
+        test_instance = alarm.CloudwatchAlarm("ctx_node",
+                                              resource_id='alarm_id',
+                                              client=self.fake_client,
+                                              logger=None)
 
-            self.assertEqual(test_instance.properties, None)
+        self.assertEqual(test_instance.properties, None)
 
-            fake_client.describe_alarms.assert_called_with(
-                AlarmNames=['alarm_id']
-            )
+        self.fake_client.describe_alarms.assert_called_with(
+            AlarmNames=['alarm_id']
+        )
 
     def test_CloudwatchAlarmClass_status(self):
-        fake_boto, fake_client = self.fake_boto_client('cloudwatch')
-        with patch('boto3.client', fake_boto):
-            fake_client.describe_alarms = MagicMock(return_value={
-                'MetricAlarms': ['FirstAlarm']
-            })
+        self.fake_client.describe_alarms = MagicMock(return_value={
+            'MetricAlarms': ['FirstAlarm']
+        })
 
-            test_instance = alarm.CloudwatchAlarm("ctx_node",
-                                                  resource_id='alarm_id',
-                                                  client=fake_client,
-                                                  logger=None)
+        test_instance = alarm.CloudwatchAlarm("ctx_node",
+                                              resource_id='alarm_id',
+                                              client=self.fake_client,
+                                              logger=None)
 
-            self.assertEqual(test_instance.status, None)
+        self.assertEqual(test_instance.status, None)
 
-            fake_client.describe_alarms.assert_called_with(
-                AlarmNames=['alarm_id']
-            )
+        self.fake_client.describe_alarms.assert_called_with(
+            AlarmNames=['alarm_id']
+        )
 
     def test_CloudwatchAlarmClass_status_empty(self):
-        fake_boto, fake_client = self.fake_boto_client('cloudwatch')
-        with patch('boto3.client', fake_boto):
-            test_instance = alarm.CloudwatchAlarm("ctx_node",
-                                                  resource_id='alarm_id',
-                                                  client=fake_client,
-                                                  logger=None)
+        test_instance = alarm.CloudwatchAlarm("ctx_node",
+                                              resource_id='alarm_id',
+                                              client=self.fake_client,
+                                              logger=None)
 
-            self.assertEqual(test_instance.status, None)
+        self.assertEqual(test_instance.status, None)
 
-            fake_client.describe_alarms.assert_called_with(
-                AlarmNames=['alarm_id']
-            )
+        self.fake_client.describe_alarms.assert_called_with(
+            AlarmNames=['alarm_id']
+        )
 
 
 if __name__ == '__main__':

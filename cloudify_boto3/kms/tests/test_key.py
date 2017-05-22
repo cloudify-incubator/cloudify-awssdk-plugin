@@ -11,9 +11,8 @@
 #    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
-
-from mock import patch, MagicMock
 import unittest
+from mock import MagicMock
 from cloudify_boto3.common.tests.test_base import CLIENT_CONFIG
 from cloudify_boto3.kms.tests.test_kms import TestKMS
 from cloudify_boto3.kms.resources import key
@@ -65,122 +64,114 @@ class TestKMSKey(TestKMS):
         )
 
     def test_create(self):
-        _ctx, fake_boto, fake_client = self._prepare_context(
+        _ctx = self._prepare_context(
             KEY_TH, NODE_PROPERTIES
         )
 
-        with patch('boto3.client', fake_boto):
-            fake_client.create_key = MagicMock(return_value={
-                'KeyMetadata': {
-                    'Arn': "arn_id",
-                    'KeyId': 'key_id'
-                }
-            })
+        self.fake_client.create_key = MagicMock(return_value={
+            'KeyMetadata': {
+                'Arn': "arn_id",
+                'KeyId': 'key_id'
+            }
+        })
 
-            key.create(ctx=_ctx, resource_config=None, iface=None)
+        key.create(ctx=_ctx, resource_config=None, iface=None)
 
-            fake_boto.assert_called_with('kms', **CLIENT_CONFIG)
+        self.fake_boto.assert_called_with('kms', **CLIENT_CONFIG)
 
-            fake_client.create_key.assert_called_with(
-                Description='An example CMK.',
-                Tags=[{'TagKey': 'Cloudify', 'TagValue': 'Example'}]
-            )
+        self.fake_client.create_key.assert_called_with(
+            Description='An example CMK.',
+            Tags=[{'TagKey': 'Cloudify', 'TagValue': 'Example'}]
+        )
 
-            self.assertEqual(
-                _ctx.instance.runtime_properties,
-                RUNTIME_PROPERTIES_AFTER_CREATE
-            )
+        self.assertEqual(
+            _ctx.instance.runtime_properties,
+            RUNTIME_PROPERTIES_AFTER_CREATE
+        )
 
     def test_enable(self):
-        _ctx, fake_boto, fake_client = self._prepare_context(
+        _ctx = self._prepare_context(
             KEY_TH, NODE_PROPERTIES, RUNTIME_PROPERTIES_AFTER_CREATE
         )
 
-        with patch('boto3.client', fake_boto):
-            fake_client.schedule_key_deletion = MagicMock(return_value={})
+        self.fake_client.schedule_key_deletion = MagicMock(return_value={})
 
-            key.enable(ctx=_ctx, resource_config=None, iface=None)
+        key.enable(ctx=_ctx, resource_config=None, iface=None)
 
-            fake_boto.assert_called_with('kms', **CLIENT_CONFIG)
+        self.fake_boto.assert_called_with('kms', **CLIENT_CONFIG)
 
-            self.assertEqual(
-                _ctx.instance.runtime_properties,
-                RUNTIME_PROPERTIES_AFTER_CREATE
-            )
+        self.assertEqual(
+            _ctx.instance.runtime_properties,
+            RUNTIME_PROPERTIES_AFTER_CREATE
+        )
 
     def test_disable(self):
-        _ctx, fake_boto, fake_client = self._prepare_context(
+        _ctx = self._prepare_context(
             KEY_TH, NODE_PROPERTIES, RUNTIME_PROPERTIES_AFTER_CREATE
         )
 
-        with patch('boto3.client', fake_boto):
-            fake_client.schedule_key_deletion = MagicMock(return_value={})
+        self.fake_client.schedule_key_deletion = MagicMock(return_value={})
 
-            key.disable(ctx=_ctx, resource_config=None, iface=None)
+        key.disable(ctx=_ctx, resource_config=None, iface=None)
 
-            fake_boto.assert_called_with('kms', **CLIENT_CONFIG)
+        self.fake_boto.assert_called_with('kms', **CLIENT_CONFIG)
 
-            self.assertEqual(
-                _ctx.instance.runtime_properties,
-                RUNTIME_PROPERTIES_AFTER_CREATE
-            )
+        self.assertEqual(
+            _ctx.instance.runtime_properties,
+            RUNTIME_PROPERTIES_AFTER_CREATE
+        )
 
     def test_delete(self):
-        _ctx, fake_boto, fake_client = self._prepare_context(
+        _ctx = self._prepare_context(
             KEY_TH, NODE_PROPERTIES, RUNTIME_PROPERTIES_AFTER_CREATE
         )
 
-        with patch('boto3.client', fake_boto):
-            fake_client.schedule_key_deletion = MagicMock(return_value={})
+        self.fake_client.schedule_key_deletion = MagicMock(return_value={})
 
-            key.delete(ctx=_ctx, resource_config=None, iface=None)
+        key.delete(ctx=_ctx, resource_config=None, iface=None)
 
-            fake_boto.assert_called_with('kms', **CLIENT_CONFIG)
+        self.fake_boto.assert_called_with('kms', **CLIENT_CONFIG)
 
-            fake_client.schedule_key_deletion.assert_called_with(
-                KeyId='key_id'
-            )
+        self.fake_client.schedule_key_deletion.assert_called_with(
+            KeyId='key_id'
+        )
 
-            self.assertEqual(
-                _ctx.instance.runtime_properties,
-                RUNTIME_PROPERTIES_AFTER_CREATE
-            )
+        self.assertEqual(
+            _ctx.instance.runtime_properties,
+            RUNTIME_PROPERTIES_AFTER_CREATE
+        )
 
     def test_KMSKey_status(self):
-        fake_boto, fake_client = self.fake_boto_client('kms')
 
         test_instance = key.KMSKey("ctx_node", resource_id='queue_id',
-                                   client=fake_client, logger=None)
+                                   client=self.fake_client, logger=None)
 
         self.assertEqual(test_instance.status, None)
 
     def test_KMSKey_properties(self):
-        fake_boto, fake_client = self.fake_boto_client('kms')
 
         test_instance = key.KMSKey("ctx_node", resource_id='queue_id',
-                                   client=fake_client, logger=None)
+                                   client=self.fake_client, logger=None)
 
         self.assertEqual(test_instance.properties, None)
 
     def test_KMSKey_properties_with_key(self):
-        fake_boto, fake_client = self.fake_boto_client('kms')
 
         test_instance = key.KMSKey("ctx_node", resource_id='queue_id',
-                                   client=fake_client, logger=None)
+                                   client=self.fake_client, logger=None)
 
-        fake_client.describe_key = MagicMock(
+        self.fake_client.describe_key = MagicMock(
             return_value={'KeyMetadata': 'z'}
         )
 
         self.assertEqual(test_instance.properties, 'z')
 
     def test_KMSKey_enable(self):
-        fake_boto, fake_client = self.fake_boto_client('kms')
 
         test_instance = key.KMSKey("ctx_node", resource_id='queue_id',
-                                   client=fake_client, logger=None)
+                                   client=self.fake_client, logger=None)
 
-        fake_client.enable_key = MagicMock(
+        self.fake_client.enable_key = MagicMock(
             return_value={'KeyMetadata': 'y'}
         )
 
@@ -189,15 +180,14 @@ class TestKMSKey(TestKMS):
             {'KeyMetadata': 'y'}
         )
 
-        fake_client.enable_key.assert_called_with(a='b')
+        self.fake_client.enable_key.assert_called_with(a='b')
 
     def test_KMSKey_disable(self):
-        fake_boto, fake_client = self.fake_boto_client('kms')
 
         test_instance = key.KMSKey("ctx_node", resource_id='queue_id',
-                                   client=fake_client, logger=None)
+                                   client=self.fake_client, logger=None)
 
-        fake_client.disable_key = MagicMock(
+        self.fake_client.disable_key = MagicMock(
             return_value={'KeyMetadata': 'y'}
         )
 
@@ -206,7 +196,7 @@ class TestKMSKey(TestKMS):
             {'KeyMetadata': 'y'}
         )
 
-        fake_client.disable_key.assert_called_with(a='b')
+        self.fake_client.disable_key.assert_called_with(a='b')
 
 
 if __name__ == '__main__':

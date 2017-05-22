@@ -28,6 +28,21 @@ EVENT_TH = ['cloudify.nodes.Root',
 
 class TestCloudwatchEvent(TestBase):
 
+    def setUp(self):
+        super(TestCloudwatchEvent, self).setUp()
+
+        self.fake_boto, self.fake_client = self.fake_boto_client('events')
+
+        self.mock_patch = patch('boto3.client', self.fake_boto)
+        self.mock_patch.start()
+
+    def tearDown(self):
+        self.mock_patch.stop()
+        self.fake_boto = None
+        self.fake_client = None
+
+        super(TestCloudwatchEvent, self).tearDown()
+
     def test_prepare(self):
         self._prepare_check(
             type_hierarchy=EVENT_TH,
@@ -57,56 +72,45 @@ class TestCloudwatchEvent(TestBase):
         )
 
         current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('events')
 
-        with patch('boto3.client', fake_boto):
-            fake_client.put_events = MagicMock(return_value={
-                'event': 'message'
-            })
+        self.fake_client.put_events = MagicMock(return_value={
+            'event': 'message'
+        })
 
-            event.create(ctx=_ctx, resource_config=None, iface=None)
+        event.create(ctx=_ctx, resource_config=None, iface=None)
 
-            fake_boto.assert_called_with('events', **CLIENT_CONFIG)
+        self.fake_boto.assert_called_with('events', **CLIENT_CONFIG)
 
-            fake_client.put_events.assert_called_with(a='b')
+        self.fake_client.put_events.assert_called_with(a='b')
 
-            self.assertEqual(
-                _ctx.instance.runtime_properties,
-                DEFAULT_RUNTIME_PROPERTIES
-            )
+        self.assertEqual(
+            _ctx.instance.runtime_properties,
+            DEFAULT_RUNTIME_PROPERTIES
+        )
 
     def test_CloudwatchEvent_status(self):
-        fake_boto, fake_client = self.fake_boto_client('events')
-        with patch('boto3.client', fake_boto):
+        test_instance = event.CloudwatchEvent("ctx_node",
+                                              resource_id='user_id',
+                                              client=self.fake_client,
+                                              logger=None)
 
-            test_instance = event.CloudwatchEvent("ctx_node",
-                                                  resource_id='user_id',
-                                                  client=fake_client,
-                                                  logger=None)
-
-            self.assertEqual(test_instance.status, None)
+        self.assertEqual(test_instance.status, None)
 
     def test_CloudwatchEvent_properties(self):
-        fake_boto, fake_client = self.fake_boto_client('events')
-        with patch('boto3.client', fake_boto):
+        test_instance = event.CloudwatchEvent("ctx_node",
+                                              resource_id='user_id',
+                                              client=self.fake_client,
+                                              logger=None)
 
-            test_instance = event.CloudwatchEvent("ctx_node",
-                                                  resource_id='user_id',
-                                                  client=fake_client,
-                                                  logger=None)
-
-            self.assertEqual(test_instance.properties, None)
+        self.assertEqual(test_instance.properties, None)
 
     def test_CloudwatchEvent_delete(self):
-        fake_boto, fake_client = self.fake_boto_client('events')
-        with patch('boto3.client', fake_boto):
+        test_instance = event.CloudwatchEvent("ctx_node",
+                                              resource_id='user_id',
+                                              client=self.fake_client,
+                                              logger=None)
 
-            test_instance = event.CloudwatchEvent("ctx_node",
-                                                  resource_id='user_id',
-                                                  client=fake_client,
-                                                  logger=None)
-
-            self.assertEqual(test_instance.delete(), None)
+        self.assertEqual(test_instance.delete(), None)
 
 
 if __name__ == '__main__':

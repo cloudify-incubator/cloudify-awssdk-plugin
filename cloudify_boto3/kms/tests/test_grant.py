@@ -12,7 +12,7 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-from mock import patch, MagicMock
+from mock import MagicMock
 import unittest
 
 from botocore.exceptions import UnknownServiceError
@@ -61,87 +61,82 @@ class TestKMSGrant(TestKMS):
         )
 
     def test_KMSKeyGrant_status(self):
-        fake_boto, fake_client = self.fake_boto_client('sqs')
 
         test_instance = grant.KMSKeyGrant("ctx_node", resource_id='queue_id',
-                                          client=fake_client, logger=None)
+                                          client=self.fake_client, logger=None)
 
         self.assertEqual(test_instance.status, None)
 
     def test_KMSKeyGrant_properties(self):
-        fake_boto, fake_client = self.fake_boto_client('sqs')
 
         test_instance = grant.KMSKeyGrant("ctx_node", resource_id='queue_id',
-                                          client=fake_client, logger=None)
+                                          client=self.fake_client, logger=None)
 
         self.assertEqual(test_instance.properties, None)
 
     def test_create_raises_UnknownServiceError(self):
-        _ctx, fake_boto, fake_client = self._prepare_context(
+        _ctx = self._prepare_context(
             GRANT_TH, NODE_PROPERTIES
         )
 
-        with patch('boto3.client', fake_boto):
-            with self.assertRaises(UnknownServiceError) as error:
-                grant.create(ctx=_ctx, resource_config=None, iface=None)
-
-            self.assertEqual(
-                str(error.exception),
-                "Unknown service: 'kms'. Valid service names are: ['rds']"
-            )
-
-            fake_boto.assert_called_with('kms', **CLIENT_CONFIG)
-
-    def test_create(self):
-        _ctx, fake_boto, fake_client = self._prepare_context(
-            GRANT_TH, NODE_PROPERTIES
-        )
-
-        with patch('boto3.client', fake_boto):
-            fake_client.create_grant = MagicMock(return_value={
-                'GrantId': "grant_id",
-                'GrantToken': 'grant_token'
-            })
-
+        with self.assertRaises(UnknownServiceError) as error:
             grant.create(ctx=_ctx, resource_config=None, iface=None)
 
-            fake_boto.assert_called_with('kms', **CLIENT_CONFIG)
+        self.assertEqual(
+            str(error.exception),
+            "Unknown service: 'kms'. Valid service names are: ['rds']"
+        )
 
-            fake_client.create_grant.assert_called_with(
-                GranteePrincipal='ami_arn', KeyId='a', Name='TestGrant',
-                Operations=['Encrypt', 'Decrypt']
-            )
+        self.fake_boto.assert_called_with('kms', **CLIENT_CONFIG)
 
-            self.assertEqual(
-                _ctx.instance.runtime_properties,
-                RUNTIME_PROPERTIES_AFTER_CREATE
-            )
+    def test_create(self):
+        _ctx = self._prepare_context(
+            GRANT_TH, NODE_PROPERTIES
+        )
+
+        self.fake_client.create_grant = MagicMock(return_value={
+            'GrantId': "grant_id",
+            'GrantToken': 'grant_token'
+        })
+
+        grant.create(ctx=_ctx, resource_config=None, iface=None)
+
+        self.fake_boto.assert_called_with('kms', **CLIENT_CONFIG)
+
+        self.fake_client.create_grant.assert_called_with(
+            GranteePrincipal='ami_arn', KeyId='a', Name='TestGrant',
+            Operations=['Encrypt', 'Decrypt']
+        )
+
+        self.assertEqual(
+            _ctx.instance.runtime_properties,
+            RUNTIME_PROPERTIES_AFTER_CREATE
+        )
 
     def test_delete(self):
-        _ctx, fake_boto, fake_client = self._prepare_context(
+        _ctx = self._prepare_context(
             GRANT_TH, NODE_PROPERTIES,
             runtime_prop=RUNTIME_PROPERTIES_AFTER_CREATE
         )
 
-        with patch('boto3.client', fake_boto):
-            fake_client.revoke_grant = MagicMock(return_value={})
+        self.fake_client.revoke_grant = MagicMock(return_value={})
 
-            grant.delete(ctx=_ctx, resource_config=None, iface=None)
+        grant.delete(ctx=_ctx, resource_config=None, iface=None)
 
-            fake_boto.assert_called_with('kms', **CLIENT_CONFIG)
+        self.fake_boto.assert_called_with('kms', **CLIENT_CONFIG)
 
-            fake_client.revoke_grant.assert_called_with(
-                GrantId='grant_id', KeyId='a'
-            )
+        self.fake_client.revoke_grant.assert_called_with(
+            GrantId='grant_id', KeyId='a'
+        )
 
-            self.assertEqual(
-                _ctx.instance.runtime_properties, {
-                    'KeyId': 'a',
-                    'aws_resource_id': 'grant_id',
-                    'resource_config': {},
-                    'GrantToken': 'grant_token'
-                }
-            )
+        self.assertEqual(
+            _ctx.instance.runtime_properties, {
+                'KeyId': 'a',
+                'aws_resource_id': 'grant_id',
+                'resource_config': {},
+                'GrantToken': 'grant_token'
+            }
+        )
 
 
 if __name__ == '__main__':

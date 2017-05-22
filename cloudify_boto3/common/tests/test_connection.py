@@ -21,19 +21,32 @@ from cloudify_boto3.common.connection import Boto3Connection
 
 class TestConnection(TestBase):
 
+    def setUp(self):
+        super(TestConnection, self).setUp()
+
+        self.fake_boto, self.fake_client = self.fake_boto_client('other')
+
+        self.mock_patch = patch('boto3.client', self.fake_boto)
+        self.mock_patch.start()
+
+    def tearDown(self):
+        self.mock_patch.stop()
+        self.fake_boto = None
+        self.fake_client = None
+
+        super(TestConnection, self).tearDown()
+
     def test_client_direct_params(self):
 
         node = MagicMock()
         node.properties = {}
 
-        fake_boto, fake_client = self.fake_boto_client('rds')
-        with patch('boto3.client', fake_boto):
-            connection = Boto3Connection(node, copy.deepcopy(CLIENT_CONFIG))
-            connection.client('abc')
+        connection = Boto3Connection(node, copy.deepcopy(CLIENT_CONFIG))
+        connection.client('abc')
 
-            fake_boto.assert_called_with(
-                'abc', **CLIENT_CONFIG
-            )
+        self.fake_boto.assert_called_with(
+            'abc', **CLIENT_CONFIG
+        )
 
     def test_client_node_params(self):
 
@@ -42,16 +55,14 @@ class TestConnection(TestBase):
             'client_config': copy.deepcopy(CLIENT_CONFIG)
         }
 
-        fake_boto, fake_client = self.fake_boto_client('rds')
-        with patch('boto3.client', fake_boto):
-            connection = Boto3Connection(node, {'a': 'b'})
-            connection.client('abc')
+        connection = Boto3Connection(node, {'a': 'b'})
+        connection.client('abc')
 
-            fake_boto.assert_called_with(
-                'abc', **CLIENT_CONFIG
-            )
+        self.fake_boto.assert_called_with(
+            'abc', **CLIENT_CONFIG
+        )
 
-            self.assertEqual(connection.aws_config, CLIENT_CONFIG)
+        self.assertEqual(connection.aws_config, CLIENT_CONFIG)
 
 
 if __name__ == '__main__':

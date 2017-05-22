@@ -140,6 +140,60 @@ class TestBase(unittest.TestCase):
             )
         )
 
+    def _fake_efs(self, fake_client, client_type):
+        fake_client.describe_file_systems = self._gen_client_error(
+            "describe_file_systems"
+        )
+        fake_client.describe_mount_targets = self._gen_client_error(
+            "describe_mount_targets"
+        )
+        fake_client.describe_tags = self._gen_client_error(
+            "describe_tags"
+        )
+
+        fake_client.create_file_system = self._get_unknowservice(client_type)
+        fake_client.create_mount_target = self._get_unknowservice(client_type)
+        fake_client.create_tags = self._get_unknowservice(client_type)
+
+        fake_client.delete_mount_target = self._get_unknowservice(client_type)
+        fake_client.delete_tags = self._get_unknowservice(client_type)
+        fake_client.delete_file_system = self._get_unknowservice(client_type)
+
+    def _fake_autoscaling(self, fake_client, client_type):
+        fake_client.describe_auto_scaling_groups = self._gen_client_error(
+            "describe_auto_scaling_groups"
+        )
+        fake_client.describe_launch_configurations = self._gen_client_error(
+            "describe_launch_configurations"
+        )
+        fake_client.describe_lifecycle_hooks = self._gen_client_error(
+            "describe_lifecycle_hooks"
+        )
+        fake_client.describe_policies = self._gen_client_error(
+            "describe_policies"
+        )
+
+        fake_client.create_auto_scaling_group = self._get_unknowservice(
+            client_type
+        )
+        fake_client.create_launch_configuration = self._get_unknowservice(
+            client_type
+        )
+        fake_client.put_lifecycle_hook = self._get_unknowservice(client_type)
+        fake_client.put_scaling_policy = self._get_unknowservice(client_type)
+
+        fake_client.delete_auto_scaling_group = self._get_unknowservice(
+            client_type
+        )
+        fake_client.delete_launch_configuration = self._get_unknowservice(
+            client_type
+        )
+        fake_client.delete_lifecycle_hook = self._get_unknowservice(
+            client_type
+        )
+        fake_client.delete_policy = self._get_unknowservice(client_type)
+        fake_client.detach_instances = self._get_unknowservice(client_type)
+
     def _fake_cloudwatch(self, fake_client, client_type):
         fake_client.put_metric_alarm = self._get_unknowservice(client_type)
         fake_client.describe_alarms = self._gen_client_error(
@@ -322,6 +376,10 @@ class TestBase(unittest.TestCase):
             self._fake_events(fake_client, client_type)
         elif client_type == "cloudwatch":
             self._fake_cloudwatch(fake_client, client_type)
+        elif client_type == "autoscaling":
+            self._fake_autoscaling(fake_client, client_type)
+        elif client_type == "efs":
+            self._fake_efs(fake_client, client_type)
 
         return MagicMock(return_value=fake_client), fake_client
 

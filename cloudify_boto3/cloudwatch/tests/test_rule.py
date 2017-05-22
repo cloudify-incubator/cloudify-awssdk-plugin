@@ -57,6 +57,21 @@ RUNTIME_PROPERTIES_AFTER_CREATE = {
 
 class TestCloudwatchEventsRule(TestBase):
 
+    def setUp(self):
+        super(TestCloudwatchEventsRule, self).setUp()
+
+        self.fake_boto, self.fake_client = self.fake_boto_client('events')
+
+        self.mock_patch = patch('boto3.client', self.fake_boto)
+        self.mock_patch.start()
+
+    def tearDown(self):
+        self.mock_patch.stop()
+        self.fake_boto = None
+        self.fake_client = None
+
+        super(TestCloudwatchEventsRule, self).tearDown()
+
     def test_prepare(self):
         self._prepare_check(
             type_hierarchy=RULE_TH,
@@ -73,28 +88,26 @@ class TestCloudwatchEventsRule(TestBase):
         )
 
         current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('events')
 
-        with patch('boto3.client', fake_boto):
-            fake_client.put_rule = MagicMock(return_value={
-                'RuleArn': 'aws_rule_arn'
-            })
+        self.fake_client.put_rule = MagicMock(return_value={
+            'RuleArn': 'aws_rule_arn'
+        })
 
-            rule.create(ctx=_ctx, resource_config=None, iface=None)
+        rule.create(ctx=_ctx, resource_config=None, iface=None)
 
-            fake_boto.assert_called_with('events', **CLIENT_CONFIG)
+        self.fake_boto.assert_called_with('events', **CLIENT_CONFIG)
 
-            fake_client.put_rule.assert_called_with(
-                EventPattern=EVENT_PATTERN_STR,
-                Name='test-cloudwatch1',
-                ScheduleExpression='rate(5 minutes)',
-                State='ENABLED'
-            )
+        self.fake_client.put_rule.assert_called_with(
+            EventPattern=EVENT_PATTERN_STR,
+            Name='test-cloudwatch1',
+            ScheduleExpression='rate(5 minutes)',
+            State='ENABLED'
+        )
 
-            self.assertEqual(
-                _ctx.instance.runtime_properties,
-                RUNTIME_PROPERTIES_AFTER_CREATE
-            )
+        self.assertEqual(
+            _ctx.instance.runtime_properties,
+            RUNTIME_PROPERTIES_AFTER_CREATE
+        )
 
     def test_delete(self):
         _ctx = self.get_mock_ctx(
@@ -105,89 +118,79 @@ class TestCloudwatchEventsRule(TestBase):
         )
 
         current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('events')
 
-        with patch('boto3.client', fake_boto):
-            fake_client.delete_rule = MagicMock(
-                return_value=DELETE_RESPONSE
-            )
+        self.fake_client.delete_rule = MagicMock(
+            return_value=DELETE_RESPONSE
+        )
 
-            rule.delete(ctx=_ctx, resource_config=None, iface=None)
+        rule.delete(ctx=_ctx, resource_config=None, iface=None)
 
-            fake_boto.assert_called_with('events', **CLIENT_CONFIG)
+        self.fake_boto.assert_called_with('events', **CLIENT_CONFIG)
 
-            fake_client.delete_rule.assert_called_with(
-                Name='test-cloudwatch1'
-            )
+        self.fake_client.delete_rule.assert_called_with(
+            Name='test-cloudwatch1'
+        )
 
-            self.assertEqual(
-                _ctx.instance.runtime_properties,
-                {
-                    'aws_resource_arn': 'aws_rule_arn',
-                    'aws_resource_id': 'test-cloudwatch1',
-                    'resource_config': {}
-                }
-            )
+        self.assertEqual(
+            _ctx.instance.runtime_properties,
+            {
+                'aws_resource_arn': 'aws_rule_arn',
+                'aws_resource_id': 'test-cloudwatch1',
+                'resource_config': {}
+            }
+        )
 
     def test_CloudwatchEventsRuleClass_properties(self):
-        fake_boto, fake_client = self.fake_boto_client('events')
-        with patch('boto3.client', fake_boto):
-            fake_client.describe_rule = MagicMock(return_value=['Event'])
+        self.fake_client.describe_rule = MagicMock(return_value=['Event'])
 
-            test_instance = rule.CloudwatchEventsRule("ctx_node",
-                                                      resource_id='rule_id',
-                                                      client=fake_client,
-                                                      logger=None)
+        test_instance = rule.CloudwatchEventsRule("ctx_node",
+                                                  resource_id='rule_id',
+                                                  client=self.fake_client,
+                                                  logger=None)
 
-            self.assertEqual(test_instance.properties, 'Event')
+        self.assertEqual(test_instance.properties, 'Event')
 
-            fake_client.describe_rule.assert_called_with(
-                Name=['rule_id']
-            )
+        self.fake_client.describe_rule.assert_called_with(
+            Name=['rule_id']
+        )
 
     def test_CloudwatchEventsRuleClass_properties_empty(self):
-        fake_boto, fake_client = self.fake_boto_client('events')
-        with patch('boto3.client', fake_boto):
-            test_instance = rule.CloudwatchEventsRule("ctx_node",
-                                                      resource_id='rule_id',
-                                                      client=fake_client,
-                                                      logger=None)
+        test_instance = rule.CloudwatchEventsRule("ctx_node",
+                                                  resource_id='rule_id',
+                                                  client=self.fake_client,
+                                                  logger=None)
 
-            self.assertEqual(test_instance.properties, None)
+        self.assertEqual(test_instance.properties, None)
 
-            fake_client.describe_rule.assert_called_with(
-                Name=['rule_id']
-            )
+        self.fake_client.describe_rule.assert_called_with(
+            Name=['rule_id']
+        )
 
     def test_CloudwatchEventsRuleClass_status(self):
-        fake_boto, fake_client = self.fake_boto_client('events')
-        with patch('boto3.client', fake_boto):
-            fake_client.describe_rule = MagicMock(return_value=['Event'])
+        self.fake_client.describe_rule = MagicMock(return_value=['Event'])
 
-            test_instance = rule.CloudwatchEventsRule("ctx_node",
-                                                      resource_id='rule_id',
-                                                      client=fake_client,
-                                                      logger=None)
+        test_instance = rule.CloudwatchEventsRule("ctx_node",
+                                                  resource_id='rule_id',
+                                                  client=self.fake_client,
+                                                  logger=None)
 
-            self.assertEqual(test_instance.status, None)
+        self.assertEqual(test_instance.status, None)
 
-            fake_client.describe_rule.assert_called_with(
-                Name=['rule_id']
-            )
+        self.fake_client.describe_rule.assert_called_with(
+            Name=['rule_id']
+        )
 
     def test_CloudwatchEventsRuleClass_status_empty(self):
-        fake_boto, fake_client = self.fake_boto_client('events')
-        with patch('boto3.client', fake_boto):
-            test_instance = rule.CloudwatchEventsRule("ctx_node",
-                                                      resource_id='rule_id',
-                                                      client=fake_client,
-                                                      logger=None)
+        test_instance = rule.CloudwatchEventsRule("ctx_node",
+                                                  resource_id='rule_id',
+                                                  client=self.fake_client,
+                                                  logger=None)
 
-            self.assertEqual(test_instance.status, None)
+        self.assertEqual(test_instance.status, None)
 
-            fake_client.describe_rule.assert_called_with(
-                Name=['rule_id']
-            )
+        self.fake_client.describe_rule.assert_called_with(
+            Name=['rule_id']
+        )
 
 
 if __name__ == '__main__':

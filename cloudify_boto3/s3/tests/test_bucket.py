@@ -22,12 +22,20 @@ from cloudify_boto3.s3.resources import bucket
 class TestS3Backet(TestBase):
 
     def setUp(self):
+        super(TestS3Backet, self).setUp()
+
         self.bucket = S3Bucket("ctx_node", resource_id=True,
                                client=True, logger=None)
-        mock1 = patch('cloudify_boto3.common.decorators.aws_resource',
-                      mock_decorator)
-        mock1.start()
+        self.mock_resource = patch(
+            'cloudify_boto3.common.decorators.aws_resource', mock_decorator
+        )
+        self.mock_resource.start()
         reload(bucket)
+
+    def tearDown(self):
+        self.mock_resource.stop()
+
+        super(TestS3Backet, self).tearDown()
 
     def test_class_properties(self):
         effect = self.get_client_error_exception(name='S3 Bucket')
@@ -56,6 +64,16 @@ class TestS3Backet(TestBase):
         self.bucket.resource_id = 'test_name'
         res = self.bucket.status
         self.assertEqual(res, 'ok')
+
+    def test_class_delete_objects(self):
+        value = {'Contents': [{'Key': 'key_id'}]}
+        self.bucket.client = self.make_client_function('list_objects',
+                                                       return_value=value)
+        self.bucket.client = self.make_client_function(
+            'delete_object', return_value={}, client=self.bucket.client
+        )
+        self.bucket.resource_id = 'test_name'
+        self.bucket.delete_objects('bucket_name')
 
     def test_class_create(self):
         value = {'Location': 'test'}

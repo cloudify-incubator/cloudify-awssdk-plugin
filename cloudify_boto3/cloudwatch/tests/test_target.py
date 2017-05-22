@@ -43,6 +43,21 @@ NODE_PROPERTIES = {
 
 class TestCloudwatchTarget(TestBase):
 
+    def setUp(self):
+        super(TestCloudwatchTarget, self).setUp()
+
+        self.fake_boto, self.fake_client = self.fake_boto_client('events')
+
+        self.mock_patch = patch('boto3.client', self.fake_boto)
+        self.mock_patch.start()
+
+    def tearDown(self):
+        self.mock_patch.stop()
+        self.fake_boto = None
+        self.fake_client = None
+
+        super(TestCloudwatchTarget, self).tearDown()
+
     def test_prepare(self):
         self._prepare_check(
             type_hierarchy=TARGET_TH,
@@ -90,66 +105,56 @@ class TestCloudwatchTarget(TestBase):
 
     def test_create(self):
         _ctx = self._prepare_context()
-        fake_boto, fake_client = self.fake_boto_client('events')
 
-        with patch('boto3.client', fake_boto):
-            fake_client.put_targets = MagicMock(return_value={})
+        self.fake_client.put_targets = MagicMock(return_value={})
 
-            target.create(ctx=_ctx, resource_config=None, iface=None)
+        target.create(ctx=_ctx, resource_config=None, iface=None)
 
-            fake_boto.assert_called_with('events', **CLIENT_CONFIG)
+        self.fake_boto.assert_called_with('events', **CLIENT_CONFIG)
 
-            fake_client.put_targets.assert_called_with(
-                Rule='aws_id', Targets=[{'Id': 'topic1', 'Arn': 'topic1'}]
-            )
+        self.fake_client.put_targets.assert_called_with(
+            Rule='aws_id', Targets=[{'Id': 'topic1', 'Arn': 'topic1'}]
+        )
 
-            self.assertEqual(
-                _ctx.instance.runtime_properties,
-                DEFAULT_RUNTIME_PROPERTIES
-            )
+        self.assertEqual(
+            _ctx.instance.runtime_properties,
+            DEFAULT_RUNTIME_PROPERTIES
+        )
 
     def test_delete(self):
         _ctx = self._prepare_context()
-        fake_boto, fake_client = self.fake_boto_client('events')
 
-        with patch('boto3.client', fake_boto):
-            fake_client.remove_targets = MagicMock(
-                return_value=DELETE_RESPONSE
-            )
+        self.fake_client.remove_targets = MagicMock(
+            return_value=DELETE_RESPONSE
+        )
 
-            target.delete(ctx=_ctx, resource_config=None, iface=None)
+        target.delete(ctx=_ctx, resource_config=None, iface=None)
 
-            fake_boto.assert_called_with('events', **CLIENT_CONFIG)
+        self.fake_boto.assert_called_with('events', **CLIENT_CONFIG)
 
-            fake_client.remove_targets.assert_called_with(
-                Ids=['topic1'], Rule='aws_id'
-            )
+        self.fake_client.remove_targets.assert_called_with(
+            Ids=['topic1'], Rule='aws_id'
+        )
 
-            self.assertEqual(
-                _ctx.instance.runtime_properties, DEFAULT_RUNTIME_PROPERTIES
-            )
+        self.assertEqual(
+            _ctx.instance.runtime_properties, DEFAULT_RUNTIME_PROPERTIES
+        )
 
     def test_CloudwatchTarget_status(self):
-        fake_boto, fake_client = self.fake_boto_client('events')
-        with patch('boto3.client', fake_boto):
+        test_instance = target.CloudwatchTarget("ctx_node",
+                                                resource_id='user_id',
+                                                client=self.fake_client,
+                                                logger=None)
 
-            test_instance = target.CloudwatchTarget("ctx_node",
-                                                    resource_id='user_id',
-                                                    client=fake_client,
-                                                    logger=None)
-
-            self.assertEqual(test_instance.status, None)
+        self.assertEqual(test_instance.status, None)
 
     def test_CloudwatchTarget_properties(self):
-        fake_boto, fake_client = self.fake_boto_client('events')
-        with patch('boto3.client', fake_boto):
+        test_instance = target.CloudwatchTarget("ctx_node",
+                                                resource_id='user_id',
+                                                client=self.fake_client,
+                                                logger=None)
 
-            test_instance = target.CloudwatchTarget("ctx_node",
-                                                    resource_id='user_id',
-                                                    client=fake_client,
-                                                    logger=None)
-
-            self.assertEqual(test_instance.properties, None)
+        self.assertEqual(test_instance.properties, None)
 
 
 if __name__ == '__main__':

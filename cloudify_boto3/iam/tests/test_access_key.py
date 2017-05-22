@@ -40,6 +40,21 @@ RUNTIME_PROPERTIES = {
 
 class TestIAMAccessKey(TestBase):
 
+    def setUp(self):
+        super(TestIAMAccessKey, self).setUp()
+
+        self.fake_boto, self.fake_client = self.fake_boto_client('iam')
+
+        self.mock_patch = patch('boto3.client', self.fake_boto)
+        self.mock_patch.start()
+
+    def tearDown(self):
+        self.mock_patch.stop()
+        self.fake_boto = None
+        self.fake_client = None
+
+        super(TestIAMAccessKey, self).tearDown()
+
     def test_configure(self):
         self._prepare_configure(
             type_hierarchy=ACCESS_KEY_TH,
@@ -53,41 +68,39 @@ class TestIAMAccessKey(TestBase):
             ['cloudify.nodes.Root', 'cloudify.nodes.aws.iam.User']
         )
         current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('iam')
 
-        with patch('boto3.client', fake_boto):
-            fake_client.create_access_key = MagicMock(return_value={
-                'AccessKey': {
-                    'AccessKeyId': 'aws_access_key_id',
-                    'SecretAccessKey': 'aws_secret_access_key'
-                }
-            })
+        self.fake_client.create_access_key = MagicMock(return_value={
+            'AccessKey': {
+                'AccessKeyId': 'aws_access_key_id',
+                'SecretAccessKey': 'aws_secret_access_key'
+            }
+        })
 
-            access_key.attach_to(
-                ctx=_ctx, resource_config=None, iface=None
-            )
+        access_key.attach_to(
+            ctx=_ctx, resource_config=None, iface=None
+        )
 
-            fake_client.create_access_key.assert_called_with(
-                UserName='aws_target_mock_id'
-            )
+        self.fake_client.create_access_key.assert_called_with(
+            UserName='aws_target_mock_id'
+        )
 
-            self.assertEqual(
-                _source_ctx.instance.runtime_properties, {
-                    'aws_resource_id': 'aws_access_key_id',
-                    'SecretAccessKey': 'aws_secret_access_key',
-                    'resource_id': 'prepare_attach_source',
-                    'resource_config': {},
-                    '_set_changed': True
-                }
-            )
+        self.assertEqual(
+            _source_ctx.instance.runtime_properties, {
+                'aws_resource_id': 'aws_access_key_id',
+                'SecretAccessKey': 'aws_secret_access_key',
+                'resource_id': 'prepare_attach_source',
+                'resource_config': {},
+                '_set_changed': True
+            }
+        )
 
-            self.assertEqual(
-                _target_ctx.instance.runtime_properties, {
-                    'aws_resource_id': 'aws_target_mock_id',
-                    'resource_id': 'prepare_attach_target',
-                    'aws_resource_arn': 'aws_resource_mock_arn'
-                }
-            )
+        self.assertEqual(
+            _target_ctx.instance.runtime_properties, {
+                'aws_resource_id': 'aws_target_mock_id',
+                'resource_id': 'prepare_attach_target',
+                'aws_resource_arn': 'aws_resource_mock_arn'
+            }
+        )
 
     def test_detach_from_User(self):
         _source_ctx, _target_ctx, _ctx = self._create_common_relationships(
@@ -96,28 +109,26 @@ class TestIAMAccessKey(TestBase):
             ['cloudify.nodes.Root', 'cloudify.nodes.aws.iam.User']
         )
         current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('iam')
 
-        with patch('boto3.client', fake_boto):
-            fake_client.delete_access_key = MagicMock(return_value={})
+        self.fake_client.delete_access_key = MagicMock(return_value={})
 
-            access_key.detach_from(
-                ctx=_ctx, resource_config=None, iface=None
-            )
+        access_key.detach_from(
+            ctx=_ctx, resource_config=None, iface=None
+        )
 
-            fake_client.delete_access_key.assert_called_with(
-                AccessKeyId='aws_resource_mock_id',
-                UserName='aws_target_mock_id'
-            )
+        self.fake_client.delete_access_key.assert_called_with(
+            AccessKeyId='aws_resource_mock_id',
+            UserName='aws_target_mock_id'
+        )
 
-            self.assertEqual(
-                _source_ctx.instance.runtime_properties, {
-                    '_set_changed': True,
-                    'aws_resource_id': 'aws_resource_mock_id',
-                    'resource_config': {},
-                    'resource_id': 'prepare_attach_source'
-                }
-            )
+        self.assertEqual(
+            _source_ctx.instance.runtime_properties, {
+                '_set_changed': True,
+                'aws_resource_id': 'aws_resource_mock_id',
+                'resource_config': {},
+                'resource_id': 'prepare_attach_source'
+            }
+        )
 
 
 if __name__ == '__main__':

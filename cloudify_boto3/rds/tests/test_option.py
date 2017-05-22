@@ -28,6 +28,21 @@ PARAMETER_OPTION_TH = ['cloudify.nodes.Root',
 
 class TestRDSOption(TestBase):
 
+    def setUp(self):
+        super(TestRDSOption, self).setUp()
+
+        self.fake_boto, self.fake_client = self.fake_boto_client('rds')
+
+        self.mock_patch = patch('boto3.client', self.fake_boto)
+        self.mock_patch.start()
+
+    def tearDown(self):
+        self.mock_patch.stop()
+        self.fake_boto = None
+        self.fake_client = None
+
+        super(TestRDSOption, self).tearDown()
+
     def test_configure(self):
         _test_name = 'test_create_UnknownServiceError'
         _test_node_properties = {
@@ -47,19 +62,18 @@ class TestRDSOption(TestBase):
             type_hierarchy=PARAMETER_OPTION_TH
         )
         current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('rds')
-        with patch('boto3.client', fake_boto):
-            option.configure(ctx=_ctx, resource_config=None, iface=None)
 
-            fake_boto.assert_not_called()
+        option.configure(ctx=_ctx, resource_config=None, iface=None)
 
-            self.assertEqual(
-                _ctx.instance.runtime_properties, {
-                    'resource_config': {
-                        "Port": 21212
-                    }
+        self.fake_boto.assert_not_called()
+
+        self.assertEqual(
+            _ctx.instance.runtime_properties, {
+                'resource_config': {
+                    "Port": 21212
                 }
-            )
+            }
+        )
 
     def test_configure_without_resource_id(self):
         _test_name = 'test_create_UnknownServiceError'
@@ -80,19 +94,18 @@ class TestRDSOption(TestBase):
             type_hierarchy=PARAMETER_OPTION_TH
         )
         current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('rds')
-        with patch('boto3.client', fake_boto):
-            option.configure(ctx=_ctx, resource_config=None, iface=None)
 
-            self.assertEqual(
-                _ctx.instance.runtime_properties, {
-                    'aws_resource_id': 'OptionName',
-                    'resource_config': {
-                        'OptionName': 'OptionName',
-                        "Port": 21212
-                    }
+        option.configure(ctx=_ctx, resource_config=None, iface=None)
+
+        self.assertEqual(
+            _ctx.instance.runtime_properties, {
+                'aws_resource_id': 'OptionName',
+                'resource_config': {
+                    'OptionName': 'OptionName',
+                    "Port": 21212
                 }
-            )
+            }
+        )
 
     def _create_option_relationships(self, node_id, type_hierarchy):
         _source_ctx = self.get_mock_ctx(
@@ -134,30 +147,28 @@ class TestRDSOption(TestBase):
             ['cloudify.nodes.Root', 'cloudify.nodes.aws.rds.OptionGroup']
         )
         current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('rds')
 
-        with patch('boto3.client', fake_boto):
-            fake_client.modify_option_group = MagicMock(
-                return_value={
-                    'OptionGroup': 'abc'
-                }
-            )
-            option.attach_to(
-                ctx=_ctx, resource_config=None, iface=None
-            )
-            self.assertEqual(
-                _source_ctx.instance.runtime_properties, {
-                    '_set_changed': True,
-                    'aws_resource_id': 'aws_resource_mock_id',
-                    'resource_config': {},
-                    'resource_id': 'prepare_attach_source'
-                }
-            )
-            fake_client.modify_option_group.assert_called_with(
-                ApplyImmediately=True,
-                OptionGroupName='aws_target_mock_id',
-                OptionsToInclude=[{'OptionName': 'aws_target_mock_id'}]
-            )
+        self.fake_client.modify_option_group = MagicMock(
+            return_value={
+                'OptionGroup': 'abc'
+            }
+        )
+        option.attach_to(
+            ctx=_ctx, resource_config=None, iface=None
+        )
+        self.assertEqual(
+            _source_ctx.instance.runtime_properties, {
+                '_set_changed': True,
+                'aws_resource_id': 'aws_resource_mock_id',
+                'resource_config': {},
+                'resource_id': 'prepare_attach_source'
+            }
+        )
+        self.fake_client.modify_option_group.assert_called_with(
+            ApplyImmediately=True,
+            OptionGroupName='aws_target_mock_id',
+            OptionsToInclude=[{'OptionName': 'aws_target_mock_id'}]
+        )
 
     def test_attach_to_security_group(self):
         _source_ctx, _target_ctx, _ctx = self._create_option_relationships(
@@ -165,22 +176,20 @@ class TestRDSOption(TestBase):
             ['cloudify.nodes.Root', 'cloudify.aws.nodes.SecurityGroup']
         )
         current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('rds')
 
-        with patch('boto3.client', fake_boto):
-            option.attach_to(
-                ctx=_ctx, resource_config=None, iface=None
-            )
-            self.assertEqual(
-                _source_ctx.instance.runtime_properties, {
-                    '_set_changed': True,
-                    'aws_resource_id': 'aws_resource_mock_id',
-                    'resource_config': {
-                        'VpcSecurityGroupMemberships': ['aws_target_mock_id']
-                    },
-                    'resource_id': 'prepare_attach_source'
-                }
-            )
+        option.attach_to(
+            ctx=_ctx, resource_config=None, iface=None
+        )
+        self.assertEqual(
+            _source_ctx.instance.runtime_properties, {
+                '_set_changed': True,
+                'aws_resource_id': 'aws_resource_mock_id',
+                'resource_config': {
+                    'VpcSecurityGroupMemberships': ['aws_target_mock_id']
+                },
+                'resource_id': 'prepare_attach_source'
+            }
+        )
 
     def test_detach_from(self):
         _source_ctx, _target_ctx, _ctx = self._create_option_relationships(
@@ -188,30 +197,28 @@ class TestRDSOption(TestBase):
             ['cloudify.nodes.Root', 'cloudify.nodes.aws.rds.OptionGroup']
         )
         current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('rds')
 
-        with patch('boto3.client', fake_boto):
-            fake_client.modify_option_group = MagicMock(
-                return_value={
-                    'OptionGroup': 'abc'
-                }
-            )
-            option.detach_from(
-                ctx=_ctx, resource_config=None, iface=None
-            )
-            self.assertEqual(
-                _source_ctx.instance.runtime_properties, {
-                    '_set_changed': True,
-                    'resource_config': {},
-                    'aws_resource_id': 'aws_resource_mock_id',
-                    'resource_id': 'prepare_attach_source'
-                }
-            )
-            fake_client.modify_option_group.assert_called_with(
-                ApplyImmediately=True,
-                OptionGroupName='aws_target_mock_id',
-                OptionsToRemove=[{'OptionName': 'aws_target_mock_id'}]
-            )
+        self.fake_client.modify_option_group = MagicMock(
+            return_value={
+                'OptionGroup': 'abc'
+            }
+        )
+        option.detach_from(
+            ctx=_ctx, resource_config=None, iface=None
+        )
+        self.assertEqual(
+            _source_ctx.instance.runtime_properties, {
+                '_set_changed': True,
+                'resource_config': {},
+                'aws_resource_id': 'aws_resource_mock_id',
+                'resource_id': 'prepare_attach_source'
+            }
+        )
+        self.fake_client.modify_option_group.assert_called_with(
+            ApplyImmediately=True,
+            OptionGroupName='aws_target_mock_id',
+            OptionsToRemove=[{'OptionName': 'aws_target_mock_id'}]
+        )
 
 
 if __name__ == '__main__':

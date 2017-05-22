@@ -51,6 +51,21 @@ RUNTIME_PROPERTIES_AFTER_CREATE = {
 
 class TestIAMGroup(TestBase):
 
+    def setUp(self):
+        super(TestIAMGroup, self).setUp()
+
+        self.fake_boto, self.fake_client = self.fake_boto_client('iam')
+
+        self.mock_patch = patch('boto3.client', self.fake_boto)
+        self.mock_patch.start()
+
+    def tearDown(self):
+        self.mock_patch.stop()
+        self.fake_boto = None
+        self.fake_client = None
+
+        super(TestIAMGroup, self).tearDown()
+
     def test_create_raises_UnknownServiceError(self):
         self._prepare_create_raises_UnknownServiceError(
             type_hierarchy=GROUP_TH,
@@ -67,28 +82,26 @@ class TestIAMGroup(TestBase):
         )
 
         current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('iam')
 
-        with patch('boto3.client', fake_boto):
-            fake_client.create_group = MagicMock(return_value={
-                'Group': {
-                    'GroupName': "group_name_id",
-                    'Arn': 'arn_id'
-                }
-            })
+        self.fake_client.create_group = MagicMock(return_value={
+            'Group': {
+                'GroupName': "group_name_id",
+                'Arn': 'arn_id'
+            }
+        })
 
-            group.create(ctx=_ctx, resource_config=None, iface=None)
+        group.create(ctx=_ctx, resource_config=None, iface=None)
 
-            fake_boto.assert_called_with('iam', **CLIENT_CONFIG)
+        self.fake_boto.assert_called_with('iam', **CLIENT_CONFIG)
 
-            fake_client.create_group.assert_called_with(
-                GroupName='aws_resource', Path='some_path'
-            )
+        self.fake_client.create_group.assert_called_with(
+            GroupName='aws_resource', Path='some_path'
+        )
 
-            self.assertEqual(
-                _ctx.instance.runtime_properties,
-                RUNTIME_PROPERTIES_AFTER_CREATE
-            )
+        self.assertEqual(
+            _ctx.instance.runtime_properties,
+            RUNTIME_PROPERTIES_AFTER_CREATE
+        )
 
     def test_delete(self):
         _ctx = self.get_mock_ctx(
@@ -99,30 +112,28 @@ class TestIAMGroup(TestBase):
         )
 
         current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('iam')
 
-        with patch('boto3.client', fake_boto):
-            fake_client.delete_group = MagicMock(
-                return_value=DELETE_RESPONSE
-            )
+        self.fake_client.delete_group = MagicMock(
+            return_value=DELETE_RESPONSE
+        )
 
-            group.delete(ctx=_ctx, resource_config=None, iface=None)
+        group.delete(ctx=_ctx, resource_config=None, iface=None)
 
-            fake_boto.assert_called_with('iam', **CLIENT_CONFIG)
+        self.fake_boto.assert_called_with('iam', **CLIENT_CONFIG)
 
-            fake_client.delete_group.assert_called_with(
-                GroupName='group_name_id'
-            )
+        self.fake_client.delete_group.assert_called_with(
+            GroupName='group_name_id'
+        )
 
-            self.assertEqual(
-                _ctx.instance.runtime_properties,
-                {
-                    'resource_config': {},
-                    'aws_resource_id': 'group_name_id',
-                    '__deleted': True,
-                    'aws_resource_arn': 'arn_id'
-                }
-            )
+        self.assertEqual(
+            _ctx.instance.runtime_properties,
+            {
+                'resource_config': {},
+                'aws_resource_id': 'group_name_id',
+                '__deleted': True,
+                'aws_resource_arn': 'arn_id'
+            }
+        )
 
     def test_attach_to_User(self):
         _source_ctx, _target_ctx, _ctx = self._create_common_relationships(
@@ -131,28 +142,26 @@ class TestIAMGroup(TestBase):
             ['cloudify.nodes.Root', 'cloudify.nodes.aws.iam.User']
         )
         current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('iam')
 
-        with patch('boto3.client', fake_boto):
-            fake_client.add_user_to_group = MagicMock(return_value={})
+        self.fake_client.add_user_to_group = MagicMock(return_value={})
 
-            group.attach_to(
-                ctx=_ctx, resource_config=None, iface=None
-            )
+        group.attach_to(
+            ctx=_ctx, resource_config=None, iface=None
+        )
 
-            fake_client.add_user_to_group.assert_called_with(
-                GroupName='aws_resource_mock_id',
-                UserName='aws_target_mock_id'
-            )
+        self.fake_client.add_user_to_group.assert_called_with(
+            GroupName='aws_resource_mock_id',
+            UserName='aws_target_mock_id'
+        )
 
-            self.assertEqual(
-                _source_ctx.instance.runtime_properties, {
-                    '_set_changed': True,
-                    'aws_resource_id': 'aws_resource_mock_id',
-                    'resource_config': {},
-                    'resource_id': 'prepare_attach_source'
-                }
-            )
+        self.assertEqual(
+            _source_ctx.instance.runtime_properties, {
+                '_set_changed': True,
+                'aws_resource_id': 'aws_resource_mock_id',
+                'resource_config': {},
+                'resource_id': 'prepare_attach_source'
+            }
+        )
 
     def test_detach_from_User(self):
         _source_ctx, _target_ctx, _ctx = self._create_common_relationships(
@@ -161,28 +170,28 @@ class TestIAMGroup(TestBase):
             ['cloudify.nodes.Root', 'cloudify.nodes.aws.iam.User']
         )
         current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('iam')
 
-        with patch('boto3.client', fake_boto):
-            fake_client.remove_user_from_group = MagicMock(return_value={})
+        self.fake_client.remove_user_from_group = MagicMock(
+            return_value={}
+        )
 
-            group.detach_from(
-                ctx=_ctx, resource_config=None, iface=None
-            )
+        group.detach_from(
+            ctx=_ctx, resource_config=None, iface=None
+        )
 
-            fake_client.remove_user_from_group.assert_called_with(
-                GroupName='aws_resource_mock_id',
-                UserName='aws_target_mock_id'
-            )
+        self.fake_client.remove_user_from_group.assert_called_with(
+            GroupName='aws_resource_mock_id',
+            UserName='aws_target_mock_id'
+        )
 
-            self.assertEqual(
-                _source_ctx.instance.runtime_properties, {
-                    '_set_changed': True,
-                    'aws_resource_id': 'aws_resource_mock_id',
-                    'resource_config': {},
-                    'resource_id': 'prepare_attach_source'
-                }
-            )
+        self.assertEqual(
+            _source_ctx.instance.runtime_properties, {
+                '_set_changed': True,
+                'aws_resource_id': 'aws_resource_mock_id',
+                'resource_config': {},
+                'resource_id': 'prepare_attach_source'
+            }
+        )
 
     def test_detach_from_Policy(self):
         _source_ctx, _target_ctx, _ctx = self._create_common_relationships(
@@ -191,28 +200,26 @@ class TestIAMGroup(TestBase):
             ['cloudify.nodes.Root', 'cloudify.nodes.aws.iam.Policy']
         )
         current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('iam')
 
-        with patch('boto3.client', fake_boto):
-            fake_client.detach_group_policy = MagicMock(return_value={})
+        self.fake_client.detach_group_policy = MagicMock(return_value={})
 
-            group.detach_from(
-                ctx=_ctx, resource_config=None, iface=None
-            )
+        group.detach_from(
+            ctx=_ctx, resource_config=None, iface=None
+        )
 
-            fake_client.detach_group_policy.assert_called_with(
-                GroupName='aws_resource_mock_id',
-                PolicyArn='aws_resource_mock_arn'
-            )
+        self.fake_client.detach_group_policy.assert_called_with(
+            GroupName='aws_resource_mock_id',
+            PolicyArn='aws_resource_mock_arn'
+        )
 
-            self.assertEqual(
-                _source_ctx.instance.runtime_properties, {
-                    '_set_changed': True,
-                    'aws_resource_id': 'aws_resource_mock_id',
-                    'resource_config': {},
-                    'resource_id': 'prepare_attach_source'
-                }
-            )
+        self.assertEqual(
+            _source_ctx.instance.runtime_properties, {
+                '_set_changed': True,
+                'aws_resource_id': 'aws_resource_mock_id',
+                'resource_config': {},
+                'resource_id': 'prepare_attach_source'
+            }
+        )
 
     def test_attach_to_Policy(self):
         _source_ctx, _target_ctx, _ctx = self._create_common_relationships(
@@ -221,69 +228,65 @@ class TestIAMGroup(TestBase):
             ['cloudify.nodes.Root', 'cloudify.nodes.aws.iam.Policy']
         )
         current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('iam')
 
-        with patch('boto3.client', fake_boto):
-            fake_client.attach_group_policy = MagicMock(return_value={})
+        self.fake_client.attach_group_policy = MagicMock(return_value={})
 
-            group.attach_to(
-                ctx=_ctx, resource_config=None, iface=None
-            )
+        group.attach_to(
+            ctx=_ctx, resource_config=None, iface=None
+        )
 
-            fake_client.attach_group_policy.assert_called_with(
-                GroupName='aws_resource_mock_id',
-                PolicyArn='aws_resource_mock_arn'
-            )
+        self.fake_client.attach_group_policy.assert_called_with(
+            GroupName='aws_resource_mock_id',
+            PolicyArn='aws_resource_mock_arn'
+        )
 
-            self.assertEqual(
-                _source_ctx.instance.runtime_properties, {
-                    '_set_changed': True,
-                    'aws_resource_id': 'aws_resource_mock_id',
-                    'resource_config': {},
-                    'resource_id': 'prepare_attach_source'
-                }
-            )
+        self.assertEqual(
+            _source_ctx.instance.runtime_properties, {
+                '_set_changed': True,
+                'aws_resource_id': 'aws_resource_mock_id',
+                'resource_config': {},
+                'resource_id': 'prepare_attach_source'
+            }
+        )
 
     def test_IAMGroupClass_properties(self):
-        fake_boto, fake_client = self.fake_boto_client('iam')
-        with patch('boto3.client', fake_boto):
-            fake_client.get_group = MagicMock(return_value={
-                'Group': {
-                    'GroupName': "group_name_id",
-                    'Arn': 'arn_id'
-                }
-            })
-
-            test_instance = group.IAMGroup("ctx_node", resource_id='group_id',
-                                           client=fake_client, logger=None)
-
-            self.assertEqual(test_instance.properties, {
+        self.fake_client.get_group = MagicMock(return_value={
+            'Group': {
                 'GroupName': "group_name_id",
                 'Arn': 'arn_id'
-            })
+            }
+        })
 
-            fake_client.get_group.assert_called_with(
-                GroupName='group_id'
-            )
+        test_instance = group.IAMGroup("ctx_node", resource_id='group_id',
+                                       client=self.fake_client,
+                                       logger=None)
+
+        self.assertEqual(test_instance.properties, {
+            'GroupName': "group_name_id",
+            'Arn': 'arn_id'
+        })
+
+        self.fake_client.get_group.assert_called_with(
+            GroupName='group_id'
+        )
 
     def test_IAMGroupClass_status(self):
-        fake_boto, fake_client = self.fake_boto_client('iam')
-        with patch('boto3.client', fake_boto):
-            fake_client.get_group = MagicMock(return_value={
-                'Group': {
-                    'GroupName': "group_name_id",
-                    'Arn': 'arn_id'
-                }
-            })
+        self.fake_client.get_group = MagicMock(return_value={
+            'Group': {
+                'GroupName': "group_name_id",
+                'Arn': 'arn_id'
+            }
+        })
 
-            test_instance = group.IAMGroup("ctx_node", resource_id='group_id',
-                                           client=fake_client, logger=None)
+        test_instance = group.IAMGroup("ctx_node", resource_id='group_id',
+                                       client=self.fake_client,
+                                       logger=None)
 
-            self.assertEqual(test_instance.status, 'available')
+        self.assertEqual(test_instance.status, 'available')
 
-            fake_client.get_group.assert_called_with(
-                GroupName='group_id'
-            )
+        self.fake_client.get_group.assert_called_with(
+            GroupName='group_id'
+        )
 
 
 if __name__ == '__main__':

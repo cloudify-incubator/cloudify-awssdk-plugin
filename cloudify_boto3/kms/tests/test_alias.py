@@ -12,7 +12,7 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-from mock import patch, MagicMock
+from mock import MagicMock
 import unittest
 
 from botocore.exceptions import UnknownServiceError
@@ -53,115 +53,104 @@ class TestKMSAlias(TestKMS):
         )
 
     def test_create_raises_UnknownServiceError(self):
-        _ctx, fake_boto, fake_client = self._prepare_context(ALIAS_TH,
-                                                             NODE_PROPERTIES)
+        _ctx = self._prepare_context(ALIAS_TH, NODE_PROPERTIES)
 
-        with patch('boto3.client', fake_boto):
-            with self.assertRaises(UnknownServiceError) as error:
-                alias.create(ctx=_ctx, resource_config=None, iface=None)
-
-            self.assertEqual(
-                str(error.exception),
-                "Unknown service: 'kms'. Valid service names are: ['rds']"
-            )
-
-            fake_boto.assert_called_with('kms', **CLIENT_CONFIG)
-
-    def test_create(self):
-        _ctx, fake_boto, fake_client = self._prepare_context(ALIAS_TH,
-                                                             NODE_PROPERTIES)
-
-        with patch('boto3.client', fake_boto):
-            fake_client.create_alias = MagicMock(return_value={})
-
+        with self.assertRaises(UnknownServiceError) as error:
             alias.create(ctx=_ctx, resource_config=None, iface=None)
 
-            fake_boto.assert_called_with('kms', **CLIENT_CONFIG)
+        self.assertEqual(
+            str(error.exception),
+            "Unknown service: 'kms'. Valid service names are: ['rds']"
+        )
 
-            fake_client.create_alias.assert_called_with(
-                AliasName='alias/test_key', TargetKeyId='a'
-            )
+        self.fake_boto.assert_called_with('kms', **CLIENT_CONFIG)
 
-            self.assertEqual(
-                _ctx.instance.runtime_properties, {
-                    'aws_resource_id': 'aws_resource', 'resource_config': {}
-                }
-            )
+    def test_create(self):
+        _ctx = self._prepare_context(ALIAS_TH, NODE_PROPERTIES)
+
+        self.fake_client.create_alias = MagicMock(return_value={})
+
+        alias.create(ctx=_ctx, resource_config=None, iface=None)
+
+        self.fake_boto.assert_called_with('kms', **CLIENT_CONFIG)
+
+        self.fake_client.create_alias.assert_called_with(
+            AliasName='alias/test_key', TargetKeyId='a'
+        )
+
+        self.assertEqual(
+            _ctx.instance.runtime_properties, {
+                'aws_resource_id': 'aws_resource', 'resource_config': {}
+            }
+        )
 
     def test_delete(self):
-        _ctx, fake_boto, fake_client = self._prepare_context(ALIAS_TH,
-                                                             NODE_PROPERTIES)
+        _ctx = self._prepare_context(ALIAS_TH, NODE_PROPERTIES)
 
-        with patch('boto3.client', fake_boto):
-            fake_client.delete_alias = MagicMock(return_value={})
+        self.fake_client.delete_alias = MagicMock(return_value={})
 
-            alias.delete(ctx=_ctx, resource_config=None, iface=None)
+        alias.delete(ctx=_ctx, resource_config=None, iface=None)
 
-            fake_boto.assert_called_with('kms', **CLIENT_CONFIG)
+        self.fake_boto.assert_called_with('kms', **CLIENT_CONFIG)
 
-            fake_client.delete_alias.assert_called_with(
-                AliasName='alias/test_key'
-            )
+        self.fake_client.delete_alias.assert_called_with(
+            AliasName='alias/test_key'
+        )
 
-            self.assertEqual(
-                _ctx.instance.runtime_properties, {
-                    'aws_resource_id': 'aws_resource', 'resource_config': {}
-                }
-            )
+        self.assertEqual(
+            _ctx.instance.runtime_properties, {
+                'aws_resource_id': 'aws_resource', 'resource_config': {}
+            }
+        )
 
     def test_delete_without_alias(self):
-        _ctx, fake_boto, fake_client = self._prepare_context(ALIAS_TH, {
+        _ctx = self._prepare_context(ALIAS_TH, {
             'use_external_resource': False,
             'resource_config': {},
             'client_config': CLIENT_CONFIG
         })
 
-        with patch('boto3.client', fake_boto):
-            fake_client.delete_alias = MagicMock(return_value={})
+        self.fake_client.delete_alias = MagicMock(return_value={})
 
-            alias.delete(ctx=_ctx, resource_config=None, iface=None)
+        alias.delete(ctx=_ctx, resource_config=None, iface=None)
 
-            fake_boto.assert_called_with('kms', **CLIENT_CONFIG)
+        self.fake_boto.assert_called_with('kms', **CLIENT_CONFIG)
 
-            fake_client.delete_alias.assert_called_with(
-                AliasName='aws_resource'
-            )
+        self.fake_client.delete_alias.assert_called_with(
+            AliasName='aws_resource'
+        )
 
-            self.assertEqual(
-                _ctx.instance.runtime_properties, {
-                    'aws_resource_id': 'aws_resource', 'resource_config': {}
-                }
-            )
+        self.assertEqual(
+            _ctx.instance.runtime_properties, {
+                'aws_resource_id': 'aws_resource', 'resource_config': {}
+            }
+        )
 
     def test_KMSKeyAlias_status(self):
-        fake_boto, fake_client = self.fake_boto_client('sqs')
 
         test_instance = alias.KMSKeyAlias("ctx_node", resource_id='queue_id',
-                                          client=fake_client, logger=None)
+                                          client=self.fake_client, logger=None)
 
         self.assertEqual(test_instance.status, None)
 
     def test_KMSKeyAlias_properties(self):
-        fake_boto, fake_client = self.fake_boto_client('sqs')
 
         test_instance = alias.KMSKeyAlias("ctx_node", resource_id='queue_id',
-                                          client=fake_client, logger=None)
+                                          client=self.fake_client, logger=None)
 
         self.assertEqual(test_instance.properties, None)
 
     def test_KMSKeyAlias_enable(self):
-        fake_boto, fake_client = self.fake_boto_client('sqs')
 
         test_instance = alias.KMSKeyAlias("ctx_node", resource_id='queue_id',
-                                          client=fake_client, logger=None)
+                                          client=self.fake_client, logger=None)
 
         self.assertEqual(test_instance.enable(None), None)
 
     def test_KMSKeyAlias_disable(self):
-        fake_boto, fake_client = self.fake_boto_client('sqs')
 
         test_instance = alias.KMSKeyAlias("ctx_node", resource_id='queue_id',
-                                          client=fake_client, logger=None)
+                                          client=self.fake_client, logger=None)
 
         self.assertEqual(test_instance.disable(None), None)
 

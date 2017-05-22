@@ -151,7 +151,7 @@ def create(ctx, iface, resource_config, **_):
         utils.add_resources_from_rels(
             ctx.instance,
             SUBNET_TYPE_DEPRECATED,
-            subnet_list.split(', ') if subnet_list else [])
+            subnet_list if subnet_list else [])
     if subnet_list:
         params[SUBNET_LIST] = ', '.join(subnet_list)
 

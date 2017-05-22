@@ -28,6 +28,21 @@ PARAMETER_TH = ['cloudify.nodes.Root',
 
 class TestRDSParameter(TestBase):
 
+    def setUp(self):
+        super(TestRDSParameter, self).setUp()
+
+        self.fake_boto, self.fake_client = self.fake_boto_client('rds')
+
+        self.mock_patch = patch('boto3.client', self.fake_boto)
+        self.mock_patch.start()
+
+    def tearDown(self):
+        self.mock_patch.stop()
+        self.fake_boto = None
+        self.fake_client = None
+
+        super(TestRDSParameter, self).tearDown()
+
     def test_configure(self):
         _test_name = 'test_create_UnknownServiceError'
         _test_node_properties = {
@@ -49,21 +64,20 @@ class TestRDSParameter(TestBase):
             type_hierarchy=PARAMETER_TH
         )
         current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('rds')
-        with patch('boto3.client', fake_boto):
-            parameter.configure(ctx=_ctx, resource_config=None, iface=None)
 
-            fake_boto.assert_not_called()
+        parameter.configure(ctx=_ctx, resource_config=None, iface=None)
 
-            self.assertEqual(
-                _ctx.instance.runtime_properties, {
-                    'resource_config': {
-                        'ParameterName': 'log_timestamps',
-                        'ParameterValue': 'UTC',
-                        'ApplyMethod': 'immediate'
-                    }
+        self.fake_boto.assert_not_called()
+
+        self.assertEqual(
+            _ctx.instance.runtime_properties, {
+                'resource_config': {
+                    'ParameterName': 'log_timestamps',
+                    'ParameterValue': 'UTC',
+                    'ApplyMethod': 'immediate'
                 }
-            )
+            }
+        )
 
     def test_configure_without_resource_id(self):
         _test_name = 'test_create_UnknownServiceError'
@@ -86,20 +100,19 @@ class TestRDSParameter(TestBase):
             type_hierarchy=PARAMETER_TH
         )
         current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('rds')
-        with patch('boto3.client', fake_boto):
-            parameter.configure(ctx=_ctx, resource_config=None, iface=None)
 
-            self.assertEqual(
-                _ctx.instance.runtime_properties, {
-                    'aws_resource_id': 'log_timestamps',
-                    'resource_config': {
-                        'ParameterName': 'log_timestamps',
-                        'ParameterValue': 'UTC',
-                        'ApplyMethod': 'immediate'
-                    }
+        parameter.configure(ctx=_ctx, resource_config=None, iface=None)
+
+        self.assertEqual(
+            _ctx.instance.runtime_properties, {
+                'aws_resource_id': 'log_timestamps',
+                'resource_config': {
+                    'ParameterName': 'log_timestamps',
+                    'ParameterValue': 'UTC',
+                    'ApplyMethod': 'immediate'
                 }
-            )
+            }
+        )
 
     def _create_parameter_relationships(self, node_id):
         _source_ctx = self.get_mock_ctx(
@@ -139,43 +152,39 @@ class TestRDSParameter(TestBase):
             'test_attach_to'
         )
         current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('rds')
 
-        with patch('boto3.client', fake_boto):
-            fake_client.modify_db_parameter_group = MagicMock(
-                return_value={
-                    'DBParameterGroupName': 'abc'
-                }
-            )
-            parameter.attach_to(
-                ctx=_ctx, resource_config=None, iface=None
-            )
-            self.assertEqual(_target_ctx.instance.runtime_properties, {
-                '_set_changed': True,
-                'aws_resource_id': 'aws_resource_mock_id',
-                'resource_id': 'prepare_attach_resource'
-            })
-            fake_client.modify_db_parameter_group.assert_called_with(
-                DBParameterGroupName='aws_resource_mock_id',
-                Parameters=[{'ParameterName': 'aws_resource_mock_id'}]
-            )
+        self.fake_client.modify_db_parameter_group = MagicMock(
+            return_value={
+                'DBParameterGroupName': 'abc'
+            }
+        )
+        parameter.attach_to(
+            ctx=_ctx, resource_config=None, iface=None
+        )
+        self.assertEqual(_target_ctx.instance.runtime_properties, {
+            '_set_changed': True,
+            'aws_resource_id': 'aws_resource_mock_id',
+            'resource_id': 'prepare_attach_resource'
+        })
+        self.fake_client.modify_db_parameter_group.assert_called_with(
+            DBParameterGroupName='aws_resource_mock_id',
+            Parameters=[{'ParameterName': 'aws_resource_mock_id'}]
+        )
 
     def test_detach_from(self):
         _source_ctx, _target_ctx, _ctx = self._create_parameter_relationships(
             'test_detach_from'
         )
         current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('rds')
 
-        with patch('boto3.client', fake_boto):
-            parameter.detach_from(
-                ctx=_ctx, resource_config=None, iface=None
-            )
-            self.assertEqual(_target_ctx.instance.runtime_properties, {
-                '_set_changed': True,
-                'aws_resource_id': 'aws_resource_mock_id',
-                'resource_id': 'prepare_attach_resource'
-            })
+        parameter.detach_from(
+            ctx=_ctx, resource_config=None, iface=None
+        )
+        self.assertEqual(_target_ctx.instance.runtime_properties, {
+            '_set_changed': True,
+            'aws_resource_id': 'aws_resource_mock_id',
+            'resource_id': 'prepare_attach_resource'
+        })
 
 
 if __name__ == '__main__':

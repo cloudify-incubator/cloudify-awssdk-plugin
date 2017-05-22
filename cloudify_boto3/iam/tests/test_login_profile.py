@@ -40,6 +40,21 @@ RUNTIME_PROPERTIES = {
 
 class TestIAMLoginProfile(TestBase):
 
+    def setUp(self):
+        super(TestIAMLoginProfile, self).setUp()
+
+        self.fake_boto, self.fake_client = self.fake_boto_client('iam')
+
+        self.mock_patch = patch('boto3.client', self.fake_boto)
+        self.mock_patch.start()
+
+    def tearDown(self):
+        self.mock_patch.stop()
+        self.fake_boto = None
+        self.fake_client = None
+
+        super(TestIAMLoginProfile, self).tearDown()
+
     def test_configure(self):
         self._prepare_configure(
             type_hierarchy=LOGIN_PROFILE_TH,
@@ -53,27 +68,25 @@ class TestIAMLoginProfile(TestBase):
             ['cloudify.nodes.Root', 'cloudify.nodes.aws.iam.User']
         )
         current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('iam')
 
-        with patch('boto3.client', fake_boto):
-            fake_client.create_login_profile = MagicMock(return_value={})
+        self.fake_client.create_login_profile = MagicMock(return_value={})
 
-            login_profile.attach_to(
-                ctx=_ctx, resource_config=None, iface=None
-            )
+        login_profile.attach_to(
+            ctx=_ctx, resource_config=None, iface=None
+        )
 
-            fake_client.create_login_profile.assert_called_with(
-                UserName='aws_target_mock_id'
-            )
+        self.fake_client.create_login_profile.assert_called_with(
+            UserName='aws_target_mock_id'
+        )
 
-            self.assertEqual(
-                _source_ctx.instance.runtime_properties, {
-                    '_set_changed': True,
-                    'aws_resource_id': 'aws_resource_mock_id',
-                    'resource_config': {},
-                    'resource_id': 'prepare_attach_source'
-                }
-            )
+        self.assertEqual(
+            _source_ctx.instance.runtime_properties, {
+                '_set_changed': True,
+                'aws_resource_id': 'aws_resource_mock_id',
+                'resource_config': {},
+                'resource_id': 'prepare_attach_source'
+            }
+        )
 
     def test_detach_from_User(self):
         _source_ctx, _target_ctx, _ctx = self._create_common_relationships(
@@ -82,27 +95,25 @@ class TestIAMLoginProfile(TestBase):
             ['cloudify.nodes.Root', 'cloudify.nodes.aws.iam.User']
         )
         current_ctx.set(_ctx)
-        fake_boto, fake_client = self.fake_boto_client('iam')
 
-        with patch('boto3.client', fake_boto):
-            fake_client.delete_login_profile = MagicMock(return_value={})
+        self.fake_client.delete_login_profile = MagicMock(return_value={})
 
-            login_profile.detach_from(
-                ctx=_ctx, resource_config=None, iface=None
-            )
+        login_profile.detach_from(
+            ctx=_ctx, resource_config=None, iface=None
+        )
 
-            fake_client.delete_login_profile.assert_called_with(
-                UserName='aws_target_mock_id'
-            )
+        self.fake_client.delete_login_profile.assert_called_with(
+            UserName='aws_target_mock_id'
+        )
 
-            self.assertEqual(
-                _source_ctx.instance.runtime_properties, {
-                    '_set_changed': True,
-                    'aws_resource_id': 'aws_resource_mock_id',
-                    'resource_config': {},
-                    'resource_id': 'prepare_attach_source'
-                }
-            )
+        self.assertEqual(
+            _source_ctx.instance.runtime_properties, {
+                '_set_changed': True,
+                'aws_resource_id': 'aws_resource_mock_id',
+                'resource_config': {},
+                'resource_id': 'prepare_attach_source'
+            }
+        )
 
 
 if __name__ == '__main__':
