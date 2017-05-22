@@ -34,6 +34,16 @@ node_templates:
       - type: cloudify.relationships.connected_to
         target: vpc
 
+  route_table:
+    type: cloudify.nodes.aws.ec2.RouteTable
+    properties:
+      client_config: *client_config
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: vpc
+      - type: cloudify.relationships.connected_to
+        target: subnet
+
   subnet:
     type: cloudify.nodes.aws.ec2.Subnet
     properties:

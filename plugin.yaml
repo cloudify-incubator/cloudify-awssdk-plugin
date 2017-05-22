@@ -212,7 +212,11 @@ data_types:
       kwargs:
         default: {}
 
+<<<<<<< HEAD
   cloudify.datatypes.aws.ec2.InternetGateway.config:
+=======
+  cloudify.datatypes.aws.ec2.RouteTable.config:
+>>>>>>> Add route table
     properties:
       kwargs:
         default: {}
@@ -4060,7 +4064,11 @@ node_types:
               required: false
               default: {}
 
+<<<<<<< HEAD
   cloudify.nodes.aws.ec2.InternetGateway:
+=======
+  cloudify.nodes.aws.ec2.RouteTable:
+>>>>>>> Add route table
     derived_from: cloudify.nodes.Root
     properties:
       use_external_resource:
@@ -4080,12 +4088,20 @@ node_types:
         description: >
           Configuration key-value data to be passed as-is to the corresponding
           Boto3 method. Key names must match the case that Boto3 requires.
+<<<<<<< HEAD
         type: cloudify.datatypes.aws.ec2.InternetGateway.config
+=======
+        type: cloudify.datatypes.aws.ec2.RouteTable.config
+>>>>>>> Add route table
         required: false
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
+<<<<<<< HEAD
           implementation: awssdk.cloudify_boto3.ec2.resources.internet_gateway.prepare
+=======
+          implementation: awssdk.cloudify_boto3.ec2.resources.routetable.prepare
+>>>>>>> Add route table
           inputs:
             aws_resource_id:
               description: >
@@ -4114,7 +4130,11 @@ node_types:
               required: false
               default: {}
         configure:
+<<<<<<< HEAD
           implementation: awssdk.cloudify_boto3.ec2.resources.internet_gateway.create
+=======
+          implementation: awssdk.cloudify_boto3.ec2.resources.routetable.create
+>>>>>>> Add route table
           inputs:
             aws_resource_id:
               description: >
@@ -4143,7 +4163,11 @@ node_types:
               required: false
               default: {}
         start:
+<<<<<<< HEAD
           implementation: awssdk.cloudify_boto3.ec2.resources.internet_gateway.attach
+=======
+          implementation: awssdk.cloudify_boto3.ec2.resources.routetable.attach
+>>>>>>> Add route table
           inputs:
             aws_resource_id:
               description: >
@@ -4172,7 +4196,11 @@ node_types:
               required: false
               default: {}
         stop:
+<<<<<<< HEAD
           implementation: awssdk.cloudify_boto3.ec2.resources.internet_gateway.detach
+=======
+          implementation: awssdk.cloudify_boto3.ec2.resources.routetable.detach
+>>>>>>> Add route table
           inputs:
             aws_resource_id:
               description: >
@@ -4201,7 +4229,11 @@ node_types:
               required: false
               default: {}
         delete:
+<<<<<<< HEAD
           implementation: awssdk.cloudify_boto3.ec2.resources.internet_gateway.delete
+=======
+          implementation: awssdk.cloudify_boto3.ec2.resources.routetable.delete
+>>>>>>> Add route table
           inputs:
             aws_resource_id:
               description: >
