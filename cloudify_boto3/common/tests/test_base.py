@@ -89,6 +89,7 @@ class TestBase(unittest.TestCase):
 
         ctx = MockCloudifyContext(
             node_id=test_name,
+            node_name=test_name,
             deployment_id=test_name,
             properties=copy.deepcopy(test_properties),
             runtime_properties=self._to_DirtyTrackingDict(
