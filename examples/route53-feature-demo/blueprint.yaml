@@ -46,14 +46,19 @@ node_templates:
     properties:
       client_config: *client_config
       resource_config:
-        kwargs:
-          Action: CREATE
-          ResourceRecordSet:
-            Name: { concat: ["dev.", { get_property: [dns_hosted_zone, resource_id] }] }
-            Type: !!str TXT
-            TTL: !!int 60
-            ResourceRecords:
-            - Value: '"Created using Cloudify"'
+        kwargs: {}
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          inputs:
+            resource_config:
+              Action: CREATE
+              ResourceRecordSet:
+                Name: { concat: ["dev.", { get_property: [dns_hosted_zone, resource_id] }] }
+                Type: !!str TXT
+                TTL: !!int 60
+                ResourceRecords:
+                - Value: '"Created using Cloudify"'
     relationships:
     - type: cloudify.relationships.aws.route53.record_set.connected_to
       target: dns_hosted_zone
