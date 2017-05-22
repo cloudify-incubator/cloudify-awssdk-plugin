@@ -23,6 +23,7 @@ from cloudify_boto3.ec2.resources import subnet
 class TestEC2Subnet(TestBase):
 
     def setUp(self):
+        super(TestEC2Subnet, self).setUp()
         self.subnet = EC2Subnet("ctx_node", resource_id=True,
                                 client=True, logger=None)
         mock1 = patch('cloudify_boto3.common.decorators.aws_resource',

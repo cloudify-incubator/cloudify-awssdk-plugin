@@ -29,6 +29,7 @@ PATCH_PREFIX = 'cloudify_boto3.elb.resources.classic.policy.'
 class TestELBClassicPolicy(TestBase):
 
     def setUp(self):
+        super(TestELBClassicPolicy, self).setUp()
         self.policy = ELBClassicPolicy("ctx_node", resource_id=True,
                                        client=MagicMock(), logger=None)
         mock1 = patch('cloudify_boto3.common.decorators.aws_resource',

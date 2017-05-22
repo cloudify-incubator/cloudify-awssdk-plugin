@@ -26,6 +26,7 @@ PATCH_PREFIX = 'cloudify_boto3.s3.resources.bucket_policy.'
 class TestS3BacketPolicy(TestBase):
 
     def setUp(self):
+        super(TestS3BacketPolicy, self).setUp()
         self.policy = S3BucketPolicy("ctx_node", resource_id=True,
                                      client=True, logger=None)
         mock1 = patch('cloudify_boto3.common.decorators.aws_resource',

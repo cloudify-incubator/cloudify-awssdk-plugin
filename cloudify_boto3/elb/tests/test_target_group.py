@@ -28,6 +28,7 @@ PATCH_PREFIX = 'cloudify_boto3.elb.resources.target_group.'
 class TestELBTargetGroup(TestBase):
 
     def setUp(self):
+        super(TestELBTargetGroup, self).setUp()
         self.target_group = ELBTargetGroup("ctx_node", resource_id=True,
                                            client=MagicMock(), logger=None)
         mock1 = patch('cloudify_boto3.common.decorators.aws_resource',

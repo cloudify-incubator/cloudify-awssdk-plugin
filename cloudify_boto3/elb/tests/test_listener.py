@@ -27,6 +27,7 @@ PATCH_PREFIX = 'cloudify_boto3.elb.resources.listener.'
 class TestELBListener(TestBase):
 
     def setUp(self):
+        super(TestELBListener, self).setUp()
         self.listener = ELBListener("ctx_node", resource_id=True,
                                     client=MagicMock(), logger=None)
         mock1 = patch('cloudify_boto3.common.decorators.aws_resource',

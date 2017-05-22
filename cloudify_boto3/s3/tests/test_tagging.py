@@ -26,6 +26,7 @@ PATCH_PREFIX = 'cloudify_boto3.s3.resources.tagging.'
 class TestS3BucketTagging(TestBase):
 
     def setUp(self):
+        super(TestS3BucketTagging, self).setUp()
         self.tagging = S3BucketTagging("ctx_node",
                                        resource_id=True,
                                        client=True, logger=None)

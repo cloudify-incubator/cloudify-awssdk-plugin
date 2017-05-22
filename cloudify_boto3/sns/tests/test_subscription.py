@@ -27,6 +27,7 @@ PATCH_PREFIX = 'cloudify_boto3.sns.resources.subscription.'
 class TestSNSSubscription(TestBase):
 
     def setUp(self):
+        super(TestSNSSubscription, self).setUp()
         self.subscription = SNSSubscription("ctx_node",
                                             resource_id=True,
                                             client=MagicMock(),

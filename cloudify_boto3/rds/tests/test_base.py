@@ -20,6 +20,7 @@ from cloudify_boto3.rds import RDSBase
 class TestRDSBase(TestServiceBase):
 
     def setUp(self):
+        super(TestRDSBase, self).setUp()
         self.base = RDSBase("ctx_node", resource_id=True,
                             client=True, logger=None)
 

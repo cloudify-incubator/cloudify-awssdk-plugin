@@ -17,6 +17,7 @@ import unittest
 from cloudify.state import current_ctx
 from cloudify_boto3.common.tests.test_base import TestBase, CLIENT_CONFIG
 from cloudify_boto3.common.tests.test_base import DELETE_RESPONSE
+from cloudify_boto3.common.tests.test_base import DEFAULT_RUNTIME_PROPERTIES
 from cloudify_boto3.dynamodb.resources import table
 
 # Constants
@@ -28,11 +29,6 @@ NODE_PROPERTIES = {
     'use_external_resource': False,
     'resource_config': {},
     'client_config': CLIENT_CONFIG
-}
-
-RUNTIME_PROPERTIES = {
-    'aws_resource_id': 'aws_resource',
-    'resource_config': {}
 }
 
 RUNTIME_PROPERTIES_AFTER_CREATE = {
@@ -70,7 +66,7 @@ class TestDynamoDBTable(TestBase):
         _ctx = self.get_mock_ctx(
             'test_create',
             test_properties=NODE_PROPERTIES,
-            test_runtime_properties=RUNTIME_PROPERTIES,
+            test_runtime_properties=DEFAULT_RUNTIME_PROPERTIES,
             type_hierarchy=TABLE_TH
         )
 

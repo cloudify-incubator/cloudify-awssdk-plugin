@@ -19,6 +19,7 @@ from cloudify.state import current_ctx
 
 from cloudify_boto3.common.tests.test_base import TestServiceBase
 from cloudify_boto3.common.tests.test_base import TestBase, CLIENT_CONFIG
+from cloudify_boto3.common.tests.test_base import DEFAULT_RUNTIME_PROPERTIES
 from cloudify_boto3.kms import KMSBase
 
 NODE_PROPERTIES = {
@@ -27,15 +28,11 @@ NODE_PROPERTIES = {
     'client_config': CLIENT_CONFIG
 }
 
-RUNTIME_PROPERTIES = {
-    'aws_resource_id': 'aws_resource',
-    'resource_config': {}
-}
-
 
 class TestKMSBase(TestServiceBase):
 
     def setUp(self):
+        super(TestKMSBase, self).setUp()
         self.base = KMSBase("ctx_node", resource_id=True,
                             client=True, logger=None)
 
@@ -78,7 +75,7 @@ class TestKMS(TestBase):
                 node_prop if node_prop else NODE_PROPERTIES
             ),
             test_runtime_properties=(
-                runtime_prop if runtime_prop else RUNTIME_PROPERTIES
+                runtime_prop if runtime_prop else DEFAULT_RUNTIME_PROPERTIES
             ),
             type_hierarchy=type_hierarchy,
             test_relationships=[mock_child]

@@ -20,6 +20,7 @@ from cloudify_boto3.cloudwatch import AWSCloudwatchBase
 class TestAWSCloudwatchBase(TestServiceBase):
 
     def setUp(self):
+        super(TestAWSCloudwatchBase, self).setUp()
         self.base = AWSCloudwatchBase("ctx_node", resource_id=True,
                                       client=True, logger=None)
 

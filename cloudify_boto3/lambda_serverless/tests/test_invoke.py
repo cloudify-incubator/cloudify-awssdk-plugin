@@ -33,6 +33,7 @@ INVOKE_PATH = 'cloudify_boto3.lambda_serverless.resources.invoke.'
 class TestLambdaInvoke(TestBase):
 
     def setUp(self):
+        super(TestLambdaInvoke, self).setUp()
         mock1 = patch('cloudify_boto3.common.decorators.aws_resource',
                       mock_decorator)
         mock2 = patch('cloudify_boto3.common.decorators.aws_relationship',

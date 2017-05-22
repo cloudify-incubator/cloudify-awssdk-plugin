@@ -20,6 +20,7 @@ from cloudify_boto3.lambda_serverless import LambdaBase
 class TestLambdaBase(TestServiceBase):
 
     def setUp(self):
+        super(TestLambdaBase, self).setUp()
         self.base = LambdaBase("ctx_node", resource_id=True,
                                client=True, logger=None)
 

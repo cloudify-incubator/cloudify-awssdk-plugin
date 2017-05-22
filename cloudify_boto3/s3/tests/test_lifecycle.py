@@ -26,6 +26,7 @@ PATCH_PREFIX = 'cloudify_boto3.s3.resources.lifecycle_configuration.'
 class TestS3BucketLifecycleConfiguration(TestBase):
 
     def setUp(self):
+        super(TestS3BucketLifecycleConfiguration, self).setUp()
         self.config = S3BucketLifecycleConfiguration("ctx_node",
                                                      resource_id=True,
                                                      client=MagicMock(),

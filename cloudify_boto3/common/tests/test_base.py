@@ -68,7 +68,18 @@ def mock_decorator(*args, **kwargs):
 
 class TestBase(unittest.TestCase):
 
+    sleep_mock = None
+
+    def setUp(self):
+        super(TestBase, self).setUp()
+        mock_sleep = MagicMock()
+        self.sleep_mock = patch('time.sleep', mock_sleep)
+        self.sleep_mock.start()
+
     def tearDown(self):
+        if self.sleep_mock:
+            self.sleep_mock.stop()
+            self.sleep_mock = None
         current_ctx.clear()
         super(TestBase, self).tearDown()
 
@@ -531,5 +542,6 @@ class TestServiceBase(TestBase):
 class TestAWSResourceBase(TestServiceBase):
 
     def setUp(self):
+        super(TestAWSResourceBase, self).setUp()
         self.base = AWSResourceBase("ctx_node", resource_id=True,
                                     logger=None)

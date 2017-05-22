@@ -20,6 +20,7 @@ from cloudify_boto3.dynamodb import DynamoDBBase
 class TestDynamoDBBase(TestServiceBase):
 
     def setUp(self):
+        super(TestDynamoDBBase, self).setUp()
         self.base = DynamoDBBase("ctx_node", resource_id=True,
                                  client=True, logger=None)
 

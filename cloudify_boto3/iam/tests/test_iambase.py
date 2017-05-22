@@ -20,6 +20,7 @@ from cloudify_boto3.iam import IAMBase
 class TestIAMBase(TestServiceBase):
 
     def setUp(self):
+        super(TestIAMBase, self).setUp()
         self.base = IAMBase("ctx_node", resource_id=True,
                             client=True, logger=None)
 

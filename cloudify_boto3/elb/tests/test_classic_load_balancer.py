@@ -26,6 +26,7 @@ PATCH_PREFIX = 'cloudify_boto3.elb.resources.classic.load_balancer.'
 class TestELBClassicLoadBalancer(TestBase):
 
     def setUp(self):
+        super(TestELBClassicLoadBalancer, self).setUp()
         self.load_balancer = ELBClassicLoadBalancer("ctx_node",
                                                     resource_id=True,
                                                     client=MagicMock(),

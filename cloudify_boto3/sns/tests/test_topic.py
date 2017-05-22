@@ -25,6 +25,7 @@ PATCH_PREFIX = 'cloudify_boto3.sns.resources.topic.'
 class TestSNSTopic(TestBase):
 
     def setUp(self):
+        super(TestSNSTopic, self).setUp()
         self.topic = SNSTopic("ctx_node",
                               resource_id=True,
                               client=MagicMock(),

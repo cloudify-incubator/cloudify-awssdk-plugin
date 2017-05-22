@@ -20,6 +20,7 @@ from cloudify_boto3.sns import SNSBase
 class TestSNSBase(TestServiceBase):
 
     def setUp(self):
+        super(TestSNSBase, self).setUp()
         self.base = SNSBase("ctx_node", resource_id=True,
                             client=True, logger=None)
 

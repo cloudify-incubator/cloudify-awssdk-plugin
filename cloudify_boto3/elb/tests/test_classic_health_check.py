@@ -26,6 +26,7 @@ PATCH_PREFIX = 'cloudify_boto3.elb.resources.classic.health_check.'
 class TestELBClassicHealthCheck(TestBase):
 
     def setUp(self):
+        super(TestELBClassicHealthCheck, self).setUp()
         self.health_check = ELBClassicHealthCheck("ctx_node", resource_id=True,
                                                   client=MagicMock(),
                                                   logger=None)

@@ -20,6 +20,7 @@ from cloudify_boto3.s3 import S3Base
 class TestS3Base(TestServiceBase):
 
     def setUp(self):
+        super(TestS3Base, self).setUp()
         self.base = S3Base("ctx_node", resource_id=True,
                            client=True, logger=None)
 

@@ -20,6 +20,7 @@ from cloudify_boto3.sqs import SQSBase
 class TestSQSBase(TestServiceBase):
 
     def setUp(self):
+        super(TestSQSBase, self).setUp()
         self.base = SQSBase("ctx_node", resource_id=True,
                             client=True, logger=None)
 

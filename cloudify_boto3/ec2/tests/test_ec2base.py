@@ -20,6 +20,7 @@ from cloudify_boto3.ec2 import EC2Base
 class TestEC2Base(TestServiceBase):
 
     def setUp(self):
+        super(TestEC2Base, self).setUp()
         self.base = EC2Base("ctx_node", resource_id=True,
                             client=True, logger=None)
 

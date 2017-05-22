@@ -37,9 +37,10 @@ NODE_PROPERTIES = {
     'client_config': CLIENT_CONFIG
 }
 
-RUNTIME_PROPERTIES = {
-    'aws_resource_id': 'aws_resource',
-    'resource_config': {}
+RUNTIME_PROPERTIES_AFTER_CREATE = {
+    'aws_resource_arn': 'arn_id',
+    'resource_config': {},
+    'aws_resource_id': 'test-lauchconfig3'
 }
 
 RUNTIME_PROPERTIES_AFTER_CREATE = {

@@ -22,6 +22,7 @@ from cloudify_boto3.ec2.resources import vpc
 class TestEC2Vpc(TestBase):
 
     def setUp(self):
+        super(TestEC2Vpc, self).setUp()
         self.vpc = EC2Vpc("ctx_node", resource_id=True,
                           client=True, logger=None)
         mock1 = patch('cloudify_boto3.common.decorators.aws_resource',

@@ -20,6 +20,7 @@ from cloudify_boto3.elb import ELBBase
 class TestELBBase(TestServiceBase):
 
     def setUp(self):
+        super(TestELBBase, self).setUp()
         self.base = ELBBase("ctx_node", resource_id=True,
                             client=True, logger=None)
 

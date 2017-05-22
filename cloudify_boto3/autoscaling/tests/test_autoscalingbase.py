@@ -20,6 +20,7 @@ from cloudify_boto3.autoscaling import AutoscalingBase
 class TestAutoscalingBase(TestServiceBase):
 
     def setUp(self):
+        super(TestAutoscalingBase, self).setUp()
         self.base = AutoscalingBase("ctx_node", resource_id=True,
                                     client=True, logger=None)
 

@@ -20,6 +20,7 @@ from cloudify_boto3.efs import EFSBase
 class TestEFSBase(TestServiceBase):
 
     def setUp(self):
+        super(TestEFSBase, self).setUp()
         self.base = EFSBase("ctx_node", resource_id=True,
                             client=True, logger=None)
 
