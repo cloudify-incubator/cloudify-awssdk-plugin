@@ -2,7 +2,7 @@ tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
   - http://www.getcloudify.org/spec/cloudify/4.0/types.yaml
-  - http://www.getcloudify.org/spec/aws-plugin/1.4.7/plugin.yaml
+  - http://www.getcloudify.org/spec/aws-plugin/1.4.9/plugin.yaml
   - plugin.yaml
 
 inputs:
@@ -24,11 +24,67 @@ dsl_definitions:
     aws_secret_access_key: { get_input: aws_secret_access_key }
     region_name: { get_input: aws_region_name }
 
-  aws_config: &aws_config
-    aws_access_key_id: { get_input: aws_access_key_id }
-    aws_secret_access_key: { get_input: aws_secret_access_key }
-
 node_templates:
+
+  network_acl:
+    type: cloudify.nodes.aws.ec2.NetworkACL
+    properties:
+      client_config: *client_config
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: vpc
+      - type: cloudify.relationships.connected_to
+        target: subnet
+
+  network_acl_entry:
+    type: cloudify.nodes.aws.ec2.NetworkAclEntry
+    properties:
+      resource_config:
+        kwargs:
+          RuleNumber: 100
+          Protocol: '-1'
+          RuleAction: 'allow'
+          Egress: False
+          CidrBlock: '0.0.0.0/0'
+      client_config: *client_config
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: network_acl
+
+  dhcp_options:
+    type: cloudify.nodes.aws.ec2.DHCPOptions
+    properties:
+      resource_config:
+        kwargs:
+          DhcpConfigurations:
+            - Key: domain-name
+              Values:
+                - example.com
+      client_config: *client_config
+    relationships:
+      - type: cloudify.relationships.connected_to
+        target: vpc
+
+  vpn_gateway:
+    type: cloudify.nodes.aws.ec2.VPNGateway
+    properties:
+      resource_config:
+        kwargs:
+          Type: 'ipsec.1'
+      client_config: *client_config
+    relationships:
+      - type: cloudify.relationships.connected_to
+        target: vpc
+
+  customer_gateway:
+    type: cloudify.nodes.aws.ec2.CustomerGateway
+    properties:
+      resource_config:
+        kwargs:
+          Type: 'ipsec.1'
+          PublicIp: '34.224.150.134'
+          BgpAsn: 65000
+      client_config: *client_config
 
   igw:
     type: cloudify.nodes.aws.ec2.InternetGateway
@@ -37,6 +93,7 @@ node_templates:
     relationships:
       - type: cloudify.relationships.connected_to
         target: vpc
+
   route:
     type: cloudify.nodes.aws.ec2.Route
     properties:
@@ -48,7 +105,7 @@ node_templates:
       - type: cloudify.relationships.contained_in
         target: route_table
       - type: cloudify.relationships.connected_to
-        target: internet_gateway
+        target: igw
 
   route_table:
     type: cloudify.nodes.aws.ec2.RouteTable
@@ -59,15 +116,6 @@ node_templates:
         target: vpc
       - type: cloudify.relationships.connected_to
         target: subnet
-
-  internet_gateway:
-    type: cloudify.aws.nodes.InternetGateway
-    properties:
-      aws_config: *aws_config
-      cidr_block: '0.0.0.0/0'
-    relationships:
-      - type: cloudify.aws.relationships.gateway_connected_to_vpc
-        target: vpc
 
   subnet:
     type: cloudify.nodes.aws.ec2.Subnet

@@ -95,6 +95,29 @@ class TestEC2InternetGateway(TestBase):
         self.internet_gateway.delete(params)
         self.assertEqual(params['InternetGateway'], 'internet gateway')
 
+    def test_class_attach(self):
+        value = {'VpcAttachment': {INTERNETGATEWAY_ID: 'internet gateway',
+                                   VPC_ID: 'vpc'}}
+        self.internet_gateway.client = \
+            self.make_client_function('attach_internet_gateway',
+                                      return_value=True)
+        with patch('cloudify_boto3.ec2.resources.internet_gateway'
+                   '.EC2InternetGateway.attach'):
+            res = self.internet_gateway.attach(value)
+            self.assertEqual(True, res)
+
+    def test_class_detach(self):
+        params = {}
+        self.internet_gateway.client = \
+            self.make_client_function('detach_internet_gateway')
+        self.internet_gateway.detach(params)
+        self.assertTrue(self.internet_gateway.client.detach_internet_gateway
+                        .called)
+        params = {INTERNETGATEWAY_ID: 'internet gateway', VPC_ID: 'vpc'}
+        self.internet_gateway.delete(params)
+        self.assertTrue(self.internet_gateway.client.detach_internet_gateway
+                        .called)
+
     def test_prepare(self):
         ctx = self.get_mock_ctx("InternetGateway")
         config = {INTERNETGATEWAY_ID: 'internet gateway'}
