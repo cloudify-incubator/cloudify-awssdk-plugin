@@ -34,6 +34,7 @@ INTERNETGATEWAY_TYPE = 'cloudify.nodes.aws.ec2.InternetGateway'
 INTERNETGATEWAY_TYPE_DEPRECATED = 'cloudify.aws.nodes.InternetGateway'
 VPNGATEWAY_TYPE = 'cloudify.nodes.aws.ec2.VPNGateway'
 VPNGATEWAY_TYPE_DEPRECATED = 'cloudify.aws.nodes.VPNGateway'
+DESTINATION_CIDR_BLOCK = 'DestinationCidrBlock'
 
 
 class EC2Route(EC2Base):
@@ -96,6 +97,8 @@ def create(ctx, iface, resource_config, **_):
             targ.target.instance.runtime_properties.get(EXTERNAL_RESOURCE_ID)
 
     ctx.instance.runtime_properties['routetable_id'] = params[ROUTETABLE_ID]
+    ctx.instance.runtime_properties['destination_cidr_block'] = \
+        params[DESTINATION_CIDR_BLOCK]
 
     # If this value is missing,
     # it must be filled from a connected Route Table.
@@ -137,6 +140,8 @@ def delete(ctx, iface, resource_config, **_):
         dict() if not resource_config else resource_config.copy()
 
     routetable_id = params.get(ROUTETABLE_ID)
+    destination_cidr_block = params.get(DESTINATION_CIDR_BLOCK)
+
     if not routetable_id:
         targ = \
             utils.find_rel_by_node_type(ctx.instance, ROUTETABLE_TYPE) or \
@@ -148,5 +153,9 @@ def delete(ctx, iface, resource_config, **_):
         params[ROUTETABLE_ID] = \
             routetable_id or \
             targ.target.instance.runtime_properties.get(EXTERNAL_RESOURCE_ID)
+
+    params[DESTINATION_CIDR_BLOCK] = \
+        destination_cidr_block or \
+        ctx.instance.runtime_properties['destination_cidr_block']
 
     iface.delete(params)
