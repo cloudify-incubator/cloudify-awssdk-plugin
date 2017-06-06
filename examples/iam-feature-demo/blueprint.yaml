@@ -7,7 +7,7 @@ description: >
 
 imports:
 - http://www.getcloudify.org/spec/cloudify/3.4.2/types.yaml
-- http://www.getcloudify.org/spec/aws-plugin/1.4.4/plugin.yaml
+- http://www.getcloudify.org/spec/aws-plugin/1.4.10/plugin.yaml
 - plugin.yaml
 
 
@@ -35,6 +35,28 @@ dsl_definitions:
     ec2_region_name: { get_input: aws_region_name }
 
 node_templates:
+
+  launch_configuration:
+    type: cloudify.nodes.aws.autoscaling.LaunchConfiguration
+    properties:
+      resource_config:
+        kwargs:
+          LaunchConfigurationName: test-lauchconfig2
+          ImageId: ami-c58c1dd3
+          InstanceType: t2.nano
+      client_config: *client_config
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure:
+          inputs:
+            resource_config:
+              LaunchConfigurationName: test-lauchconfig2
+              ImageId: ami-c58c1dd3
+              InstanceType: t2.nano
+              IamInstanceProfile: { get_attribute: [ iam_user_instance_profile, aws_resource_arn ] }
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: iam_user_instance_profile
 
   iam_user_api_access:
     type: cloudify.nodes.aws.iam.AccessKey
@@ -81,6 +103,14 @@ node_templates:
     relationships:
     - type: cloudify.relationships.aws.iam.group.connected_to
       target: iam_policy_vpc_access
+
+  iam_user_instance_profile:
+    type: cloudify.nodes.aws.iam.InstanceProfile
+    properties:
+      client_config: *client_config
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: iam_role
 
   iam_role:
     type: cloudify.nodes.aws.iam.Role
