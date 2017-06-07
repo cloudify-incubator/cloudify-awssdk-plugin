@@ -6,9 +6,9 @@ description: >
 
 
 imports:
-- http://www.getcloudify.org/spec/cloudify/3.4.2/types.yaml
-- http://www.getcloudify.org/spec/aws-plugin/1.4.4/plugin.yaml
-- plugin.yaml
+- http://www.getcloudify.org/spec/cloudify/4.0.1/types.yaml
+- http://getcloudify.org.s3.amazonaws.com/spec/aws-plugin/1.4.10/plugin.yaml
+- https://raw.githubusercontent.com/cloudify-incubator/cloudify-boto3-plugin/1.0.0m5/plugin.yaml
 
 
 inputs:
@@ -21,12 +21,6 @@ inputs:
   aws_region_name:
     type: string
     default: us-east-1
-    
-  aws_vpc_id:
-    description: |
-      AWS VPC ID
-    type: string
-
 
 dsl_definitions:
   client_config: &client_config
@@ -47,16 +41,35 @@ node_templates:
       client_config: *client_config
       resource_config:
         kwargs:
-          Action: CREATE
-          ResourceRecordSet:
-            Name: { concat: ["dev.", { get_property: [dns_hosted_zone, resource_id] }] }
-            Type: !!str TXT
-            TTL: !!int 60
-            ResourceRecords:
-            - Value: '"Created using Cloudify"'
     relationships:
     - type: cloudify.relationships.aws.route53.record_set.connected_to
       target: dns_hosted_zone
+    - type: cloudify.relationships.depends_on
+      target: instance
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: awssdk.cloudify_boto3.route53.resources.record_set.prepare
+          inputs:
+            resource_config:
+              Action: CREATE
+              ResourceRecordSet:
+                Name: { concat: ["dev.", { get_property: [dns_hosted_zone, resource_id] }] }
+                Type: !!str TXT
+                TTL: !!int 60
+                ResourceRecords:
+                - Value: { concat: [ '"', { get_attribute: [ instance, ip ] } , '"' ] }
+
+  instance:
+    type: cloudify.aws.nodes.Instance
+    properties:
+      install_agent: false
+      image_id: ami-c58c1dd3
+      instance_type: t2.micro
+      aws_config: *aws_config
+    relationships:
+      - type: cloudify.aws.relationships.instance_contained_in_subnet
+        target: dns_subnet
 
   dns_record_set_1:
     type: cloudify.nodes.aws.route53.RecordSet
@@ -94,10 +107,18 @@ node_templates:
     - type: cloudify.relationships.aws.route53.hosted_zone.connected_to
       target: dns_vpc
 
+  dns_subnet:
+    type: cloudify.aws.nodes.Subnet
+    properties:
+      aws_config: *aws_config
+      cidr_block:  '10.0.0.0/24'
+      availability_zone: { concat: [ { get_input: aws_region_name }, 'b' ] }
+    relationships:
+    - type: cloudify.aws.relationships.subnet_contained_in_vpc
+      target: dns_vpc
+
   dns_vpc:
     type: cloudify.aws.nodes.VPC
     properties:
-      use_external_resource: true
-      resource_id: { get_input: aws_vpc_id }
-      cidr_block:  N/A
+      cidr_block:  10.0.0.0/16
       aws_config: *aws_config

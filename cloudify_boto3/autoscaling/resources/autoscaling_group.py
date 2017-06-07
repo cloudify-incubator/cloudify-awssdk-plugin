@@ -141,17 +141,21 @@ def create(ctx, iface, resource_config, **_):
                 INSTANCE_TYPE)
         params[INSTANCE_ID] = instance_id
 
-    subnet_list = params.get(SUBNET_LIST, '')
+    subnet_list_string = params.get(SUBNET_LIST)
+    subnet_list = \
+        subnet_list_string.split(', ') if \
+        subnet_list_string else []
+
     subnet_list = \
         utils.add_resources_from_rels(
             ctx.instance,
             SUBNET_TYPE,
-            subnet_list.split(', ') if subnet_list else [])
+            subnet_list)
     subnet_list = \
         utils.add_resources_from_rels(
             ctx.instance,
             SUBNET_TYPE_DEPRECATED,
-            subnet_list if subnet_list else [])
+            subnet_list)
     if subnet_list:
         params[SUBNET_LIST] = ', '.join(subnet_list)
 

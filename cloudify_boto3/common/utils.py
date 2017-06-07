@@ -271,10 +271,31 @@ def find_resource_id_by_type(node_instance, node_type):
         find_rel_by_node_type(
             node_instance,
             node_type)
-    if targ:
+    if targ and getattr(targ, 'target'):
         resource_id = \
             targ.target.instance.runtime_properties.get(
                 constants.EXTERNAL_RESOURCE_ID)
+        return resource_id
+    return None
+
+
+def find_resource_arn_by_type(node_instance, node_type):
+    '''
+        Finds the resource_arn of a single node,
+        which is connected via a relationship.
+    :param `cloudify.context.NodeInstanceContext` inst: Cloudify instance
+    :param string node_type: Node type name
+    :return: None or the resource arn
+    '''
+
+    targ = \
+        find_rel_by_node_type(
+            node_instance,
+            node_type)
+    if targ and getattr(targ, 'target'):
+        resource_id = \
+            targ.target.instance.runtime_properties.get(
+                constants.EXTERNAL_RESOURCE_ARN)
         return resource_id
     return None
 

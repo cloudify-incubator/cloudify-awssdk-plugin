@@ -1,8 +1,9 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
-- http://www.getcloudify.org/spec/cloudify/3.4.2/types.yaml
-- plugin.yaml
+- http://www.getcloudify.org/spec/cloudify/4.0.1/types.yaml
+- http://getcloudify.org.s3.amazonaws.com/spec/aws-plugin/1.4.10/plugin.yaml
+- https://raw.githubusercontent.com/cloudify-incubator/cloudify-boto3-plugin/1.0.0m5/plugin.yaml
 
 inputs:
 
@@ -65,7 +66,7 @@ node_templates:
                   "Action": [
                     "s3:GetObject"
                   ],
-                  "Resource": "arn:aws:s3:::cloudify-bucket/*"
+                  "Resource": "arn:aws:s3:::cfypm_example_s3/*"
                 }
               ]
             }
@@ -82,7 +83,7 @@ node_templates:
           Tagging:
             TagSet:
             - Key: Name
-              Value: cloudify-bucket-bucket_tagging
+              Value: cfypm_example_s3-bucket_tagging
       client_config: *client_config
     relationships:
     - type: cloudify.relationships.depends_on
@@ -94,7 +95,5 @@ node_templates:
       resource_config:
         kwargs:
           ACL: public-read-write
-          Bucket: cloudify-bucket
-          CreateBucketConfiguration:
-            LocationConstraint: { get_input: aws_region_name }
+          Bucket: cfypm_example_s3
       client_config: *client_config

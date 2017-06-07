@@ -31,73 +31,57 @@ dsl_definitions:
 
 node_templates:
 
-  autoscaling_lifecycle_hook3:
-    type: cloudify.nodes.aws.autoscaling.LifecycleHook
+  pmcfy_nc:
+    type: cloudify.nodes.aws.autoscaling.NotificationConfiguration
     properties:
+      client_config: *client_config
       resource_config:
         kwargs:
-          LifecycleHookName: test-autoscaling3
-          LifecycleTransition: autoscaling:EC2_INSTANCE_LAUNCHING
-      client_config: *client_config
+          NotificationTypes:
+          - autoscaling:TEST_NOTIFICATION
     relationships:
     - type: cloudify.relationships.depends_on
-      target: autoscaling_group3
+      target: pmcfy_as
+    - type: cloudify.relationships.depends_on
+      target: pmcfy_topic
 
-  autoscaling_group3:
+  pmcfy_as:
     type: cloudify.nodes.aws.autoscaling.Group
     properties:
       resource_config:
         kwargs:
-          AutoScalingGroupName: test-autoscaling3
+          AutoScalingGroupName: pmcfy_as
           MinSize: 1
           MaxSize: 1
           DefaultCooldown: 300
+          AvailabilityZones:
+          - { concat: [ { get_input: aws_region_name }, 'a' ] }
       client_config: *client_config
     relationships:
     - type: cloudify.relationships.depends_on
-      target: launch_configuration3
-    - type: cloudify.relationships.depends_on
-      target: subnet
+      target: pmcfy_lc
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        delete:
+          implementation: awssdk.cloudify_boto3.autoscaling.resources.autoscaling_group.delete
+          inputs:
+            resource_config:
+              ForceDelete: true
 
-  launch_configuration3:
+  pmcfy_lc:
     type: cloudify.nodes.aws.autoscaling.LaunchConfiguration
     properties:
       resource_config:
         kwargs:
-          LaunchConfigurationName: test-lauchconfig3
+          ImageId: ami-c58c1dd3
+          InstanceType: t2.micro
+          LaunchConfigurationName: pmcfy_lc
       client_config: *client_config
-    relationships:
-    - type: cloudify.relationships.depends_on
-      target: instance3
 
-  instance3:
-    type: cloudify.aws.nodes.Instance
+  pmcfy_topic:
+    type: cloudify.nodes.aws.SNS.Topic
     properties:
-      agent_config:
-        install_method: none
-      image_id: ami-01ccc867
-      instance_type: t2.micro
-      aws_config: *aws_config
-    relationships:
-      - type: cloudify.aws.relationships.instance_connected_to_subnet
-        target: subnet
-
-  subnet:
-    type: cloudify.aws.nodes.Subnet
-    properties:
-      aws_config: *aws_config
-      use_external_resource: true
-      resource_id: subnet-b545b1c2
-      cidr_block:  172.30.0.0/24
-      availability_zone: eu-west-1a
-    relationships:
-    - type: cloudify.aws.relationships.subnet_contained_in_vpc
-      target: vpc
-
-  vpc:
-    type: cloudify.aws.nodes.VPC
-    properties:
-      aws_config: *aws_config
-      use_external_resource: true
-      resource_id: vpc-ffec199a
-      cidr_block:  172.30.0.0/16
+      resource_config:
+        kwargs:
+          Name: pmcfy_topic
+      client_config: *client_config

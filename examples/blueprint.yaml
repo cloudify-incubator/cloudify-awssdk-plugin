@@ -1,9 +1,9 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
-- http://www.getcloudify.org/spec/cloudify/3.4.2/types.yaml
-- http://www.getcloudify.org/spec/aws-plugin/1.4.7/plugin.yaml
-- https://raw.githubusercontent.com/cloudify-incubator/cloudify-boto3-plugin/1.0.0m3/plugin.yaml
+- http://www.getcloudify.org/spec/cloudify/4.0.1/types.yaml
+- http://getcloudify.org.s3.amazonaws.com/spec/aws-plugin/1.4.10/plugin.yaml
+- https://raw.githubusercontent.com/cloudify-incubator/cloudify-boto3-plugin/1.0.0m5/plugin.yaml
 
 inputs:
 
@@ -12,15 +12,21 @@ inputs:
 
   aws_region_name:
     type: string
-    default: eu-west-1
+    default: { get_secret: ec2_region_name }
 
   aws_region_zone1:
     type: string
-    default: eu-west-1a
+    default:
+      concat:
+      - { get_input: aws_region_name }
+      - 'a'
 
   aws_region_zone2:
     type: string
-    default: eu-west-1b
+    default:
+      concat:
+      - { get_input: aws_region_name }
+      - 'b'
 
 dsl_definitions:
 
@@ -35,6 +41,53 @@ dsl_definitions:
     ec2_region_name: { get_input: aws_region_name }
 
 node_templates:
+
+  autoscaling_group:
+    type: cloudify.nodes.aws.autoscaling.Group
+    properties:
+      resource_config:
+        kwargs: {}
+      client_config: *client_config
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure:
+          implementation: awssdk.cloudify_boto3.autoscaling.resources.autoscaling_group.create
+          inputs:
+            resource_config:
+              LaunchConfigurationName: { get_attribute: [ launch_configuration, aws_resource_id ] }
+              AutoScalingGroupName: pmcfy_asg
+              MinSize: 0
+              MaxSize: 0
+              DefaultCooldown: 20
+              AvailabilityZones:
+              - { get_input: aws_region_zone1 }
+              - { get_input: aws_region_zone2 }
+              LoadBalancerNames:
+              - { get_attribute: [ elb, aws_resource_id ] }
+        delete:
+          implementation: awssdk.cloudify_boto3.autoscaling.resources.autoscaling_group.delete
+          inputs:
+            resource_config:
+              ForceDelete: true
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: launch_configuration
+    - type: cloudify.relationships.depends_on
+      target: elb
+    - type: cloudify.relationships.depends_on
+      target: subnet1
+    - type: cloudify.relationships.depends_on
+      target: subnet2
+
+  launch_configuration:
+    type: cloudify.nodes.aws.autoscaling.LaunchConfiguration
+    properties:
+      resource_config:
+        kwargs:
+          LaunchConfigurationName: pmcfy_ex_lc
+          ImageId: ami-c58c1dd3
+          InstanceType: t2.micro
+      client_config: *client_config
 
   policy_elb:
     type: cloudify.nodes.aws.elb.Classic.Policy
@@ -112,7 +165,7 @@ node_templates:
               LoadBalancerAttributes:
                 AccessLog:
                   Enabled: true
-                  S3BucketName: boto3-plugin-bucket
+                  S3BucketName: cfypm_example0
                   EmitInterval: 5
 
   securitygroup:
@@ -203,28 +256,24 @@ node_templates:
       domain: vpc
 
   subnet2:
-    type: cloudify.nodes.aws.ec2.Subnet
+    type: cloudify.aws.nodes.Subnet
     properties:
-      resource_config:
-        kwargs:
-          CidrBlock: '10.0.1.0/24'
-          AvailabilityZone: { get_input: aws_region_zone2 }
-      client_config: *client_config
+      aws_config: *aws_config
+      cidr_block: '10.0.1.0/24'
+      availability_zone: { get_input: aws_region_zone2 }
     relationships:
-      - type: cloudify.relationships.depends_on
-        target: vpc
+    - type: cloudify.aws.relationships.subnet_contained_in_vpc
+      target: vpc
 
   subnet1:
-    type: cloudify.nodes.aws.ec2.Subnet
+    type: cloudify.aws.nodes.Subnet
     properties:
-      resource_config:
-        kwargs:
-          CidrBlock: '10.0.0.0/24'
-          AvailabilityZone: { get_input: aws_region_zone1 }
-      client_config: *client_config
+      aws_config: *aws_config
+      cidr_block:  '10.0.0.0/24'
+      availability_zone: { get_input: aws_region_zone1 }
     relationships:
-      - type: cloudify.relationships.depends_on
-        target: vpc
+    - type: cloudify.aws.relationships.subnet_contained_in_vpc
+      target: vpc
 
   vpc:
     type: cloudify.nodes.aws.ec2.Vpc
@@ -345,7 +394,5 @@ node_templates:
       resource_config:
         kwargs:
           ACL: public-read-write
-          Bucket: boto3-plugin-bucket
-          CreateBucketConfiguration:
-            LocationConstraint: { get_input: aws_region_name }
+          Bucket: cfypm_example0
       client_config: *client_config
