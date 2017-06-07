@@ -26,6 +26,17 @@ dsl_definitions:
 
 node_templates:
 
+  elasticip:
+    type: cloudify.nodes.aws.ec2.ElasticIP
+    properties:
+      resource_config:
+        kwargs:
+          Domain: 'vpc'
+      client_config: *client_config
+    relationships:
+      - type: cloudify.relationships.connected_to
+        target: network_interface
+
   network_interface:
     type: cloudify.nodes.aws.ec2.Interface
     properties:
