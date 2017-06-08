@@ -17,10 +17,14 @@
     ~~~~~~~~~~~~
     AWS RDS instance interface
 '''
+
+from datetime import datetime
+
 # Cloudify
 from cloudify.exceptions import NonRecoverableError
 from cloudify_boto3.common import decorators, utils
 from cloudify_boto3.rds import RDSBase
+
 # Boto
 from botocore.exceptions import ClientError
 
@@ -66,8 +70,7 @@ class DBInstance(RDSBase):
                           % (self.type_name, params))
         res = self.client.create_db_instance(**params)
         self.logger.debug('Response: %s' % res)
-        self.update_resource_id(res['DBInstance']['DBInstanceIdentifier'])
-        return self.resource_id, res['DBInstance']['DBInstanceArn']
+        return res
 
     def delete(self, params=None):
         '''
@@ -100,9 +103,19 @@ def create(ctx, iface, resource_config, **_):
     params = ctx.instance.runtime_properties['resource_config'] or dict()
     params.update(dict(DBInstanceIdentifier=iface.resource_id))
     # Actually create the resource
-    res_id, res_arn = iface.create(params)
+    res = iface.create(params)
+
+    res_id = res['DBInstance']['DBInstanceIdentifier']
+    res_arn = res['DBInstance']['DBInstanceArn']
+
+    iface.update_resource_arn(res_arn)
+    iface.update_resource_id(res_id)
     utils.update_resource_id(ctx.instance, res_id)
     utils.update_resource_arn(ctx.instance, res_arn)
+    for key, value in res.get('DBInstance'):
+        if isinstance(value, datetime):
+            value = str(value)
+        ctx.instance.runtime_properties[key] = value
 
 
 @decorators.aws_resource(DBInstance, RESOURCE_TYPE,
