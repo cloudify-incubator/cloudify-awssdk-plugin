@@ -32,6 +32,8 @@ setup(
         'cloudify_boto3.dynamodb.resources',
         'cloudify_boto3.ec2',
         'cloudify_boto3.ec2.resources',
+        'cloudify_boto3.efs',
+        'cloudify_boto3.efs.resources',
         'cloudify_boto3.elb',
         'cloudify_boto3.elb.resources',
         'cloudify_boto3.elb.resources.classic',
