@@ -3,20 +3,22 @@ tosca_definitions_version: cloudify_dsl_1_3
 imports:
 - http://www.getcloudify.org/spec/cloudify/4.0.1/types.yaml
 - http://getcloudify.org.s3.amazonaws.com/spec/aws-plugin/1.4.10/plugin.yaml
-- https://raw.githubusercontent.com/cloudify-incubator/cloudify-boto3-plugin/1.0.0m5/plugin.yaml
+- https://raw.githubusercontent.com/cloudify-incubator/cloudify-boto3-plugin/1.0.0m6/plugin.yaml
 - http://www.getcloudify.org/spec/fabric-plugin/1.4.2/plugin.yaml
 
 inputs:
 
   aws_access_key_id:
     type: string
+    default: { get_secret: aws_access_key_id }
 
   aws_secret_access_key:
     type: string
+    default: { get_secret: aws_secret_access_key }
 
   aws_region_name:
     type: string
-    default: us-east-1
+    default: { get_secret: ec2_region_name}
 
 dsl_definitions:
   client_config: &client_config
@@ -72,7 +74,7 @@ node_templates:
     properties:
       agent_config:
         install_method: none
-      image_id: ami-01ccc867
+      image_id: ami-c58c1dd3
       instance_type: t2.micro
       aws_config: *aws_config
     relationships:
@@ -163,7 +165,7 @@ node_templates:
     properties:
       aws_config: *aws_config
       cidr_block:  172.30.0.0/24
-      availability_zone: eu-west-1c
+      availability_zone: { concat: [ { get_input: aws_region_name }, 'b' ] }
     relationships:
     - type: cloudify.aws.relationships.subnet_contained_in_vpc
       target: vpc

@@ -108,11 +108,10 @@ def create(ctx, iface, resource_config, **_):
     res_id = res['DBInstance']['DBInstanceIdentifier']
     res_arn = res['DBInstance']['DBInstanceArn']
 
-    iface.update_resource_arn(res_arn)
     iface.update_resource_id(res_id)
     utils.update_resource_id(ctx.instance, res_id)
     utils.update_resource_arn(ctx.instance, res_arn)
-    for key, value in res.get('DBInstance'):
+    for key, value in res.get('DBInstance', {}):
         if isinstance(value, datetime):
             value = str(value)
         ctx.instance.runtime_properties[key] = value
