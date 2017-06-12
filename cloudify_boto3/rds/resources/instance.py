@@ -104,17 +104,19 @@ def create(ctx, iface, resource_config, **_):
     params.update(dict(DBInstanceIdentifier=iface.resource_id))
     # Actually create the resource
     res = iface.create(params)
-
-    res_id = res['DBInstance']['DBInstanceIdentifier']
-    res_arn = res['DBInstance']['DBInstanceArn']
-
-    iface.update_resource_id(res_id)
-    utils.update_resource_id(ctx.instance, res_id)
-    utils.update_resource_arn(ctx.instance, res_arn)
-    for key, value in res.get('DBInstance', {}):
-        if isinstance(value, datetime):
+    db_instance = res['DBInstance']
+    for key, value in db_instance.items():
+        if key == 'DBInstanceIdentifier':
+            iface.update_resource_id(value)
+            utils.update_resource_id(ctx.instance, value)
+            continue
+        elif key == 'DBInstanceArn':
+            utils.update_resource_arn(ctx.instance, value)
+            continue
+        elif isinstance(value, datetime):
             value = str(value)
         ctx.instance.runtime_properties[key] = value
+
 
 
 @decorators.aws_resource(DBInstance, RESOURCE_TYPE,

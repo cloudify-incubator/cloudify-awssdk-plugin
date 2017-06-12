@@ -45,15 +45,23 @@ class EC2NatGateway(EC2Base):
 
     @property
     def properties(self):
-        """Gets the properties of an external resource"""
-        params = {NATGATEWAY_IDS: [self.resource_id]}
+        """Gets the properties of a resource"""
+        params = \
+            {
+                NATGATEWAY_IDS: [self.resource_id],
+                'MaxResults': 1
+            }
         try:
             resources = \
                 self.client.describe_nat_gateways(**params)
         except ClientError:
-            pass
+            return None
         else:
-            return resources.get(NATGATEWAYS)[0] if resources else None
+            nat_gateways = resources.get(NATGATEWAYS, [{}])
+            if len(nat_gateways) == 1 and \
+                    nat_gateways[0].get(NATGATEWAY_ID) == self.resource_id:
+                return nat_gateways[0]
+            return None
 
     @property
     def status(self):

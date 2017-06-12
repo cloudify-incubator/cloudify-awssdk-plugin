@@ -56,6 +56,7 @@ class TestEC2NatGateway(TestBase):
         self.nat_gateway.client = self.make_client_function('describe_nat'
                                                             '_gateways',
                                                             return_value=value)
+        self.nat_gateway.resource_id = 'test_name'
         res = self.nat_gateway.properties
         self.assertEqual(res[NATGATEWAY_ID], 'test_name')
 
@@ -72,6 +73,7 @@ class TestEC2NatGateway(TestBase):
         self.nat_gateway.client = self.make_client_function('describe_nat'
                                                             '_gateways',
                                                             return_value=value)
+        self.nat_gateway.resource_id = 'test_name'
         res = self.nat_gateway.status
         self.assertEqual(res, 'available')
 
