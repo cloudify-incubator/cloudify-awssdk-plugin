@@ -68,7 +68,7 @@ class EC2NatGateway(EC2Base):
         """Gets the status of an external resource"""
         props = self.properties
         if not props:
-            return None
+            return 'pending'
         return props['State']
 
     def create(self, params):

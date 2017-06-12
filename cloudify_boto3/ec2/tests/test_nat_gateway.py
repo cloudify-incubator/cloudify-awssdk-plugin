@@ -66,7 +66,7 @@ class TestEC2NatGateway(TestBase):
                                                             '_gateways',
                                                             return_value=value)
         res = self.nat_gateway.status
-        self.assertIsNone(res)
+        self.assertEqual('pending', res)
 
         value = {NATGATEWAYS: [{NATGATEWAY_ID: 'test_name',
                                 'State': 'available'}]}
