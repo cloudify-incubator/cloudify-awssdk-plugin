@@ -45,15 +45,19 @@ class EC2NatGateway(EC2Base):
 
     @property
     def properties(self):
-        """Gets the properties of an external resource"""
-        params = {NATGATEWAY_IDS: [self.resource_id]}
+        """Gets the properties of a resource"""
+        params = \
+            {
+                NATGATEWAY_IDS: [self.resource_id],
+                'MaxResults': 1
+            }
         try:
             resources = \
                 self.client.describe_nat_gateways(**params)
         except ClientError:
-            pass
+            return None
         else:
-            return resources.get(NATGATEWAYS)[0] if resources else None
+            return resources.get(NATGATEWAYS, [{}])[0]
 
     @property
     def status(self):
@@ -71,6 +75,7 @@ class EC2NatGateway(EC2Base):
                           % (self.type_name, params))
         res = self.client.create_nat_gateway(**params)
         self.logger.debug('Response: %s' % res)
+        self.update_resource_id(res['NatGateway'][NATGATEWAY_ID])
         return res['NatGateway']
 
     def delete(self, params=None):
@@ -94,7 +99,8 @@ def prepare(ctx, resource_config, **_):
 @decorators.aws_resource(EC2NatGateway, RESOURCE_TYPE)
 @decorators.wait_for_status(
     status_good=['available'],
-    status_pending=['pending'])
+    status_pending=['pending'],
+    fail_on_missing=False)
 def create(ctx, iface, resource_config, **_):
     """Creates an AWS EC2 NAT Gateway"""
 
