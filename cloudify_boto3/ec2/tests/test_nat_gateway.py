@@ -76,7 +76,7 @@ class TestEC2NatGateway(TestBase):
         self.assertEqual(res, 'available')
 
     def test_class_create(self):
-        value = {'NatGateway': { 'NatGatewayId': 'test' } }
+        value = {'NatGateway': {'NatGatewayId': 'test'}}
         self.nat_gateway.client = self.make_client_function('create_nat'
                                                             '_gateway',
                                                             return_value=value)

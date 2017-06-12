@@ -120,6 +120,25 @@ def create(ctx, iface, resource_config, **_):
 
 @decorators.aws_resource(DBInstance, RESOURCE_TYPE,
                          ignore_properties=True)
+def start(ctx, iface, resource_config, **_):
+    '''Updates an AWS RDS Instance Runtime Properties'''
+
+    db_instance = iface.properties
+    for key, value in db_instance.items():
+        if key == 'DBInstanceIdentifier':
+            iface.update_resource_id(value)
+            utils.update_resource_id(ctx.instance, value)
+            continue
+        elif key == 'DBInstanceArn':
+            utils.update_resource_arn(ctx.instance, value)
+            continue
+        elif isinstance(value, datetime):
+            value = str(value)
+        ctx.instance.runtime_properties[key] = value
+
+
+@decorators.aws_resource(DBInstance, RESOURCE_TYPE,
+                         ignore_properties=True)
 @decorators.wait_for_delete(status_pending=['deleting'])
 def delete(iface, resource_config, **_):
     '''Deletes an AWS RDS Instance'''
