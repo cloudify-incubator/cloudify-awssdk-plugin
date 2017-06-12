@@ -80,7 +80,8 @@ class TestDecorators(TestBase):
         _ctx = self._gen_decorators_context('test_wait_for_status')
 
         @decorators.wait_for_status(status_good=['ok'],
-                                    status_pending=['pending'])
+                                    status_pending=['pending'],
+                                    fail_on_missing=False)
         def test_ok(*agrs, **kwargs):
             pass
 

@@ -147,7 +147,7 @@ def wait_for_status(status_good=None,
                 raise NonRecoverableError(
                     '%s ID# "%s" no longer exists but "fail_on_missing" set'
                     % (resource_type, iface.resource_id))
-            elif status_good and status not in status_good:
+            elif status_good and status not in status_good and not fail_on_missing:
                 raise NonRecoverableError(
                     '%s ID# "%s" reported an unexpected status: "%s"'
                     % (resource_type, iface.resource_id, status))
