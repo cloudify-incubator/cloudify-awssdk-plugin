@@ -50,7 +50,12 @@ node_templates:
                       "SQS:SendMessage",
                       "SQS:ReceiveMessage"
                     ],
-                    "Resource": "test-queue"
+                    "Resource": "test-queue",
+                    "Condition": {
+                      "DateGreaterThan" : {
+                         "aws:CurrentTime" : "2013-12-15T12:00:00Z"
+                      }
+                    }
                   }
                 ]
               }
