@@ -118,7 +118,6 @@ def create(ctx, iface, resource_config, **_):
         ctx.instance.runtime_properties[key] = value
 
 
-
 @decorators.aws_resource(DBInstance, RESOURCE_TYPE,
                          ignore_properties=True)
 @decorators.wait_for_delete(status_pending=['deleting'])
