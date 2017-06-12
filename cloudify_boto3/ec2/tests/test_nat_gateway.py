@@ -50,13 +50,12 @@ class TestEC2NatGateway(TestBase):
                                                             '_gateways',
                                                             return_value=value)
         res = self.nat_gateway.properties
-        self.assertIsNone(res)
+        self.assertEquals(res, {})
 
         value = {NATGATEWAYS: [{NATGATEWAY_ID: 'test_name'}]}
         self.nat_gateway.client = self.make_client_function('describe_nat'
                                                             '_gateways',
                                                             return_value=value)
-        self.nat_gateway.resource_id = 'test_name'
         res = self.nat_gateway.properties
         self.assertEqual(res[NATGATEWAY_ID], 'test_name')
 
@@ -66,19 +65,18 @@ class TestEC2NatGateway(TestBase):
                                                             '_gateways',
                                                             return_value=value)
         res = self.nat_gateway.status
-        self.assertEqual('pending', res)
+        self.assertIsNone(res)
 
         value = {NATGATEWAYS: [{NATGATEWAY_ID: 'test_name',
                                 'State': 'available'}]}
         self.nat_gateway.client = self.make_client_function('describe_nat'
                                                             '_gateways',
                                                             return_value=value)
-        self.nat_gateway.resource_id = 'test_name'
         res = self.nat_gateway.status
         self.assertEqual(res, 'available')
 
     def test_class_create(self):
-        value = {'NatGateway': 'test'}
+        value = {'NatGateway': { 'NatGatewayId': 'test' } }
         self.nat_gateway.client = self.make_client_function('create_nat'
                                                             '_gateway',
                                                             return_value=value)

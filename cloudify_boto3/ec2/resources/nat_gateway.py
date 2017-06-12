@@ -57,18 +57,14 @@ class EC2NatGateway(EC2Base):
         except ClientError:
             return None
         else:
-            nat_gateways = resources.get(NATGATEWAYS, [{}])
-            if len(nat_gateways) == 1 and \
-                    nat_gateways[0].get(NATGATEWAY_ID) == self.resource_id:
-                return nat_gateways[0]
-            return None
+            return resources.get(NATGATEWAYS, [{}])[0]
 
     @property
     def status(self):
         """Gets the status of an external resource"""
         props = self.properties
         if not props:
-            return 'pending'
+            return None
         return props['State']
 
     def create(self, params):
@@ -79,6 +75,7 @@ class EC2NatGateway(EC2Base):
                           % (self.type_name, params))
         res = self.client.create_nat_gateway(**params)
         self.logger.debug('Response: %s' % res)
+        self.update_resource_id(res['NatGateway'][NATGATEWAY_ID])
         return res['NatGateway']
 
     def delete(self, params=None):
@@ -102,8 +99,7 @@ def prepare(ctx, resource_config, **_):
 @decorators.aws_resource(EC2NatGateway, RESOURCE_TYPE)
 @decorators.wait_for_status(
     status_good=['available'],
-    status_pending=['pending'],
-    fail_on_missing=False)
+    status_pending=['pending'])
 def create(ctx, iface, resource_config, **_):
     """Creates an AWS EC2 NAT Gateway"""
 
