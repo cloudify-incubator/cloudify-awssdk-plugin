@@ -136,6 +136,21 @@ node_templates:
       - type: cloudify.relationships.connected_to
         target: subnet
 
+  tags:
+    type: cloudify.nodes.aws.ec2.Tags
+    properties:
+      resource_config:
+        kwargs:
+          Tags:
+          - Key: Blueprint
+            Value: ec2-vpc-feature-demo
+      client_config: *client_config
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: vpc
+    - type: cloudify.relationships.depends_on
+      target: subnet
+
   subnet:
     type: cloudify.nodes.aws.ec2.Subnet
     properties:

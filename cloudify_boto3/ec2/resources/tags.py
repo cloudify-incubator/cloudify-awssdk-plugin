@@ -94,8 +94,8 @@ def create(ctx, iface, resource_config, **_):
                 ctx.instance,
                 'cloudify.relationships.depends_on')
         resources = \
-            [target.runtime.runtime_properties
-             .get(EXTERNAL_RESOURCE_ID) for target in targets]
+            [rel.target.instance.runtime_properties
+             .get(EXTERNAL_RESOURCE_ID) for rel in targets]
         params['Resources'] = resources
 
     iface.create(params)
@@ -115,8 +115,8 @@ def delete(ctx, iface, resource_config, **_):
                 ctx.instance,
                 'cloudify.relationships.depends_on')
         resources = \
-            [target.runtime.runtime_properties
-             .get(EXTERNAL_RESOURCE_ID) for target in targets]
+            [rel.target.instance.runtime_properties
+             .get(EXTERNAL_RESOURCE_ID) for rel in targets]
         params['Resources'] = resources
 
     iface.delete(params)
