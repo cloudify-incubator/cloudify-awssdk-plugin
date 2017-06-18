@@ -32,7 +32,8 @@ ALLOCATION_ID = 'AllocationId'
 ALLOCATION_ID_DEPRECATED = 'allocation_id'
 SUBNET_TYPE = 'cloudify.nodes.aws.ec2.Subnet'
 SUBNET_TYPE_DEPRECATED = 'cloudify.aws.nodes.Subnet'
-ELASTICIP_TYPE = 'cloudify.aws.nodes.ElasticIP'
+ELASTICIP_TYPE = 'cloudify.nodes.aws.ec2.ElasticIP'
+ELASTICIP_TYPE_DEPRECATED = 'cloudify.aws.nodes.ElasticIP'
 
 
 class EC2NatGateway(EC2Base):
@@ -122,7 +123,10 @@ def create(ctx, iface, resource_config, **_):
         targ = \
             utils.find_rel_by_node_type(
                 ctx.instance,
-                ELASTICIP_TYPE)
+                ELASTICIP_TYPE) or \
+            utils.find_rel_by_node_type(
+                ctx.instance,
+                ELASTICIP_TYPE_DEPRECATED)
         if targ:
             allocation_id = \
                 targ.target.instance.runtime_properties.get(
