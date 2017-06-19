@@ -75,7 +75,7 @@ class TestEC2Route(TestBase):
         ctx = self.get_mock_ctx("RouteTable",
                                 type_hierarchy=[ROUTETABLE_TYPE,
                                                 INTERNETGATEWAY_TYPE])
-        config = {}
+        config = {'DestinationCidrBlock': '0.0.0.0/0'}
         self.route.resource_id = 'routetable'
         iface = MagicMock()
         iface.create = self.mock_return(config)
@@ -87,14 +87,15 @@ class TestEC2Route(TestBase):
     def test_delete(self):
         ctx = self.get_mock_ctx("RouteTable")
         iface = MagicMock()
-        config = {ROUTETABLE_ID: 'route table'}
+        config = {ROUTETABLE_ID: 'route table',
+                  'DestinationCidrBlock': '0.0.0.0/0'}
         route.delete(ctx, iface, config)
         self.assertTrue(iface.delete.called)
 
     def test_delete_with_relationship(self):
         ctx = self.get_mock_ctx("RouteTable", type_hierarchy=[ROUTETABLE_TYPE])
         iface = MagicMock()
-        config = {}
+        config = {'DestinationCidrBlock': '0.0.0.0/0'}
         with patch('cloudify_boto3.common.utils.find_rel_by_node_type'):
             route.delete(ctx, iface, config)
             self.assertTrue(iface.delete.called)

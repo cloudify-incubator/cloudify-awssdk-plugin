@@ -38,7 +38,7 @@ node_templates:
         kwargs:
           QueueName: test-queue
           Attributes:
-            Policy: |
+            Policy:
               {
                 "Version": "2012-10-17",
                 "Statement": [

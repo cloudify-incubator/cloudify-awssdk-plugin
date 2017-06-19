@@ -32,7 +32,8 @@ ALLOCATION_ID = 'AllocationId'
 ALLOCATION_ID_DEPRECATED = 'allocation_id'
 SUBNET_TYPE = 'cloudify.nodes.aws.ec2.Subnet'
 SUBNET_TYPE_DEPRECATED = 'cloudify.aws.nodes.Subnet'
-ELASTICIP_TYPE = 'cloudify.aws.nodes.ElasticIP'
+ELASTICIP_TYPE = 'cloudify.nodes.aws.ec2.ElasticIP'
+ELASTICIP_TYPE_DEPRECATED = 'cloudify.aws.nodes.ElasticIP'
 
 
 class EC2NatGateway(EC2Base):
@@ -48,8 +49,7 @@ class EC2NatGateway(EC2Base):
         """Gets the properties of a resource"""
         params = \
             {
-                NATGATEWAY_IDS: [self.resource_id],
-                'MaxResults': 1
+                NATGATEWAY_IDS: [self.resource_id]
             }
         try:
             resources = \
@@ -122,12 +122,17 @@ def create(ctx, iface, resource_config, **_):
         targ = \
             utils.find_rel_by_node_type(
                 ctx.instance,
-                ELASTICIP_TYPE)
+                ELASTICIP_TYPE) or \
+            utils.find_rel_by_node_type(
+                ctx.instance,
+                ELASTICIP_TYPE_DEPRECATED)
         if targ:
             allocation_id = \
                 targ.target.instance.runtime_properties.get(
                     ALLOCATION_ID_DEPRECATED)
-        params.update({ALLOCATION_ID: allocation_id})
+    params[ALLOCATION_ID] = allocation_id
+    ctx.instance.runtime_properties['allocation_id'] = \
+        allocation_id
 
     # Actually create the resource
     nat_gateway = iface.create(params)
