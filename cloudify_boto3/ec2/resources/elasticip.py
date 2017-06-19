@@ -204,8 +204,6 @@ def attach(ctx, iface, resource_config, **_):
                     .get(EXTERNAL_RESOURCE_ID)
             else:
                 return
-    if not params.get('AssociationId'):
-        return
 
     # Make sure that Domain is not sent to attach call.
     try:
@@ -226,9 +224,13 @@ def detach(ctx, iface, resource_config, **_):
     params = dict() if not resource_config else resource_config.copy()
 
     association_id = \
+        params.get('AssociationId') or \
         ctx.instance.runtime_properties.get('association_id')
-    elasticip_id = params.get(ELASTICIP_ID)
+    if not association_id:
+        return
     params['AssociationId'] = association_id
+
+    elasticip_id = params.get(ELASTICIP_ID)
     if not elasticip_id:
         params[ELASTICIP_ID] = iface.resource_id
 
