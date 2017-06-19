@@ -167,11 +167,12 @@ def attach(ctx, iface, resource_config, **_):
     elasticip_id = params.get(ELASTICIP_ID)
 
     if not allocation_id:
-        params[ALLOCATION_ID] = \
+        allocation_id = \
             ctx.instance.runtime_properties.get(
                 'allocation_id')
+        params[ALLOCATION_ID] = allocation_id
 
-    if not elasticip_id:
+    if not elasticip_id and not allocation_id:
         params[ELASTICIP_ID] = \
             iface.resource_id
 
