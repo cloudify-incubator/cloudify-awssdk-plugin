@@ -122,7 +122,7 @@ def create(ctx, iface, resource_config, **_):
     iface.update_resource_id(elasticip_id)
     utils.update_resource_id(ctx.instance, elasticip_id)
     ctx.instance.runtime_properties['allocation_id'] = \
-        elasticip.get(ALLOCATION_ID, None)
+        elasticip.get(ALLOCATION_ID)
 
 
 @decorators.aws_resource(EC2ElasticIP, RESOURCE_TYPE,
@@ -133,15 +133,14 @@ def delete(ctx, iface, resource_config, **_):
     # Create a copy of the resource config for clean manipulation.
     params = \
         dict() if not resource_config else resource_config.copy()
-    allocation_id = ctx.instance.runtime_properties.get('allocation_id', None)
+    allocation_id = params.get(ALLOCATION_ID)
+    elasticip_id = params.get(ELASTICIP_ID)
 
-    if allocation_id:
-        params.update({ALLOCATION_ID: allocation_id})
-    else:
-        elasticip_id = params.get(ELASTICIP_ID)
-        if not elasticip_id:
-            elasticip_id = iface.resource_id
-        params.update({ELASTICIP_ID: elasticip_id})
+    if not allocation_id:
+        params[ALLOCATION_ID] = \
+            ctx.instance.runtime_properties.get('allocation_id')
+    if not elasticip_id:
+        params[ELASTICIP_ID] = iface.resource_id
 
     iface.delete(params)
 
@@ -151,52 +150,58 @@ def attach(ctx, iface, resource_config, **_):
     '''Attaches an AWS EC2 ElasticIP to an Instance or a NetworkInterface'''
     params = dict() if not resource_config else resource_config.copy()
 
-    allocation_id = ctx.instance.runtime_properties.get('allocation_id', None)
+    allocation_id = params.get(ALLOCATION_ID)
+    elasticip_id = params.get(ELASTICIP_ID)
+
     if not allocation_id:
-        elasticip_id = params.get(ELASTICIP_ID)
-        if not elasticip_id:
-            elasticip_id = iface.resource_id
-        params.update({ELASTICIP_ID: elasticip_id})
-    else:
-        params.update({ALLOCATION_ID: allocation_id})
+        params[ALLOCATION_ID] = \
+            ctx.instance.runtime_properties.get(
+                'allocation_id')
+
+    if not elasticip_id:
+        params[ELASTICIP_ID] = \
+            iface.resource_id
 
     instance_id = params.get(INSTANCE_ID)
-    if not instance_id:
-        targ = \
-            utils.find_rel_by_node_type(ctx.instance, INSTANCE_TYPE_DEPRECATED)
+    eni_id = params.get(NETWORKINTERFACE_ID)
 
-        if targ:
+    if not instance_id and not eni_id:
+        resource = \
+            utils.find_rel_by_node_type(
+                ctx.instance,
+                INSTANCE_TYPE_DEPRECATED)
+
+        if resource:
             params[INSTANCE_ID] = \
-                instance_id or \
-                targ.target.instance.runtime_properties\
-                .get(EXTERNAL_RESOURCE_ID)
-
+                resource.\
+                target.instance.runtime_properties.get(EXTERNAL_RESOURCE_ID)
         else:
-            eni_id = params.get(NETWORKINTERFACE_ID)
-            if not eni_id:
-                targ = \
-                    utils.find_rel_by_node_type(ctx.instance,
-                                                NETWORKINTERFACE_TYPE) \
-                    or utils\
-                    .find_rel_by_node_type(ctx.instance,
-                                           NETWORKINTERFACE_TYPE_DEPRECATED)
+            resource = \
+                utils.find_rel_by_node_type(
+                    ctx.instance,
+                    NETWORKINTERFACE_TYPE) or \
+                utils.find_rel_by_node_type(
+                    ctx.instance,
+                    NETWORKINTERFACE_TYPE_DEPRECATED)
 
-                if not targ:
-                    return
-
+            if resource:
                 params[NETWORKINTERFACE_ID] = \
                     eni_id or \
-                    targ.target.instance.runtime_properties\
-                        .get(EXTERNAL_RESOURCE_ID)
+                    resource.target.instance.runtime_properties\
+                    .get(EXTERNAL_RESOURCE_ID)
+            else:
+                return
 
-    domain = params.get('Domain')
-    if domain:
-        params.pop('Domain')
+    # Make sure that Domain is not sent to attach call.
+    try:
+        del params['Domain']
+    except KeyError:
+        pass
 
     # Actually attach the resources
     association_id = iface.attach(params)
     ctx.instance.runtime_properties['association_id'] = \
-        association_id.get('AssociationId', None)
+        association_id.get('AssociationId')
 
 
 @decorators.aws_resource(EC2ElasticIP, RESOURCE_TYPE,
@@ -206,13 +211,10 @@ def detach(ctx, iface, resource_config, **_):
     params = dict() if not resource_config else resource_config.copy()
 
     association_id = \
-        ctx.instance.runtime_properties.get('association_id', None)
-    if not association_id:
-        elasticip_id = params.get(ELASTICIP_ID)
-        if not elasticip_id:
-                elasticip_id = iface.resource_id
-        params.update({ELASTICIP_ID: elasticip_id})
-    else:
-        params.update({'AssociationId': association_id})
+        ctx.instance.runtime_properties.get('association_id')
+    elasticip_id = params.get(ELASTICIP_ID)
+    params['AssociationId'] = association_id
+    if not elasticip_id:
+        params[ELASTICIP_ID] = iface.resource_id
 
     iface.detach(params)
