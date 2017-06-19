@@ -49,8 +49,7 @@ class EC2NatGateway(EC2Base):
         """Gets the properties of a resource"""
         params = \
             {
-                NATGATEWAY_IDS: [self.resource_id],
-                'MaxResults': 1
+                NATGATEWAY_IDS: [self.resource_id]
             }
         try:
             resources = \
@@ -89,15 +88,15 @@ class EC2NatGateway(EC2Base):
         self.logger.debug('Response: %s' % res)
         return res
 
-    def release_address(self, params=None):
-        """
-            Release an address.
-        """
-        self.logger.debug('Releasing address with parameters: %s'
-                          % params)
-        res = self.client.release_address(**params)
-        self.logger.debug('Response: %s' % res)
-        return res
+    # def release_address(self, params=None):
+    #     """
+    #         Release an address.
+    #     """
+    #     self.logger.debug('Releasing address with parameters: %s'
+    #                       % params)
+    #     res = self.client.release_address(**params)
+    #     self.logger.debug('Response: %s' % res)
+    #     return res
 
 
 @decorators.aws_resource(resource_type=RESOURCE_TYPE)
@@ -156,7 +155,7 @@ def create(ctx, iface, resource_config, **_):
 @decorators.wait_for_delete(
     status_deleted=['deleted'],
     status_pending=['deleting'])
-def delete(iface, resource_config, ctx=None, force_operation=None, **_):
+def delete(iface, resource_config, **_):
     """Deletes an AWS EC2 NAT Gateway"""
 
     # Create a copy of the resource config for clean manipulation.
@@ -170,6 +169,9 @@ def delete(iface, resource_config, ctx=None, force_operation=None, **_):
     params.update({NATGATEWAY_ID: nat_gateway_id})
     iface.delete(params)
 
-    if force_operation:
-        allocation_id = ctx.instance.runtime_properties['allocation_id']
-        iface.release_address({ALLOCATION_ID: allocation_id})
+    # if force_operation:
+    #     allocation_id = ctx.instance.runtime_properties['allocation_id']
+    #     try:
+    #         iface.release_address({ALLOCATION_ID: allocation_id})
+    #     except ClientError:
+    #         raise OperationRetry('Address has not released yet.')

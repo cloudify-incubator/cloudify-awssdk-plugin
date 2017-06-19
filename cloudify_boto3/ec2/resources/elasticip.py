@@ -18,6 +18,7 @@
     AWS EC2 ElasticIP interface
 """
 # Cloudify
+from cloudify.exceptions import OperationRetry
 from cloudify_boto3.common import decorators, utils
 from cloudify_boto3.ec2 import EC2Base
 from cloudify_boto3.common.constants import EXTERNAL_RESOURCE_ID
@@ -155,7 +156,13 @@ def delete(ctx, iface, resource_config, **_):
         except KeyError:
             pass
 
-    iface.delete(params)
+    try:
+        iface.delete(params)
+    except ClientError as e:
+        if 'AuthFailure' is str(e):
+            raise OperationRetry('Address has not released yet.')
+        else:
+            pass
 
 
 @decorators.aws_resource(EC2ElasticIP, RESOURCE_TYPE)
