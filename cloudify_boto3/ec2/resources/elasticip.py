@@ -24,7 +24,7 @@ from cloudify_boto3.common.constants import EXTERNAL_RESOURCE_ID
 # Boto
 from botocore.exceptions import ClientError
 
-RESOURCE_TYPE = 'EC2 Ellastic IP'
+RESOURCE_TYPE = 'EC2 Elastic IP'
 ADDRESSES = 'Addresses'
 ELASTICIP_ID = 'PublicIp'
 ELASTICIP_IDS = 'PublicIps'
@@ -81,8 +81,8 @@ class EC2ElasticIP(EC2Base):
             Attach an AWS EC2 ElasticIP to an Instance or a NetworkInterface.
         '''
         self.logger.debug('Attaching %s with: %s'
-                          % (self.type_name, params.get(INSTANCE_ID, None) or
-                             params.get(ELASTICIP_ID, None)))
+                          % (self.resource_id, params.get(INSTANCE_ID) or
+                             params.get(NETWORKINTERFACE_ID)))
         res = self.client.associate_address(**params)
         self.logger.debug('Response: %s' % res)
         return res
@@ -92,10 +92,8 @@ class EC2ElasticIP(EC2Base):
             Detach an AWS EC2 ElasticIP from an Instance or a NetworkInterface.
         '''
         self.logger.debug('Detaching %s from: %s'
-                          % (self.type_name, params.get(INSTANCE_ID, None) or
-                             params.get(ELASTICIP_ID, None)))
-        self.logger.debug('Attaching default %s'
-                          % (self.type_name))
+                          % (self.resource_id, params.get(INSTANCE_ID) or
+                             params.get(NETWORKINTERFACE_ID)))
         res = self.client.disassociate_address(**params)
         self.logger.debug('Response: %s' % res)
         return res
@@ -133,14 +131,29 @@ def delete(ctx, iface, resource_config, **_):
     # Create a copy of the resource config for clean manipulation.
     params = \
         dict() if not resource_config else resource_config.copy()
-    allocation_id = params.get(ALLOCATION_ID)
-    elasticip_id = params.get(ELASTICIP_ID)
 
+    allocation_id = params.get(ALLOCATION_ID)
     if not allocation_id:
-        params[ALLOCATION_ID] = \
-            ctx.instance.runtime_properties.get('allocation_id')
+        allocation_id = \
+            ctx.instance.runtime_properties.get(
+                'allocation_id')
+
+    elasticip_id = params.get(ELASTICIP_ID)
     if not elasticip_id:
-        params[ELASTICIP_ID] = iface.resource_id
+        elasticip_id = iface.resource_id
+
+    if allocation_id:
+        params[ALLOCATION_ID] = allocation_id
+        try:
+            del params[ELASTICIP_ID]
+        except KeyError:
+            pass
+    elif elasticip_id:
+        params[ELASTICIP_ID] = elasticip_id
+        try:
+            del params[ALLOCATION_ID]
+        except KeyError:
+            pass
 
     iface.delete(params)
 
@@ -191,6 +204,8 @@ def attach(ctx, iface, resource_config, **_):
                     .get(EXTERNAL_RESOURCE_ID)
             else:
                 return
+    if not params.get('AssociationId'):
+        return
 
     # Make sure that Domain is not sent to attach call.
     try:
