@@ -89,6 +89,16 @@ class EC2NatGateway(EC2Base):
         self.logger.debug('Response: %s' % res)
         return res
 
+    def release_address(self, params=None):
+        """
+            Release an address.
+        """
+        self.logger.debug('Releasing address with parameters: %s'
+                          % params)
+        res = self.client.release_address(**params)
+        self.logger.debug('Response: %s' % res)
+        return res
+
 
 @decorators.aws_resource(resource_type=RESOURCE_TYPE)
 def prepare(ctx, resource_config, **_):
@@ -131,7 +141,9 @@ def create(ctx, iface, resource_config, **_):
             allocation_id = \
                 targ.target.instance.runtime_properties.get(
                     ALLOCATION_ID_DEPRECATED)
-        params.update({ALLOCATION_ID: allocation_id})
+    params[ALLOCATION_ID] = allocation_id
+    ctx.instance.runtime_properties['allocation_id'] = \
+        allocation_id
 
     # Actually create the resource
     nat_gateway = iface.create(params)
@@ -144,7 +156,7 @@ def create(ctx, iface, resource_config, **_):
 @decorators.wait_for_delete(
     status_deleted=['deleted'],
     status_pending=['deleting'])
-def delete(iface, resource_config, **_):
+def delete(iface, resource_config, ctx=None, force_operation=None, **_):
     """Deletes an AWS EC2 NAT Gateway"""
 
     # Create a copy of the resource config for clean manipulation.
@@ -157,3 +169,7 @@ def delete(iface, resource_config, **_):
 
     params.update({NATGATEWAY_ID: nat_gateway_id})
     iface.delete(params)
+
+    if force_operation:
+        allocation_id = ctx.instance.runtime_properties['allocation_id']
+        iface.release_address({ALLOCATION_ID: allocation_id})
