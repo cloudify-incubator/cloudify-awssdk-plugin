@@ -2,8 +2,8 @@ tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
 - http://www.getcloudify.org/spec/cloudify/4.0.1/types.yaml
-- http://getcloudify.org.s3.amazonaws.com/spec/aws-plugin/1.4.10/plugin.yaml
-- https://raw.githubusercontent.com/cloudify-incubator/cloudify-boto3-plugin/1.0.0m5/plugin.yaml
+- http://getcloudify.org.s3.amazonaws.com/spec/aws-plugin/1.4.11/plugin.yaml
+- https://raw.githubusercontent.com/cloudify-incubator/cloudify-boto3-plugin/1.0.0m8/plugin.yaml
 
 inputs:
 
@@ -46,7 +46,14 @@ node_templates:
     type: cloudify.nodes.aws.autoscaling.Group
     properties:
       resource_config:
-        kwargs: {}
+        kwargs:
+          AutoScalingGroupName: pmcfy_asg
+          MinSize: 1
+          MaxSize: 1
+          DefaultCooldown: 20
+          AvailabilityZones:
+          - { get_input: aws_region_zone1 }
+          - { get_input: aws_region_zone2 }
       client_config: *client_config
     interfaces:
       cloudify.interfaces.lifecycle:
@@ -56,8 +63,8 @@ node_templates:
             resource_config:
               LaunchConfigurationName: { get_attribute: [ launch_configuration, aws_resource_id ] }
               AutoScalingGroupName: pmcfy_asg
-              MinSize: 0
-              MaxSize: 0
+              MinSize: 1
+              MaxSize: 1
               DefaultCooldown: 20
               AvailabilityZones:
               - { get_input: aws_region_zone1 }
@@ -78,6 +85,8 @@ node_templates:
       target: subnet1
     - type: cloudify.relationships.depends_on
       target: subnet2
+    - type: cloudify.relationships.depends_on
+      target: internet_gateway_vpc
 
   launch_configuration:
     type: cloudify.nodes.aws.autoscaling.LaunchConfiguration
@@ -85,16 +94,114 @@ node_templates:
       resource_config:
         kwargs:
           LaunchConfigurationName: pmcfy_ex_lc
-          ImageId: ami-c58c1dd3
-          InstanceType: t2.micro
       client_config: *client_config
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure:
+          implementation: awssdk.cloudify_boto3.autoscaling.resources.launch_configuration.create
+          inputs:
+            resource_config:
+              LaunchConfigurationName: pmcfy_ex_lc
+              ImageId: ami-c58c1dd3
+              InstanceType: t2.micro
+              SecurityGroups:
+              - { get_attribute: [ securitygroup, aws_resource_id ] }
+              UserData: |
+                #cloud-config
+                users:
+                - name: ubuntu
+                  groups: ubuntu
+                  shell: /bin/bash
+                  sudo: ['ALL=(ALL) NOPASSWD:ALL']
+              IamInstanceProfile: { get_attribute: [ pmcfy_iam_user_instance_profile, aws_resource_arn ] } # Succeeds on retry.
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: securitygroup
+      - type: cloudify.relationships.depends_on
+        target: pmcfy_iam_user_instance_profile
+
+  pmcfy_iam_user_instance_profile:
+    type: cloudify.nodes.aws.iam.InstanceProfile
+    properties:
+      client_config: *client_config
+      resource_id: pmcfyinstancepro
+      resource_config:
+        kwargs:
+          InstanceProfileName: pmcfyinstancepro
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: pmcfy_iam_role
+
+  pmcfy_iam_role:
+    type: cloudify.nodes.aws.iam.Role
+    properties:
+      resource_id: pmcfy_lambdarole
+      client_config: *client_config
+      resource_config:
+        kwargs:
+          Path: !!str /service-role/
+          AssumeRolePolicyDocument:
+            Version: !!str 2012-10-17
+            Statement:
+            - Effect: Allow
+              Principal:
+                Service: !!str lambda.amazonaws.com
+              Action: !!str sts:AssumeRole
+    relationships:
+    - type: cloudify.relationships.aws.iam.role.connected_to
+      target: pmcfy_iam_policy_vpc_access
+    - type: cloudify.relationships.aws.iam.role.connected_to
+      target: pmcfy_iam_policy_cloudwatch_access
+
+  pmcfy_iam_policy_vpc_access:
+    type: cloudify.nodes.aws.iam.Policy
+    properties:
+      resource_id: pmcfy_vpcpolicy
+      client_config: *client_config
+      resource_config:
+        kwargs:
+          Description: >-
+            Grants access to EC2 network components
+          Path: !!str /service-role/
+          PolicyDocument:
+            Version: !!str 2012-10-17
+            Statement:
+            - Effect: Allow
+              Action:
+              - !!str ec2:CreateNetworkInterface
+              - !!str ec2:DeleteNetworkInterface
+              - !!str ec2:DescribeNetworkInterfaces
+              Resource: '*'
+
+  pmcfy_iam_policy_cloudwatch_access:
+    type: cloudify.nodes.aws.iam.Policy
+    properties:
+      resource_id: pmcfy_iampolicy
+      client_config: *client_config
+      resource_config:
+        kwargs:
+          Description: >-
+            Grants access to CloudWatch logs
+          Path: !!str /service-role/
+          PolicyDocument:
+            Version: !!str 2012-10-17
+            Statement:
+            - Effect: Allow
+              Action: !!str logs:CreateLogGroup
+              Resource: !!str arn:aws:logs:us-east-1:352582918444:*
+            - Effect: Allow
+              Action:
+              - !!str logs:CreateLogStream'
+              - !!str logs:PutLogEvents'
+              Resource:
+              - !!str arn:aws:logs:us-east-1:352582918444:log-group:/aws/lambda/myLambdaFunction:*
 
   policy_elb:
     type: cloudify.nodes.aws.elb.Classic.Policy
     properties:
       resource_config:
         kwargs:
-          PolicyName: boto3PluginElbPolicy
+          PolicyName: pmcfyelbpolicy
           PolicyTypeName: ProxyProtocolPolicyType
           PolicyAttributes:
             - AttributeName: ProxyProtocol
@@ -143,7 +250,7 @@ node_templates:
           Tags:
           - Key: name
             Value: boto3-plugin-elb
-          LoadBalancerName: boto3PluginELB
+          LoadBalancerName: pmcfyelb
           Listeners: { get_property: [ listener_elb, resource_config, kwargs, Listeners ] }
           Scheme: internet-facing
       client_config: *client_config
@@ -156,6 +263,8 @@ node_templates:
       target: subnet2
     - type: cloudify.relationships.depends_on
       target: securitygroup
+    - type: cloudify.relationships.depends_on
+      target: internet_gateway_vpc
     interfaces:
       cloudify.interfaces.lifecycle:
         start:
@@ -165,7 +274,7 @@ node_templates:
               LoadBalancerAttributes:
                 AccessLog:
                   Enabled: true
-                  S3BucketName: cfypm_example0
+                  S3BucketName: pmcfy_example0
                   EmitInterval: 5
 
   securitygroup:
@@ -179,8 +288,14 @@ node_templates:
         to_port: -1
         cidr_ip: 0.0.0.0/0
     relationships:
-      - type: cloudify.aws.relationships.security_group_contained_in_vpc
-        target: vpc
+    - type: cloudify.aws.relationships.security_group_contained_in_vpc
+      target: vpc
+    - type: cloudify.relationships.depends_on
+      target: subnet1
+    - type: cloudify.relationships.depends_on
+      target: subnet2
+    - type: cloudify.relationships.depends_on
+      target: internet_gateway_vpc
 
   routetable_subnet2:
     type: cloudify.aws.nodes.RouteTable
@@ -234,6 +349,28 @@ node_templates:
     - type: cloudify.relationships.depends_on
       target: elasticip_natgateway1
 
+  elasticip_natgateway2:
+    type: cloudify.aws.nodes.ElasticIP
+    properties:
+      aws_config: *aws_config
+      domain: vpc
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: internet_gateway_vpc
+    - type: cloudify.relationships.depends_on
+      target: subnet2
+
+  elasticip_natgateway1:
+    type: cloudify.aws.nodes.ElasticIP
+    properties:
+      aws_config: *aws_config
+      domain: vpc
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: internet_gateway_vpc
+    - type: cloudify.relationships.depends_on
+      target: subnet1
+
   internet_gateway_vpc:
     type: cloudify.aws.nodes.InternetGateway
     properties:
@@ -242,18 +379,6 @@ node_templates:
     relationships:
     - type: cloudify.aws.relationships.gateway_connected_to_vpc
       target: vpc
-
-  elasticip_natgateway2:
-    type: cloudify.aws.nodes.ElasticIP
-    properties:
-      aws_config: *aws_config
-      domain: vpc
-
-  elasticip_natgateway1:
-    type: cloudify.aws.nodes.ElasticIP
-    properties:
-      aws_config: *aws_config
-      domain: vpc
 
   subnet2:
     type: cloudify.aws.nodes.Subnet
@@ -394,5 +519,5 @@ node_templates:
       resource_config:
         kwargs:
           ACL: public-read-write
-          Bucket: cfypm_example0
+          Bucket: pmcfy_example0
       client_config: *client_config

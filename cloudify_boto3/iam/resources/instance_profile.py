@@ -131,6 +131,12 @@ def delete(ctx, iface, resource_config, **_):
         instance_profile_name = iface.resource_id
     params['InstanceProfileName'] = instance_profile_name
 
+    # Path parameter is not accepted by delete_instance_profile.
+    try:
+        del params['Path']
+    except KeyError:
+        pass
+
     role_name = params.pop('RoleName', None)
     if not role_name:
         role_name = \
