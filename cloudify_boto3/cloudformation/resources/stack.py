@@ -101,7 +101,7 @@ def create(ctx, iface, resource_config, **_):
     stack_name = params.get(NAME)
     utils.update_resource_id(ctx.instance, stack_name)
 
-    template_body = params.get(TEMPLATEBODY)
+    template_body = params.get(TEMPLATEBODY, {})
     if not isinstance(template_body, basestring):
         params[TEMPLATEBODY] = json.dumps(template_body)
 
@@ -116,6 +116,7 @@ def delete(iface, resource_config, **_):
     # Create a copy of the resource config for clean manipulation.
     params = \
         dict() if not resource_config else resource_config.copy()
-    if NAME not in params.keys():
-        params.update({NAME: iface.resource_id})
-    iface.delete(params)
+    name = params.get(NAME)
+    if not name:
+        name = iface.resource_id
+    iface.delete({NAME: name})

@@ -92,8 +92,8 @@ class TestCloudFormationStack(TestBase):
             create_stack.\
             assert_called_with(
                 StackName='test-cloudformation1',
-                TemplateBody={"AWSTemplateFormatVersion": "2010-09-09",
-                              "Description": "A sample template"})
+                TemplateBody=str({"AWSTemplateFormatVersion": "2010-09-09",
+                              "Description": "A sample template"}))
 
         self.assertEqual(_ctx.instance.runtime_properties,
                          RUNTIMEPROP_AFTER_CREATE)
