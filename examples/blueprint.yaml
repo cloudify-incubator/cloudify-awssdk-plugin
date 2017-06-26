@@ -3,7 +3,7 @@ tosca_definitions_version: cloudify_dsl_1_3
 imports:
 - http://www.getcloudify.org/spec/cloudify/4.0.1/types.yaml
 - http://getcloudify.org.s3.amazonaws.com/spec/aws-plugin/1.4.11/plugin.yaml
-- https://raw.githubusercontent.com/cloudify-incubator/cloudify-boto3-plugin/dev/plugin.yaml
+- https://raw.githubusercontent.com/cloudify-incubator/cloudify-boto3-plugin/1.0.0m8/plugin.yaml
 
 inputs:
 
@@ -46,7 +46,14 @@ node_templates:
     type: cloudify.nodes.aws.autoscaling.Group
     properties:
       resource_config:
-        kwargs: {}
+        kwargs:
+          AutoScalingGroupName: pmcfy_asg
+          MinSize: 1
+          MaxSize: 1
+          DefaultCooldown: 20
+          AvailabilityZones:
+          - { get_input: aws_region_zone1 }
+          - { get_input: aws_region_zone2 }
       client_config: *client_config
     interfaces:
       cloudify.interfaces.lifecycle:
@@ -78,6 +85,8 @@ node_templates:
       target: subnet1
     - type: cloudify.relationships.depends_on
       target: subnet2
+    - type: cloudify.relationships.depends_on
+      target: internet_gateway_vpc
 
   launch_configuration:
     type: cloudify.nodes.aws.autoscaling.LaunchConfiguration
@@ -86,9 +95,6 @@ node_templates:
         kwargs:
           LaunchConfigurationName: pmcfy_ex_lc
       client_config: *client_config
-    relationships:
-      - type: cloudify.relationships.depends_on
-        target: securitygroup
     interfaces:
       cloudify.interfaces.lifecycle:
         configure:
@@ -108,6 +114,11 @@ node_templates:
                   shell: /bin/bash
                   sudo: ['ALL=(ALL) NOPASSWD:ALL']
               IamInstanceProfile: { get_attribute: [ pmcfy_iam_user_instance_profile, aws_resource_arn ] } # Succeeds on retry.
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: securitygroup
+      - type: cloudify.relationships.depends_on
+        target: pmcfy_iam_user_instance_profile
 
   pmcfy_iam_user_instance_profile:
     type: cloudify.nodes.aws.iam.InstanceProfile
@@ -252,6 +263,8 @@ node_templates:
       target: subnet2
     - type: cloudify.relationships.depends_on
       target: securitygroup
+    - type: cloudify.relationships.depends_on
+      target: internet_gateway_vpc
     interfaces:
       cloudify.interfaces.lifecycle:
         start:
@@ -275,8 +288,14 @@ node_templates:
         to_port: -1
         cidr_ip: 0.0.0.0/0
     relationships:
-      - type: cloudify.aws.relationships.security_group_contained_in_vpc
-        target: vpc
+    - type: cloudify.aws.relationships.security_group_contained_in_vpc
+      target: vpc
+    - type: cloudify.relationships.depends_on
+      target: subnet1
+    - type: cloudify.relationships.depends_on
+      target: subnet2
+    - type: cloudify.relationships.depends_on
+      target: internet_gateway_vpc
 
   routetable_subnet2:
     type: cloudify.aws.nodes.RouteTable
@@ -336,8 +355,10 @@ node_templates:
       aws_config: *aws_config
       domain: vpc
     relationships:
-      - type: cloudify.relationships.depends_on
-        target: internet_gateway_vpc
+    - type: cloudify.relationships.depends_on
+      target: internet_gateway_vpc
+    - type: cloudify.relationships.depends_on
+      target: subnet2
 
   elasticip_natgateway1:
     type: cloudify.aws.nodes.ElasticIP
@@ -345,8 +366,10 @@ node_templates:
       aws_config: *aws_config
       domain: vpc
     relationships:
-      - type: cloudify.relationships.depends_on
-        target: internet_gateway_vpc
+    - type: cloudify.relationships.depends_on
+      target: internet_gateway_vpc
+    - type: cloudify.relationships.depends_on
+      target: subnet1
 
   internet_gateway_vpc:
     type: cloudify.aws.nodes.InternetGateway
