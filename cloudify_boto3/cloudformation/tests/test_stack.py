@@ -49,10 +49,10 @@ RUNTIMEPROP_AFTER_CREATE = {
 }
 
 
-class TestCloudformationStack(TestBase):
+class TestCloudFormationStack(TestBase):
 
     def setUp(self):
-        super(TestCloudformationStack, self).setUp()
+        super(TestCloudFormationStack, self).setUp()
 
         self.fake_boto, self.fake_client = \
             self.fake_boto_client('cloudformation')
@@ -65,7 +65,7 @@ class TestCloudformationStack(TestBase):
         self.fake_boto = None
         self.fake_client = None
 
-        super(TestCloudformationStack, self).tearDown()
+        super(TestCloudFormationStack, self).tearDown()
 
     def test_prepare(self):
         self._prepare_check(type_hierarchy=STACK_TH,
@@ -120,12 +120,12 @@ class TestCloudformationStack(TestBase):
                          {'aws_resource_id': 'test-cloudformation1',
                           'resource_config': {}})
 
-    def test_CloudformationStackClass_properties(self):
+    def test_CloudFormationStackClass_properties(self):
         self.fake_client.describe_stacks = MagicMock(return_value={
             'Stacks': [{'StackName': 'Stack'}]
         })
 
-        test_instance = stack.CloudformationStack("ctx_node",
+        test_instance = stack.CloudFormationStack("ctx_node",
                                                   resource_id='Stack',
                                                   client=self.fake_client,
                                                   logger=None)
@@ -134,12 +134,12 @@ class TestCloudformationStack(TestBase):
 
         self.fake_client.describe_stacks.assert_called_with(StackName='Stack')
 
-    def test_CloudformationStackClass_properties_empty(self):
+    def test_CloudFormationStackClass_properties_empty(self):
         self.fake_client.describe_stacks = MagicMock(return_value={
             'Stacks': [None]
         })
 
-        test_instance = stack.CloudformationStack("ctx_node",
+        test_instance = stack.CloudFormationStack("ctx_node",
                                                   resource_id='Stack',
                                                   client=self.fake_client,
                                                   logger=None)
@@ -148,12 +148,12 @@ class TestCloudformationStack(TestBase):
 
         self.fake_client.describe_stacks.assert_called_with(StackName='Stack')
 
-    def test_CloudformationStackClass_status(self):
+    def test_CloudFormationStackClass_status(self):
         self.fake_client.describe_stacks = MagicMock(return_value={
             'Stacks': [{'StackName': 'Stack'}]
         })
 
-        test_instance = stack.CloudformationStack("ctx_node",
+        test_instance = stack.CloudFormationStack("ctx_node",
                                                   resource_id='Stack',
                                                   client=self.fake_client,
                                                   logger=None)
@@ -162,12 +162,12 @@ class TestCloudformationStack(TestBase):
 
         self.fake_client.describe_stacks.assert_called_with(StackName='Stack')
 
-    def test_CloudformationStackClass_status_empty(self):
+    def test_CloudFormationStackClass_status_empty(self):
         self.fake_client.describe_stacks = MagicMock(return_value={
             'Stacks': [None]
         })
 
-        test_instance = stack.CloudformationStack("ctx_node",
+        test_instance = stack.CloudFormationStack("ctx_node",
                                                   resource_id='Stack',
                                                   client=self.fake_client,
                                                   logger=None)

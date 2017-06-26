@@ -13,28 +13,31 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 """
-    Cloudformation.stack
+    CloudFormation.stack
     ~~~~~~~~~~~~~~
-    AWS Cloudformation Stack interface
+    AWS CloudFormation Stack interface
 """
 # Cloudify
 from cloudify_boto3.common import decorators, utils
-from cloudify_boto3.cloudformation import AWSCloudformationBase
+from cloudify_boto3.cloudformation import AWSCloudFormationBase
 # Boto
 from botocore.exceptions import ClientError
 
-RESOURCE_TYPE = 'Cloudformation Stack'
+import json
+
+RESOURCE_TYPE = 'CloudFormation Stack'
 NAME = 'StackName'
 NAMES = 'StackNames'
 STACKS = 'Stacks'
+TEMPLATEBODY = 'TemplateBody'
 
 
-class CloudformationStack(AWSCloudformationBase):
+class CloudFormationStack(AWSCloudFormationBase):
     """
-        AWS Cloudformation Stack interface
+        AWS CloudFormation Stack interface
     """
     def __init__(self, ctx_node, resource_id=None, client=None, logger=None):
-        AWSCloudformationBase.__init__(self, ctx_node, resource_id, client,
+        AWSCloudFormationBase.__init__(self, ctx_node, resource_id, client,
                                        logger)
         self.type_name = RESOURCE_TYPE
 
@@ -60,7 +63,7 @@ class CloudformationStack(AWSCloudformationBase):
 
     def create(self, params):
         """
-            Create a new AWS Cloudformation Stack.
+            Create a new AWS CloudFormation Stack.
         """
         if not self.resource_id:
             setattr(self, 'resource_id', params.get(NAME))
@@ -72,7 +75,7 @@ class CloudformationStack(AWSCloudformationBase):
 
     def delete(self, params=None):
         """
-            Deletes an existing AWS Cloudformation Stack.
+            Deletes an existing AWS CloudFormation Stack.
         """
         self.logger.debug('Deleting %s with parameters: %s'
                           % (self.type_name, params))
@@ -83,28 +86,33 @@ class CloudformationStack(AWSCloudformationBase):
 
 @decorators.aws_resource(resource_type=RESOURCE_TYPE)
 def prepare(ctx, resource_config, **_):
-    """Prepares an AWS Cloudformation Stack"""
+    """Prepares an AWS CloudFormation Stack"""
     # Save the parameters
     ctx.instance.runtime_properties['resource_config'] = resource_config
 
 
-@decorators.aws_resource(CloudformationStack, RESOURCE_TYPE)
+@decorators.aws_resource(CloudFormationStack, RESOURCE_TYPE)
 def create(ctx, iface, resource_config, **_):
-    """Creates an AWS Cloudformation Stack"""
+    """Creates an AWS CloudFormation Stack"""
     # Create a copy of the resource config for clean manipulation.
     params = \
         dict() if not resource_config else resource_config.copy()
 
     stack_name = params.get(NAME)
     utils.update_resource_id(ctx.instance, stack_name)
+
+    template_body = params.get(TEMPLATEBODY)
+    if not isinstance(template_body, basestring):
+        params[TEMPLATEBODY] = json.dumps(template_body)
+
     # Actually create the resource
     iface.create(params)
 
 
-@decorators.aws_resource(CloudformationStack, RESOURCE_TYPE,
+@decorators.aws_resource(CloudFormationStack, RESOURCE_TYPE,
                          ignore_properties=True)
 def delete(iface, resource_config, **_):
-    """Deletes an AWS Cloudformation Stack"""
+    """Deletes an AWS CloudFormation Stack"""
     # Create a copy of the resource config for clean manipulation.
     params = \
         dict() if not resource_config else resource_config.copy()

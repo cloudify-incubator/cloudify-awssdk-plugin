@@ -26,12 +26,12 @@ dsl_definitions:
 node_templates:
 
   cloudformation_stack:
-    type: cloudify.nodes.aws.cloudformation.Stack
+    type: cloudify.nodes.aws.CloudFormation.Stack
     properties:
       resource_config:
         kwargs:
           StackName: test-cloudformation1
-          TemplateBody: |
+          TemplateBody:
             {
               "AWSTemplateFormatVersion" : "2010-09-09",
               "Description" : "A sample template",
@@ -60,7 +60,7 @@ node_templates:
       client_config: *client_config
 
   cloudformation_stack2:
-    type: cloudify.nodes.aws.cloudformation.Stack
+    type: cloudify.nodes.aws.CloudFormation.Stack
     properties:
       resource_config:
         kwargs:

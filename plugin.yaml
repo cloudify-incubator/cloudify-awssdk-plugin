@@ -357,7 +357,7 @@ data_types:
       kwargs:
         default: {}
 
-  cloudify.datatypes.aws.cloudformation.Stack.config:
+  cloudify.datatypes.aws.CloudFormation.Stack.config:
     properties:
       kwargs:
         default: {}
@@ -7786,7 +7786,7 @@ node_types:
               required: false
               default: {}
 
-  cloudify.nodes.aws.cloudformation.Stack:
+  cloudify.nodes.aws.CloudFormation.Stack:
     derived_from: cloudify.nodes.Root
     properties:
       use_external_resource:
@@ -7806,7 +7806,7 @@ node_types:
         description: >
           Configuration key-value data to be passed as-is to the corresponding
           Boto3 method. Key names must match the case that Boto3 requires.
-        type: cloudify.datatypes.aws.cloudformation.Stack.config
+        type: cloudify.datatypes.aws.CloudFormation.Stack.config
         required: false
     interfaces:
       cloudify.interfaces.lifecycle:

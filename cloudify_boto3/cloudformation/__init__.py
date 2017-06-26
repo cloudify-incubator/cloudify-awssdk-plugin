@@ -13,9 +13,9 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 """
-    Cloudformation
+    CloudFormation
     ~~~
-    AWS Cloudformation base interface
+    AWS CloudFormation base interface
 """
 # Cloudify AWS
 from cloudify_boto3.common import AWSResourceBase
@@ -24,9 +24,9 @@ from cloudify_boto3.common.connection import Boto3Connection
 # pylint: disable=R0903
 
 
-class AWSCloudformationBase(AWSResourceBase):
+class AWSCloudFormationBase(AWSResourceBase):
     """
-        AWS Cloudformation interface
+        AWS CloudFormation interface
     """
     def __init__(self, ctx_node, resource_id=None, client=None, logger=None):
         AWSResourceBase.__init__(self,
