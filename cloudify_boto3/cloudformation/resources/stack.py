@@ -102,7 +102,8 @@ def create(ctx, iface, resource_config, **_):
     utils.update_resource_id(ctx.instance, stack_name)
 
     template_body = params.get(TEMPLATEBODY, {})
-    if not isinstance(template_body, basestring):
+    if template_body and \
+            not isinstance(template_body, basestring):
         params[TEMPLATEBODY] = json.dumps(template_body)
 
     # Actually create the resource
