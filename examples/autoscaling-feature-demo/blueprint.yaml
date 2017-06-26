@@ -3,7 +3,7 @@ tosca_definitions_version: cloudify_dsl_1_3
 imports:
 - http://www.getcloudify.org/spec/cloudify/4.0.1/types.yaml
 - http://getcloudify.org.s3.amazonaws.com/spec/aws-plugin/1.4.10/plugin.yaml
-- https://raw.githubusercontent.com/cloudify-incubator/cloudify-boto3-plugin/1.0.0m5/plugin.yaml
+- plugin.yaml
 
 inputs:
 
@@ -64,8 +64,9 @@ node_templates:
         kwargs:
           AutoScalingGroupName: pmcfy_as
           MinSize: 1
-          MaxSize: 1
-          DefaultCooldown: 300
+          MaxSize: 2
+          DesiredCapacity: 2
+          DefaultCooldown: 20
           AvailabilityZones:
           - { concat: [ { get_input: aws_region_name }, 'a' ] }
       client_config: *client_config

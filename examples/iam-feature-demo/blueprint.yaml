@@ -102,6 +102,11 @@ node_templates:
     type: cloudify.nodes.aws.iam.InstanceProfile
     properties:
       client_config: *client_config
+      resource_id: pmcfyinstanceprofile
+      resource_config:
+        kwargs:
+          InstanceProfileName: pmcfyinstanceprofile
+          Path: '/pmcfyinstanceprofile/'
     relationships:
     - type: cloudify.relationships.depends_on
       target: pmcfy_iam_role

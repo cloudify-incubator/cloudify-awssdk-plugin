@@ -18,6 +18,7 @@
     AWS Autoscaling Group interface
 """
 # Cloudify
+from cloudify.exceptions import OperationRetry
 from cloudify_boto3.common import decorators, utils
 from cloudify_boto3.autoscaling import AutoscalingBase
 # Boto
@@ -89,6 +90,16 @@ class AutoscalingGroup(AutoscalingBase):
         self.logger.debug('Deleting %s with parameters: %s'
                           % (self.type_name, params))
         res = self.client.delete_auto_scaling_group(**params)
+        self.logger.debug('Response: %s' % res)
+        return res
+
+    def update(self, params=None):
+        """
+            Updates an existing AWS Autoscaling Group.
+        """
+        self.logger.debug('Updating %s with parameters: %s'
+                          % (self.type_name, params))
+        res = self.client.update_auto_scaling_group(**params)
         self.logger.debug('Response: %s' % res)
         return res
 
@@ -167,6 +178,41 @@ def create(ctx, iface, resource_config, **_):
         ctx.instance, resource_id)
     utils.update_resource_arn(
         ctx.instance, resource_arn)
+
+
+@decorators.aws_resource(AutoscalingGroup, RESOURCE_TYPE)
+def stop(iface,
+         resource_config,
+         **_):
+    """Stops all instances associated with Autoscaling group."""
+
+    params = \
+        dict() if not resource_config else resource_config.copy()
+    autoscaling_group = iface.properties
+
+    instances = autoscaling_group.get(INSTANCES, [])
+    minsize = autoscaling_group.get('MinSize')
+    maxsize = autoscaling_group.get('MaxSize')
+    desired_cap = autoscaling_group.get('DesiredCapacity')
+
+    # If rules would allow scaling
+    if minsize != 0 and desired_cap != 0 and maxsize != 0:
+        stop_parameters = {
+            GROUP_NAME: params.get(GROUP_NAME),
+            'MinSize': 0,
+            'MaxSize': 0,
+            'DesiredCapacity': 0
+        }
+        iface.update(stop_parameters)
+        raise OperationRetry(
+            'Updating %s ID# "%s" parameters before deletion.'
+            % (iface.type_name, iface.resource_id))
+
+    # Retry until there are no instances.
+    if len(instances) > 0:
+        raise OperationRetry(
+            '%s ID# "%s" is deleting associated instances.'
+            % (iface.type_name, iface.resource_id))
 
 
 @decorators.aws_resource(AutoscalingGroup, RESOURCE_TYPE,
