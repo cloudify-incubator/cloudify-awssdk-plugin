@@ -151,6 +151,174 @@ node_templates:
     - type: cloudify.relationships.depends_on
       target: subnet
 
+  securitygroup2_egress:
+    type: cloudify.nodes.aws.ec2.SecurityGroupRuleEgress
+    properties:
+      client_config: *client_config
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        start:
+          inputs:
+            aws_resource_id: { get_attribute: [ securitygroup2, aws_resource_id ]}
+            resource_config:
+              IpPermissions:
+              - FromPort: 443
+                ToPort: 443
+                IpProtocol: tcp
+                IpRanges:
+                - CidrIp: 0.0.0.0/0
+                UserIdGroupPairs:
+                - GroupId: { get_attribute: [ securitygroup1, aws_resource_id ] }
+        stop:
+          inputs:
+            aws_resource_id: { get_attribute: [ securitygroup2, aws_resource_id ]}
+            resource_config:
+              IpPermissions:
+              - FromPort: 443
+                ToPort: 443
+                IpProtocol: tcp
+                IpRanges:
+                - CidrIp: 0.0.0.0/0
+                UserIdGroupPairs:
+                - GroupId: { get_attribute: [ securitygroup1, aws_resource_id ] }
+    relationships:
+    - type: cloudify.relationships.contained_in
+      target: securitygroup2
+    - type: cloudify.relationships.depends_on
+      target: securitygroup1
+
+  securitygroup2_ingress:
+    type: cloudify.nodes.aws.ec2.SecurityGroupRuleIngress
+    properties:
+      client_config: *client_config
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        start:
+          inputs:
+            aws_resource_id: { get_attribute: [ securitygroup2, aws_resource_id ]}
+            resource_config:
+              IpPermissions:
+              - FromPort: 443
+                ToPort: 443
+                IpProtocol: tcp
+                IpRanges:
+                - CidrIp: 0.0.0.0/0
+                UserIdGroupPairs:
+                - GroupId: { get_attribute: [ securitygroup1, aws_resource_id ] }
+        stop:
+          inputs:
+            aws_resource_id: { get_attribute: [ securitygroup2, aws_resource_id ]}
+            resource_config:
+              IpPermissions:
+              - FromPort: 443
+                ToPort: 443
+                IpProtocol: tcp
+                IpRanges:
+                - CidrIp: 0.0.0.0/0
+                UserIdGroupPairs:
+                - GroupId: { get_attribute: [ securitygroup1, aws_resource_id ] }
+    relationships:
+    - type: cloudify.relationships.contained_in
+      target: securitygroup2
+    - type: cloudify.relationships.depends_on
+      target: securitygroup1
+
+  securitygroup1_egress:
+    type: cloudify.nodes.aws.ec2.SecurityGroupRuleEgress
+    properties:
+      client_config: *client_config
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        start:
+          inputs:
+            aws_resource_id: { get_attribute: [ securitygroup1, aws_resource_id ]}
+            resource_config:
+              IpPermissions:
+              - FromPort: 443
+                ToPort: 443
+                IpProtocol: tcp
+                IpRanges:
+                - CidrIp: 0.0.0.0/0
+                UserIdGroupPairs:
+                - GroupId: { get_attribute: [ securitygroup2, aws_resource_id ] }
+        stop:
+          inputs:
+            aws_resource_id: { get_attribute: [ securitygroup1, aws_resource_id ]}
+            resource_config:
+              IpPermissions:
+              - FromPort: 443
+                ToPort: 443
+                IpProtocol: tcp
+                IpRanges:
+                - CidrIp: 0.0.0.0/0
+                UserIdGroupPairs:
+                - GroupId: { get_attribute: [ securitygroup2, aws_resource_id ] }
+    relationships:
+    - type: cloudify.relationships.contained_in
+      target: securitygroup1
+    - type: cloudify.relationships.depends_on
+      target: securitygroup2
+
+  securitygroup1_ingress:
+    type: cloudify.nodes.aws.ec2.SecurityGroupRuleIngress
+    properties:
+      client_config: *client_config
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        start:
+          inputs:
+            aws_resource_id: { get_attribute: [ securitygroup1, aws_resource_id ]}
+            resource_config:
+              IpPermissions:
+              - FromPort: 443
+                ToPort: 443
+                IpProtocol: tcp
+                IpRanges:
+                - CidrIp: 0.0.0.0/0
+                UserIdGroupPairs:
+                - GroupId: { get_attribute: [ securitygroup2, aws_resource_id ] }
+        stop:
+          inputs:
+            aws_resource_id: { get_attribute: [ securitygroup1, aws_resource_id ]}
+            resource_config:
+              IpPermissions:
+              - FromPort: 443
+                ToPort: 443
+                IpProtocol: tcp
+                IpRanges:
+                - CidrIp: 0.0.0.0/0
+                UserIdGroupPairs:
+                - GroupId: { get_attribute: [ securitygroup2, aws_resource_id ] }
+    relationships:
+    - type: cloudify.relationships.contained_in
+      target: securitygroup1
+    - type: cloudify.relationships.depends_on
+      target: securitygroup2
+
+  securitygroup2:
+    type: cloudify.nodes.aws.ec2.SecurityGroup
+    properties:
+      resource_config:
+        kwargs:
+          GroupName: SecurityGroup2
+          Description: Example Security Group 2
+      client_config: *client_config
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: vpc
+
+  securitygroup1:
+    type: cloudify.nodes.aws.ec2.SecurityGroup
+    properties:
+      resource_config:
+        kwargs:
+          GroupName: SecurityGroup1
+          Description: Example Security Group 1
+      client_config: *client_config
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: vpc
+
   subnet:
     type: cloudify.nodes.aws.ec2.Subnet
     properties:
