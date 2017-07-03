@@ -132,6 +132,7 @@ def create(ctx, iface, resource_config, **_):
 
     utils.update_resource_id(
         ctx.instance, params.get(LC_NAME))
+    iface.update_resource_id(params.get(LC_NAME))
     # Actually create the resource
     resource_arn = iface.create(params)
     utils.update_resource_arn(

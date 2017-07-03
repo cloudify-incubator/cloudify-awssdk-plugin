@@ -1,9 +1,9 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
-- http://www.getcloudify.org/spec/cloudify/4.0.1/types.yaml
+- https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/4.1/resources/rest-service/cloudify/types/types.yaml
 - http://getcloudify.org.s3.amazonaws.com/spec/aws-plugin/1.4.11/plugin.yaml
-- https://raw.githubusercontent.com/cloudify-incubator/cloudify-boto3-plugin/1.0.0m8/plugin.yaml
+- plugin.yaml
 
 inputs:
 
@@ -28,16 +28,22 @@ inputs:
       - { get_input: aws_region_name }
       - 'b'
 
+  aws_access_key_id:
+    default: { get_secret: aws_access_key_id }
+
+  aws_secret_access_key:
+    default: { get_secret: aws_secret_access_key }
+
 dsl_definitions:
 
   client_config: &client_config
-    aws_access_key_id: { get_secret: aws_access_key_id }
-    aws_secret_access_key: { get_secret: aws_secret_access_key }
+    aws_access_key_id: { get_input: aws_access_key_id }
+    aws_secret_access_key: { get_input: aws_secret_access_key }
     region_name: { get_input: aws_region_name }
 
   aws_config: &aws_config
-    aws_access_key_id: { get_secret: aws_access_key_id }
-    aws_secret_access_key: { get_secret: aws_secret_access_key }
+    aws_access_key_id: { get_input: aws_access_key_id }
+    aws_secret_access_key: { get_input: aws_secret_access_key }
     ec2_region_name: { get_input: aws_region_name }
 
 node_templates:
@@ -61,7 +67,8 @@ node_templates:
           implementation: awssdk.cloudify_boto3.autoscaling.resources.autoscaling_group.create
           inputs:
             resource_config:
-              LaunchConfigurationName: { get_attribute: [ launch_configuration, aws_resource_id ] }
+              # LaunchConfigurationName: { get_attribute: [ launch_configuration, aws_resource_id ] }
+              LaunchConfigurationName: { get_attribute: [ launch_configuration, Outputs, 0, OutputValue ] }
               AutoScalingGroupName: pmcfy_asg
               MinSize: 1
               MaxSize: 1
@@ -88,32 +95,74 @@ node_templates:
     - type: cloudify.relationships.depends_on
       target: internet_gateway_vpc
 
+#  launch_configuration:
+#    type: cloudify.nodes.aws.autoscaling.LaunchConfiguration
+#    properties:
+#      resource_config:
+#        kwargs:
+#          LaunchConfigurationName: pmcfy_ex_lc
+#      client_config: *client_config
+#    interfaces:
+#      cloudify.interfaces.lifecycle:
+#        configure:
+#          implementation: awssdk.cloudify_boto3.autoscaling.resources.launch_configuration.create
+#          inputs:
+#            resource_config:
+#              LaunchConfigurationName: pmcfy_ex_lc
+#              ImageId: ami-c58c1dd3
+#              InstanceType: t2.micro
+#              SecurityGroups:
+#              - { get_attribute: [ securitygroup, aws_resource_id ] }
+#              UserData: |
+#                #cloud-config
+#                users:
+#                - name: ubuntu
+#                  groups: ubuntu
+#                  shell: /bin/bash
+#                  sudo: ['ALL=(ALL) NOPASSWD:ALL']
+#              IamInstanceProfile: { get_attribute: [ pmcfy_iam_user_instance_profile, aws_resource_arn ] } # Succeeds on retry.
+#    relationships:
+#      - type: cloudify.relationships.depends_on
+#        target: securitygroup
+#      - type: cloudify.relationships.depends_on
+#        target: pmcfy_iam_user_instance_profile
+
   launch_configuration:
-    type: cloudify.nodes.aws.autoscaling.LaunchConfiguration
+    type: cloudify.nodes.aws.CloudFormation.Stack
     properties:
-      resource_config:
-        kwargs:
-          LaunchConfigurationName: pmcfy_ex_lc
       client_config: *client_config
     interfaces:
       cloudify.interfaces.lifecycle:
         configure:
-          implementation: awssdk.cloudify_boto3.autoscaling.resources.launch_configuration.create
           inputs:
             resource_config:
-              LaunchConfigurationName: pmcfy_ex_lc
-              ImageId: ami-c58c1dd3
-              InstanceType: t2.micro
-              SecurityGroups:
-              - { get_attribute: [ securitygroup, aws_resource_id ] }
-              UserData: |
-                #cloud-config
-                users:
-                - name: ubuntu
-                  groups: ubuntu
-                  shell: /bin/bash
-                  sudo: ['ALL=(ALL) NOPASSWD:ALL']
-              IamInstanceProfile: { get_attribute: [ pmcfy_iam_user_instance_profile, aws_resource_arn ] } # Succeeds on retry.
+              StackName: PMCfyExLCStack
+              TemplateBody:
+                AWSTemplateFormatVersion: "2010-09-09"
+                Description: A sample template
+                Outputs:
+                  PMCfyExLCLaunchConfigurationName:
+                    Description: PMCfyExLC Launch Configuration Name
+                    Value:
+                      Ref: PMCfyExLC
+                Resources:
+                  PMCfyExLC:
+                    Type: "AWS::AutoScaling::LaunchConfiguration"
+                    Properties:
+                      ImageId: ami-c58c1dd3
+                      InstanceType: t2.micro
+                      SecurityGroups:
+                      - { get_attribute: [ securitygroup, aws_resource_id ] }
+                      IamInstanceProfile: { get_attribute: [ pmcfy_iam_user_instance_profile, aws_resource_arn ] } # Succeeds on retry.
+                    Metadata:
+                      AWS::CloudFormation::Init:
+                        configSets:
+                          config:
+                          - config_something
+                        config_something:
+                          commands:
+                            some_command:
+                              command: "echo hello"
     relationships:
       - type: cloudify.relationships.depends_on
         target: securitygroup
@@ -124,10 +173,10 @@ node_templates:
     type: cloudify.nodes.aws.iam.InstanceProfile
     properties:
       client_config: *client_config
-      resource_id: pmcfyinstancepro
+      resource_id: pmcfyinstancepro000
       resource_config:
         kwargs:
-          InstanceProfileName: pmcfyinstancepro
+          InstanceProfileName: pmcfyinstancepro000
     relationships:
     - type: cloudify.relationships.depends_on
       target: pmcfy_iam_role
