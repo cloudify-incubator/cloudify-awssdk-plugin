@@ -67,3 +67,29 @@ node_templates:
           StackName: test-cloudformation2
           TemplateURL: https://s3-us-west-1.amazonaws.com/cf-templates-1599a9xjo0snl-us-west-1/2017177zh7-test-new.templateuwj91r7rjrb
       client_config: *client_config
+
+  cloudformation_stack3:
+    type: cloudify.nodes.aws.CloudFormation.Stack
+    properties:
+      resource_config:
+        kwargs:
+          StackName: test-cloudformation3
+          TemplateBody:
+            AWSTemplateFormatVersion: "2010-09-09"
+            Description: A sample template
+            Resources:
+              AdmLaunchConfiguration:
+                Type: "AWS::AutoScaling::LaunchConfiguration"
+                Properties:
+                  ImageId: ami-c58c1dd3
+                  InstanceType: t2.micro
+                Metadata:
+                  AWS::CloudFormation::Init:
+                    configSets:
+                      config:
+                      - config_something
+                    config_something:
+                      commands:
+                        some_command:
+                          command: "echo hello"
+      client_config: *client_config

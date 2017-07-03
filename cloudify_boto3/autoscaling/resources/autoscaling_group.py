@@ -128,7 +128,8 @@ def prepare(ctx, resource_config, **_):
 @decorators.aws_resource(AutoscalingGroup, RESOURCE_TYPE)
 def create(ctx, iface, resource_config, **_):
     """Creates an AWS Autoscaling Group"""
-    params = resource_config.copy()
+    params = \
+        dict() if not resource_config else resource_config.copy()
 
     # Try to populate the Launch Configuration field
     # with a relationship
@@ -174,6 +175,7 @@ def create(ctx, iface, resource_config, **_):
         ctx.instance, params.get(GROUP_NAME))
     # Actually create the resource
     resource_id, resource_arn = iface.create(params)
+    iface.update_resource_id(resource_id)
     utils.update_resource_id(
         ctx.instance, resource_id)
     utils.update_resource_arn(
@@ -198,7 +200,7 @@ def stop(iface,
     # If rules would allow scaling
     if minsize != 0 and desired_cap != 0 and maxsize != 0:
         stop_parameters = {
-            GROUP_NAME: params.get(GROUP_NAME),
+            GROUP_NAME: iface.resource_id,
             'MinSize': 0,
             'MaxSize': 0,
             'DesiredCapacity': 0

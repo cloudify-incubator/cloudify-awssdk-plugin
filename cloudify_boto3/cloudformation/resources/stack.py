@@ -19,10 +19,11 @@
 """
 # Cloudify
 from cloudify_boto3.common import decorators, utils
+from cloudify_boto3.common.constants import EXTERNAL_RESOURCE_ID
 from cloudify_boto3.cloudformation import AWSCloudFormationBase
 # Boto
 from botocore.exceptions import ClientError
-
+from datetime import datetime
 import json
 
 RESOURCE_TYPE = 'CloudFormation Stack'
@@ -30,7 +31,7 @@ NAME = 'StackName'
 NAMES = 'StackNames'
 STACKS = 'Stacks'
 TEMPLATEBODY = 'TemplateBody'
-
+STATUS = 'StackStatus'
 
 class CloudFormationStack(AWSCloudFormationBase):
     """
@@ -59,7 +60,7 @@ class CloudFormationStack(AWSCloudFormationBase):
         props = self.properties
         if not props:
             return None
-        return None
+        return props.get(STATUS)
 
     def create(self, params):
         """
@@ -92,6 +93,9 @@ def prepare(ctx, resource_config, **_):
 
 
 @decorators.aws_resource(CloudFormationStack, RESOURCE_TYPE)
+@decorators.wait_for_status(
+    status_good=['CREATE_COMPLETE'],
+    status_pending=['CREATE_IN_PROGRESS',])
 def create(ctx, iface, resource_config, **_):
     """Creates an AWS CloudFormation Stack"""
     # Create a copy of the resource config for clean manipulation.
@@ -110,8 +114,40 @@ def create(ctx, iface, resource_config, **_):
     iface.create(params)
 
 
+@decorators.aws_resource(CloudFormationStack, RESOURCE_TYPE)
+def start(ctx, iface, **_):
+    """Update Runtime Properties an AWS CloudFormation Stack"""
+
+    def test(_value):
+        if isinstance(_value, datetime):
+            return str(_value)
+        elif isinstance(_value, list):
+            for _value_item in _value:
+                i = _value.index(_value_item)
+                _value[i] = test(_value_item)
+            return _value
+        elif isinstance(_value, dict):
+            for _value_key, _value_item in _value.items():
+                _value[_value_key] = test(_value_item)
+            return _value
+        else:
+            return _value
+
+    if not iface.resource_id:
+        iface.update_resource_id(
+            ctx.instance.runtime_properties[EXTERNAL_RESOURCE_ID])
+
+    props = iface.properties
+    for key, value in props.items():
+        tested_value = test(value)
+        ctx.instance.runtime_properties[key] = tested_value
+
+
 @decorators.aws_resource(CloudFormationStack, RESOURCE_TYPE,
                          ignore_properties=True)
+@decorators.wait_for_status(
+    status_good=['DELETE_COMPLETE'],
+    status_pending=['DELETE_IN_PROGRESS',])
 def delete(iface, resource_config, **_):
     """Deletes an AWS CloudFormation Stack"""
     # Create a copy of the resource config for clean manipulation.
