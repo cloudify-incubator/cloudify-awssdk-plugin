@@ -33,6 +33,7 @@ STACKS = 'Stacks'
 TEMPLATEBODY = 'TemplateBody'
 STATUS = 'StackStatus'
 
+
 class CloudFormationStack(AWSCloudFormationBase):
     """
         AWS CloudFormation Stack interface
@@ -95,7 +96,7 @@ def prepare(ctx, resource_config, **_):
 @decorators.aws_resource(CloudFormationStack, RESOURCE_TYPE)
 @decorators.wait_for_status(
     status_good=['CREATE_COMPLETE'],
-    status_pending=['CREATE_IN_PROGRESS',])
+    status_pending=['CREATE_IN_PROGRESS'])
 def create(ctx, iface, resource_config, **_):
     """Creates an AWS CloudFormation Stack"""
     # Create a copy of the resource config for clean manipulation.
@@ -147,7 +148,7 @@ def start(ctx, iface, **_):
                          ignore_properties=True)
 @decorators.wait_for_status(
     status_good=['DELETE_COMPLETE'],
-    status_pending=['DELETE_IN_PROGRESS',])
+    status_pending=['DELETE_IN_PROGRESS'])
 def delete(iface, resource_config, **_):
     """Deletes an AWS CloudFormation Stack"""
     # Create a copy of the resource config for clean manipulation.

@@ -188,8 +188,6 @@ def stop(iface,
          **_):
     """Stops all instances associated with Autoscaling group."""
 
-    params = \
-        dict() if not resource_config else resource_config.copy()
     autoscaling_group = iface.properties
 
     instances = autoscaling_group.get(INSTANCES, [])
