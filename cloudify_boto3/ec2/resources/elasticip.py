@@ -234,12 +234,17 @@ def detach(ctx, iface, resource_config, **_):
     association_id = \
         params.get('AssociationId') or \
         ctx.instance.runtime_properties.get('association_id')
-    if not association_id:
-        return
-    params['AssociationId'] = association_id
-
     elasticip_id = params.get(ELASTICIP_ID)
+
     if not elasticip_id:
-        params[ELASTICIP_ID] = iface.resource_id
+        elasticip_id = iface.resource_id
+        params[ELASTICIP_ID] = elasticip_id
+    elif not association_id:
+        return
+
+    if association_id and elasticip_id:
+        del params[ELASTICIP_ID]
+
+    params['AssociationId'] = association_id
 
     iface.detach(params)
