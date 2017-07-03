@@ -125,6 +125,7 @@ class EC2SecurityGroup(EC2Base):
         self.logger.debug('Response: %s' % res)
         return res
 
+
 @decorators.aws_resource(EC2SecurityGroup, resource_type=RESOURCE_TYPE)
 def prepare(ctx, iface, resource_config, **_):
     '''Prepares an AWS EC2 Security Group'''
@@ -168,7 +169,7 @@ def delete(iface, resource_config, **_):
 
     group_id = params.get(GROUPID)
     if not group_id:
-         group_id = iface.resource_id
+        group_id = iface.resource_id
 
     iface.delete({GROUPID: group_id})
 

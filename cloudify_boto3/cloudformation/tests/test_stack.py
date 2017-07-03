@@ -79,6 +79,10 @@ class TestCloudFormationStack(TestBase):
                                  type_hierarchy=STACK_TH)
 
         current_ctx.set(_ctx)
+        self.fake_client.describe_stacks = MagicMock(return_value={
+            'Stacks': [{'StackName': 'Stack',
+                        'StackStatus': 'CREATE_COMPLETE'}]
+        })
 
         self.fake_client.create_stack = MagicMock(return_value={
             'StackId': 'stack'
@@ -106,6 +110,10 @@ class TestCloudFormationStack(TestBase):
                               type_hierarchy=STACK_TH)
 
         current_ctx.set(_ctx)
+        self.fake_client.describe_stacks = MagicMock(return_value={
+            'Stacks': [{'StackName': 'Stack',
+                        'StackStatus': 'DELETE_COMPLETE'}]
+        })
 
         self.fake_client.delete_stack = MagicMock(return_value=DELETE_RESPONSE)
 
@@ -150,7 +158,8 @@ class TestCloudFormationStack(TestBase):
 
     def test_CloudFormationStackClass_status(self):
         self.fake_client.describe_stacks = MagicMock(return_value={
-            'Stacks': [{'StackName': 'Stack'}]
+            'Stacks': [{'StackName': 'Stack',
+                        'StackStatus': None}]
         })
 
         test_instance = stack.CloudFormationStack("ctx_node",
