@@ -148,7 +148,8 @@ def start(ctx, iface, **_):
                          ignore_properties=True)
 @decorators.wait_for_status(
     status_good=['DELETE_COMPLETE'],
-    status_pending=['DELETE_IN_PROGRESS'])
+    status_pending=['DELETE_IN_PROGRESS'],
+    fail_on_missing=False)
 def delete(iface, resource_config, **_):
     """Deletes an AWS CloudFormation Stack"""
     # Create a copy of the resource config for clean manipulation.
