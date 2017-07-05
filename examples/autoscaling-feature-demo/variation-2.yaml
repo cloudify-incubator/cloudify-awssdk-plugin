@@ -19,6 +19,10 @@ inputs:
     type: string
     default: { get_secret: aws_region_name }
 
+  image_id:
+    description: This AMI is matched to us-east-1.
+    default: ami-c58c1dd3
+
 dsl_definitions:
 
   client_config: &client_config
@@ -75,7 +79,7 @@ node_templates:
     properties:
       resource_config:
         kwargs:
-          ImageId: ami-c58c1dd3
+          ImageId: { get_input: image_id }
           InstanceType: t2.micro
           LaunchConfigurationName: pmcfy_lc
       client_config: *client_config

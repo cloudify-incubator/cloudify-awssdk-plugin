@@ -19,6 +19,10 @@ inputs:
     type: string
     default: { get_secret: aws_region_name }
 
+  image_id:
+    description: This AMI is matched to us-east-1.
+    default: ami-c58c1dd3
+
 dsl_definitions:
 
   client_config: &client_config
@@ -80,7 +84,7 @@ node_templates:
     properties:
       agent_config:
         install_method: none
-      image_id: ami-01ccc867
+      image_id: { get_input: image_id }
       instance_type: t2.micro
       aws_config: *aws_config
     relationships:
@@ -91,10 +95,8 @@ node_templates:
     type: cloudify.aws.nodes.Subnet
     properties:
       aws_config: *aws_config
-      use_external_resource: true
-      resource_id: subnet-b545b1c2
       cidr_block:  172.30.0.0/24
-      availability_zone: eu-west-1a
+      availability_zone: { concat: [ { get_input: aws_region_name }, 'a' ] }
     relationships:
     - type: cloudify.aws.relationships.subnet_contained_in_vpc
       target: vpc
@@ -103,6 +105,4 @@ node_templates:
     type: cloudify.aws.nodes.VPC
     properties:
       aws_config: *aws_config
-      use_external_resource: true
-      resource_id: vpc-ffec199a
       cidr_block:  172.30.0.0/16
