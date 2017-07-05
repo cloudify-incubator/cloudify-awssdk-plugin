@@ -9,13 +9,15 @@ inputs:
 
   aws_access_key_id:
     type: string
+    default: { get_secret: aws_access_key_id }
 
   aws_secret_access_key:
     type: string
+    default: { get_secret: aws_secret_access_key }
 
   aws_region_name:
     type: string
-    default: us-east-1
+    default: { get_secret: aws_region_name }
 
 dsl_definitions:
 
@@ -51,10 +53,7 @@ node_templates:
     type: cloudify.aws.nodes.Subnet
     properties:
       aws_config: *aws_config
-      use_external_resource: true
-      resource_id: subnet-b545b1c2
       cidr_block:  172.30.0.0/24
-      availability_zone: eu-west-1a
     relationships:
     - type: cloudify.aws.relationships.subnet_contained_in_vpc
       target: vpc
@@ -63,6 +62,4 @@ node_templates:
     type: cloudify.aws.nodes.VPC
     properties:
       aws_config: *aws_config
-      use_external_resource: true
-      resource_id: vpc-ffec199a
       cidr_block:  172.30.0.0/16

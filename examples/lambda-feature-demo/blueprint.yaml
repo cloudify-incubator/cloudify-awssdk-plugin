@@ -9,37 +9,21 @@ imports:
 - plugin.yaml
 
 inputs:
+
   aws_access_key_id:
     type: string
-  
+    default: { get_secret: aws_access_key_id }
+
   aws_secret_access_key:
     type: string
-    
+    default: { get_secret: aws_secret_access_key }
+
   aws_region_name:
     type: string
-    default: us-east-1
-
-  aws_vpc_id:
-    description: |
-      AWS VPC ID
-    type: string
-    
-  aws_security_group_id:
-    description: |
-      AWS VPC Security Group ID
-    type: string
-    
-  aws_vpc_subnet_1_id:
-    description: |
-      AWS VPC Subnet ID (Zone 1)
-    type: string
-    
-  aws_vpc_subnet_2_id:
-    description: |
-      AWS VPC Subnet ID (Zone 2)
-    type: string
+    default: { get_secret: aws_region_name }
 
 dsl_definitions:
+
   client_config: &client_config
     aws_access_key_id: { get_input: aws_access_key_id }
     aws_secret_access_key: { get_input: aws_secret_access_key }
@@ -159,9 +143,7 @@ node_templates:
   subnet_1:
     type: cloudify.aws.nodes.Subnet
     properties:
-      use_external_resource: true
-      resource_id: { get_input: aws_vpc_subnet_2_id }
-      cidr_block: N/A
+      cidr_block:  10.0.0.0/24
       aws_config: *aws_config
     relationships:
     - type: cloudify.aws.relationships.subnet_contained_in_vpc
@@ -170,9 +152,7 @@ node_templates:
   subnet_2:
     type: cloudify.aws.nodes.Subnet
     properties:
-      use_external_resource: true
-      resource_id: { get_input: aws_vpc_subnet_1_id }
-      cidr_block: N/A
+      cidr_block:  10.0.1.0/24
       aws_config: *aws_config
     relationships:
     - type: cloudify.aws.relationships.subnet_contained_in_vpc
@@ -181,9 +161,12 @@ node_templates:
   security_group:
     type: cloudify.aws.nodes.SecurityGroup
     properties:
-      use_external_resource: true
-      resource_id: { get_input: aws_security_group_id }
-      description: N/A
+      description: Lambda Feature Demo Test Group
+      rules:
+      - ip_protocol: -1
+        from_port: -1
+        to_port: -1
+        cidr_ip: 0.0.0.0/0
       aws_config: *aws_config
     relationships:
     - type: cloudify.aws.relationships.security_group_contained_in_vpc
@@ -192,7 +175,5 @@ node_templates:
   vpc:
     type: cloudify.aws.nodes.VPC
     properties:
-      use_external_resource: true
-      resource_id: { get_input: aws_vpc_id }
-      cidr_block:  N/A
+      cidr_block:  10.0.0.0/16
       aws_config: *aws_config
