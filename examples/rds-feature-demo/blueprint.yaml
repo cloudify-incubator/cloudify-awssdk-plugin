@@ -1,29 +1,9 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
-
-description: >
-  Example blueprint showing AWS RDS functionality. This will
-  create an Option Group with one or more options, a Parameter
-  Group with one or more parameters, and a Subnet Group with
-  multiple subnets. This will also create a DB Instance and
-  attach all above components as well as a VPC security group.
-  
-  Note that almost every new node type introduced in the RDS
-  plugin has a special property / attribute called "resource_config".
-  This object can be used as a hedge against future AWS API changes
-  without needing to wait for a Cloudify plugin update to fix, or
-  enhance, the plugin to match the API. If used as a property,
-  the object is passed, as-is, when the resource is being
-  created (see the plugin.yaml for documentation links to find
-  what values are accepted by the AWS API). If used as a lifecycle
-  input, it is passed, as-is, to the relevant AWS operation. 
-
-
 imports:
-- http://www.getcloudify.org/spec/cloudify/4.0.1/types.yaml
-- http://getcloudify.org.s3.amazonaws.com/spec/aws-plugin/1.4.10/plugin.yaml
-- https://raw.githubusercontent.com/cloudify-incubator/cloudify-boto3-plugin/1.0.0m5/plugin.yaml
-
+- https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/4.1/resources/rest-service/cloudify/types/types.yaml
+- http://getcloudify.org.s3.amazonaws.com/spec/aws-plugin/1.4.13/plugin.yaml
+- plugin.yaml
 
 inputs:
   aws_access_key_id:

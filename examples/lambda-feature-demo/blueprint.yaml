@@ -1,15 +1,12 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
-
 description: >
   Example blueprint showing AWS Lambda functionality.
 
-
 imports:
-- http://www.getcloudify.org/spec/cloudify/4.0.1/types.yaml
-- http://getcloudify.org.s3.amazonaws.com/spec/aws-plugin/1.4.10/plugin.yaml
-- https://raw.githubusercontent.com/cloudify-incubator/cloudify-boto3-plugin/1.0.0m5/plugin.yaml
-
+- https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/4.1/resources/rest-service/cloudify/types/types.yaml
+- http://getcloudify.org.s3.amazonaws.com/spec/aws-plugin/1.4.13/plugin.yaml
+- plugin.yaml
 
 inputs:
   aws_access_key_id:
@@ -41,7 +38,6 @@ inputs:
     description: |
       AWS VPC Subnet ID (Zone 2)
     type: string
-
 
 dsl_definitions:
   client_config: &client_config

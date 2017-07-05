@@ -1,8 +1,9 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
-  - http://www.getcloudify.org/spec/cloudify/4.0.1/types.yaml
-  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-boto3-plugin/1.0.0m8/plugin.yaml
+- https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/4.1/resources/rest-service/cloudify/types/types.yaml
+- http://getcloudify.org.s3.amazonaws.com/spec/aws-plugin/1.4.13/plugin.yaml
+- plugin.yaml
 
 inputs:
 
@@ -57,7 +58,10 @@ node_templates:
                 }
               }
             }
-      client_config: *client_config
+      client_config:
+        aws_access_key_id: { get_input: aws_access_key_id }
+        aws_secret_access_key: { get_input: aws_secret_access_key }
+        region_name: us-west-1 # to match template
 
   cloudformation_stack2:
     type: cloudify.nodes.aws.CloudFormation.Stack
@@ -66,7 +70,10 @@ node_templates:
         kwargs:
           StackName: test-cloudformation2
           TemplateURL: https://s3-us-west-1.amazonaws.com/cf-templates-1599a9xjo0snl-us-west-1/2017177zh7-test-new.templateuwj91r7rjrb
-      client_config: *client_config
+      client_config:
+        aws_access_key_id: { get_input: aws_access_key_id }
+        aws_secret_access_key: { get_input: aws_secret_access_key }
+        region_name: us-west-1 # to match template
 
   cloudformation_stack3:
     type: cloudify.nodes.aws.CloudFormation.Stack
@@ -86,10 +93,25 @@ node_templates:
                 Metadata:
                   AWS::CloudFormation::Init:
                     configSets:
-                      config:
-                      - config_something
-                    config_something:
+                      ascending:
+                        - "config1"
+                        - "config2"
+                      descending:
+                        - "config2"
+                        - "config1"
+                    config1:
                       commands:
-                        some_command:
-                          command: "echo hello"
+                        test:
+                          command: "echo \"$CFNTEST\" > test.txt"
+                          env:
+                            CFNTEST: "I come from config1."
+                          cwd: "~"
+                    config2:
+                      commands:
+                        test:
+                          command: "echo \"$CFNTEST\" > test.txt"
+                          env:
+                            CFNTEST: "I come from config2"
+                          cwd: "~"
+
       client_config: *client_config
