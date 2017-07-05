@@ -130,6 +130,15 @@ def create(ctx, iface, resource_config, **_):
     """Creates an AWS Autoscaling Group"""
     params = \
         dict() if not resource_config else resource_config.copy()
+    resource_id = \
+        iface.resource_id or \
+        utils.get_resource_id(
+            ctx.node,
+            ctx.instance,
+            params.get(RESOURCE_NAME),
+            use_instance_id=True)
+    params[RESOURCE_NAME] = resource_id
+    utils.update_resource_id(ctx.instance, resource_id)
 
     # Try to populate the Launch Configuration field
     # with a relationship
@@ -171,8 +180,6 @@ def create(ctx, iface, resource_config, **_):
     if subnet_list:
         params[SUBNET_LIST] = ', '.join(subnet_list)
 
-    utils.update_resource_id(
-        ctx.instance, params.get(RESOURCE_NAME))
     # Actually create the resource
     resource_id, resource_arn = iface.create(params)
     iface.update_resource_id(resource_id)

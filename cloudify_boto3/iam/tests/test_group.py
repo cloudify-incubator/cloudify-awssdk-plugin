@@ -20,6 +20,7 @@ from cloudify.state import current_ctx
 from cloudify_boto3.common.tests.test_base import TestBase, CLIENT_CONFIG
 from cloudify_boto3.common.tests.test_base import DELETE_RESPONSE
 from cloudify_boto3.common.tests.test_base import DEFAULT_RUNTIME_PROPERTIES
+from cloudify_boto3.common.constants import EXTERNAL_RESOURCE_ID
 from cloudify_boto3.iam.resources import group
 
 
@@ -28,7 +29,7 @@ GROUP_TH = ['cloudify.nodes.Root',
             'cloudify.nodes.aws.iam.Group']
 
 NODE_PROPERTIES = {
-    'resource_id': "CloudifyGroup",
+    'resource_id': "group_name_id",
     'use_external_resource': False,
     'resource_config': {
         'kwargs': {
@@ -78,6 +79,7 @@ class TestIAMGroup(TestBase):
         )
 
         current_ctx.set(_ctx)
+        del _ctx.instance.runtime_properties[EXTERNAL_RESOURCE_ID]
 
         self.fake_client.create_group = MagicMock(return_value={
             'Group': {
@@ -91,7 +93,7 @@ class TestIAMGroup(TestBase):
         self.fake_boto.assert_called_with('iam', **CLIENT_CONFIG)
 
         self.fake_client.create_group.assert_called_with(
-            GroupName='aws_resource', Path='some_path'
+            GroupName='group_name_id', Path='some_path'
         )
 
         self.assertEqual(

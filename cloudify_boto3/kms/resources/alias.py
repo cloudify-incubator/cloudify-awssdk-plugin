@@ -23,7 +23,7 @@ from cloudify_boto3.kms.resources.key import KMSKey
 from cloudify_boto3.common.constants import EXTERNAL_RESOURCE_ID
 
 RESOURCE_TYPE = 'KMS Key Alias'
-ALIAS_NAME = 'AliasName'
+RESOURCE_NAME = 'AliasName'
 TARGET_KEY_ID = 'TargetKeyId'
 KEY_TYPE = 'cloudify.nodes.aws.kms.CustomerMasterKey'
 
@@ -80,10 +80,18 @@ def prepare(ctx, resource_config, **_):
 @decorators.aws_resource(KMSKeyAlias, RESOURCE_TYPE)
 def create(ctx, iface, resource_config, **_):
     """Creates an AWS KMS Key Alias"""
-
     # Create a copy of the resource config for clean manipulation.
     params = \
         dict() if not resource_config else resource_config.copy()
+    resource_id = \
+        utils.get_resource_id(
+            ctx.node,
+            ctx.instance,
+            params.get(RESOURCE_NAME),
+            use_instance_id=True
+        )
+    params[RESOURCE_NAME] = resource_id
+    utils.update_resource_id(ctx.instance, resource_id)
 
     target_key_id = params.get(TARGET_KEY_ID)
     if not target_key_id:
@@ -106,9 +114,9 @@ def delete(ctx, iface, resource_config, **_):
     params = \
         dict() if not resource_config else resource_config.copy()
 
-    alias_name = params.get(ALIAS_NAME)
+    alias_name = params.get(RESOURCE_NAME)
     if not alias_name:
-        params[ALIAS_NAME] = \
+        params[RESOURCE_NAME] = \
             ctx.instance.runtime_properties.get(
                 EXTERNAL_RESOURCE_ID,
                 iface.resource_id)

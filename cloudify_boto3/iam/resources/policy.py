@@ -25,6 +25,7 @@ from cloudify_boto3.iam import IAMBase
 from botocore.exceptions import ClientError
 
 RESOURCE_TYPE = 'IAM Policy'
+RESOURCE_NAME = 'PolicyName'
 
 
 class IAMPolicy(IAMBase):
@@ -80,8 +81,18 @@ class IAMPolicy(IAMBase):
 def create(ctx, iface, resource_config, **_):
     '''Creates an AWS IAM Policy'''
     # Build API params
-    params = resource_config
-    params.update(dict(PolicyName=iface.resource_id))
+    params = \
+        dict() if not resource_config else resource_config.copy()
+    resource_id = \
+        utils.get_resource_id(
+            ctx.node,
+            ctx.instance,
+            params.get(RESOURCE_NAME),
+            use_instance_id=True
+        ) or iface.resource_id
+    params[RESOURCE_NAME] = resource_id
+    utils.update_resource_id(ctx.instance, resource_id)
+
     if 'PolicyDocument' in params and \
             isinstance(params['PolicyDocument'], dict):
         params['PolicyDocument'] = json_dumps(params['PolicyDocument'])

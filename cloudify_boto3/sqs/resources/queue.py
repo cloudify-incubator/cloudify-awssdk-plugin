@@ -26,6 +26,7 @@ from cloudify_boto3.sqs import SQSBase
 from botocore.exceptions import ClientError
 
 RESOURCE_TYPE = 'SQS Queue'
+RESOURCE_NAME = 'QueueName'
 QUEUE_URL = 'QueueUrl'
 QUEUE_URLS = 'QueueUrls'
 QUEUE_ARN = 'QueueArn'
@@ -100,10 +101,18 @@ def prepare(ctx, resource_config, **_):
 @decorators.aws_resource(SQSQueue, RESOURCE_TYPE)
 def create(ctx, iface, resource_config, **_):
     """Creates an AWS SQS Queue"""
-
     # Create a copy of the resource config for clean manipulation.
     params = \
         dict() if not resource_config else resource_config.copy()
+    resource_id = \
+        utils.get_resource_id(
+            ctx.node,
+            ctx.instance,
+            params.get(RESOURCE_NAME),
+            use_instance_id=True
+        )
+    params[RESOURCE_NAME] = resource_id
+    utils.update_resource_id(ctx.instance, resource_id)
 
     queue_attributes = params.get('Attributes', {})
     queue_attributes_policy = queue_attributes.get('Policy')

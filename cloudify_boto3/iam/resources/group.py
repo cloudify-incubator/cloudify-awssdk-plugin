@@ -24,6 +24,7 @@ from cloudify_boto3.iam import IAMBase
 from botocore.exceptions import ClientError
 
 RESOURCE_TYPE = 'IAM Group'
+RESOURCE_NAME = 'GroupName'
 
 
 class IAMGroup(IAMBase):
@@ -61,7 +62,7 @@ class IAMGroup(IAMBase):
                           % (self.type_name, params))
         res = self.client.create_group(**params)
         self.logger.debug('Response: %s' % res)
-        self.update_resource_id(res['Group']['GroupName'])
+        self.update_resource_id(res['Group'][RESOURCE_NAME])
         return self.resource_id, res['Group']['Arn']
 
     def delete(self, params=None):
@@ -123,9 +124,19 @@ class IAMGroup(IAMBase):
 def create(ctx, iface, resource_config, **_):
     '''Creates an AWS IAM Group'''
     # Build API params
-    resource_config.update(dict(GroupName=iface.resource_id))
+    params = \
+        dict() if not resource_config else resource_config.copy()
+    resource_id = \
+        iface.resource_id or \
+        utils.get_resource_id(
+            ctx.node,
+            ctx.instance,
+            params.get(RESOURCE_NAME),
+            use_instance_id=True)
+    params[RESOURCE_NAME] = resource_id
+    utils.update_resource_id(ctx.instance, resource_id)
     # Actually create the resource
-    res_id, res_arn = iface.create(resource_config)
+    res_id, res_arn = iface.create(params)
     utils.update_resource_id(ctx.instance, res_id)
     utils.update_resource_arn(ctx.instance, res_arn)
 

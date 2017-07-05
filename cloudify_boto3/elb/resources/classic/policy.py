@@ -24,8 +24,8 @@ from cloudify_boto3.common.connection import Boto3Connection
 from cloudify_boto3.common.constants import EXTERNAL_RESOURCE_ID
 
 RESOURCE_TYPE = 'ELB classic policy'
-POLICY_NAME = 'PolicyName'
-POLICY_NAMES = 'PolicyNames'
+RESOURCE_NAME = 'PolicyName'
+RESOURCE_NAMES = 'PolicyNames'
 LB_NAME = 'LoadBalancerName'
 LB_PORT = 'LoadBalancerPort'
 LB_TYPE = 'cloudify.nodes.aws.elb.Classic.LoadBalancer'
@@ -118,10 +118,19 @@ def create(ctx, iface, resource_config, **_):
     # Create a copy of the resource config for clean manipulation.
     params = \
         dict() if not resource_config else resource_config.copy()
+    resource_id = \
+        iface.resource_id or \
+        utils.get_resource_id(
+            ctx.node,
+            ctx.instance,
+            params.get(RESOURCE_NAME),
+            use_instance_id=True)
+    params[RESOURCE_NAME] = resource_id
+    utils.update_resource_id(ctx.instance, resource_id)
+    ctx.instance.runtime_properties[RESOURCE_NAME] = \
+        resource_id
 
     lb_name = params.get(LB_NAME)
-    policy_name = params.get(POLICY_NAME)
-
     if not lb_name:
         targs = \
             utils.find_rels_by_node_type(
@@ -134,8 +143,6 @@ def create(ctx, iface, resource_config, **_):
 
     ctx.instance.runtime_properties[LB_NAME] = \
         lb_name
-    ctx.instance.runtime_properties[POLICY_NAME] = \
-        policy_name
 
     # Actually create the resource
     iface.create(params)
@@ -150,7 +157,7 @@ def create_sticky(ctx, iface, resource_config, **_):
         dict() if not resource_config else resource_config.copy()
 
     lb_name = params.get(LB_NAME)
-    policy_name = params.get(POLICY_NAME)
+    policy_name = params.get(RESOURCE_NAME)
 
     if not lb_name:
         targs = \
@@ -164,7 +171,7 @@ def create_sticky(ctx, iface, resource_config, **_):
 
     ctx.instance.runtime_properties[LB_NAME] = \
         lb_name
-    ctx.instance.runtime_properties[POLICY_NAME] = \
+    ctx.instance.runtime_properties[RESOURCE_NAME] = \
         policy_name
 
     # Actually create the resource
@@ -183,7 +190,7 @@ def start_sticky(ctx, iface, resource_config, **_):
 
     lb_name = params.get(LB_NAME)
     lb_port = params.get(LB_PORT)
-    policy_names = params.get(POLICY_NAMES)
+    policy_names = params.get(RESOURCE_NAMES)
 
     # This operations requires the LoadBalancerName, LoadBalancerPort,
     # and the PolicyName.
@@ -228,8 +235,8 @@ def start_sticky(ctx, iface, resource_config, **_):
     # However this node type represents only one policy.
     # Therefore we restrict the usage.
     if not policy_names:
-        policy_names = ctx.instance.runtime_properties[POLICY_NAME]
-        params.update({POLICY_NAMES: [policy_names]})
+        policy_names = ctx.instance.runtime_properties[RESOURCE_NAME]
+        params.update({RESOURCE_NAMES: [policy_names]})
 
     # Actually create the resource
     iface.start(params)
@@ -245,12 +252,12 @@ def delete(ctx, iface, resource_config, **_):
 
     lb = params.get(LB_NAME) or ctx.instance.runtime_properties.get(LB_NAME)
     policy = \
-        params.get(POLICY_NAME) or \
-        ctx.instance.runtime_properties.get(POLICY_NAME)
+        params.get(RESOURCE_NAME) or \
+        ctx.instance.runtime_properties.get(RESOURCE_NAME)
 
     lb_delete_params = {
         LB_NAME: lb,
-        POLICY_NAME: policy
+        RESOURCE_NAME: policy
     }
 
     iface.delete(lb_delete_params)

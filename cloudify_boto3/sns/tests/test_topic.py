@@ -18,6 +18,7 @@ from cloudify_boto3.sns.resources.topic import (SNSTopic,
                                                 SUB_ARN, TOPIC_ARN)
 from mock import patch, MagicMock
 from cloudify_boto3.sns.resources import topic
+from cloudify.state import current_ctx
 
 PATCH_PREFIX = 'cloudify_boto3.sns.resources.topic.'
 
@@ -99,6 +100,7 @@ class TestSNSTopic(TestBase):
 
     def test_create(self):
         ctx = self.get_mock_ctx("SNS")
+        current_ctx.set(ctx=ctx)
         iface = MagicMock()
         topic.create(ctx, iface, {})
         self.assertTrue(iface.create.called)

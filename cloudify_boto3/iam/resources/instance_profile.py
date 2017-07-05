@@ -26,6 +26,7 @@ from botocore.exceptions import ClientError
 
 RESOURCE_TYPE = 'IAM Instance Profile'
 IAM_ROLE_TYPE = 'cloudify.nodes.aws.iam.Role'
+RESOURCE_NAME = 'InstanceProfileName'
 
 
 class IAMInstanceProfile(IAMBase):
@@ -62,7 +63,7 @@ class IAMInstanceProfile(IAMBase):
                           % (self.type_name, params))
         res = self.client.create_instance_profile(**params)
         self.logger.debug('Response: %s' % res)
-        self.update_resource_id(res['InstanceProfile']['InstanceProfileName'])
+        self.update_resource_id(res['InstanceProfile'][RESOURCE_NAME])
         return self.resource_id, res['InstanceProfile']['Arn']
 
     def delete(self, params=None):
@@ -96,12 +97,16 @@ def create(ctx, iface, resource_config, **_):
     # Build API params
     params = \
         dict() if not resource_config else resource_config.copy()
+    resource_id = \
+        utils.get_resource_id(
+            ctx.node,
+            ctx.instance,
+            params.get(RESOURCE_NAME),
+            use_instance_id=True
+        ) or iface.resource_id
+    params[RESOURCE_NAME] = resource_id
+    utils.update_resource_id(ctx.instance, resource_id)
 
-    instance_profile_name = params.get('InstanceProfileName')
-    if not instance_profile_name:
-        params['InstanceProfileName'] = \
-            ctx.node.properties.get('resource_id',
-                                    ctx.instance.id)
     role_name = params.pop('RoleName', None)
 
     res_id, res_arn = iface.create(params)
@@ -113,7 +118,7 @@ def create(ctx, iface, resource_config, **_):
                                        IAM_ROLE_TYPE)
     if role_name:
         add_role_params = {
-            'InstanceProfileName': iface.resource_id,
+            RESOURCE_NAME: iface.resource_id,
             'RoleName': role_name
         }
         iface.add_role_to_instance_profile(add_role_params)
@@ -126,10 +131,10 @@ def delete(ctx, iface, resource_config, **_):
     # Create a copy of the resource config for clean manipulation.
     params = \
         dict() if not resource_config else resource_config.copy()
-    instance_profile_name = params.get('InstanceProfileName')
+    instance_profile_name = params.get(RESOURCE_NAME)
     if not instance_profile_name:
         instance_profile_name = iface.resource_id
-    params['InstanceProfileName'] = instance_profile_name
+    params[RESOURCE_NAME] = instance_profile_name
 
     # Path parameter is not accepted by delete_instance_profile.
     try:
@@ -144,7 +149,7 @@ def delete(ctx, iface, resource_config, **_):
                                            IAM_ROLE_TYPE)
     if role_name:
         remove_role_params = {
-            'InstanceProfileName': instance_profile_name,
+            RESOURCE_NAME: instance_profile_name,
             'RoleName': role_name
         }
         iface.remove_role_from_instance_profile(remove_role_params)

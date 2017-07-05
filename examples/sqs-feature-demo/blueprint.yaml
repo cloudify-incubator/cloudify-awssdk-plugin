@@ -38,7 +38,7 @@ node_templates:
     properties:
       resource_config:
         kwargs:
-          QueueName: test-queue
+          # QueueName: test-queue
           Attributes:
             Policy:
               {

@@ -13,8 +13,10 @@
 #    * limitations under the License.
 
 import unittest
-from cloudify_boto3.common.tests.test_base import TestBase, mock_decorator
-from cloudify_boto3.s3.resources.bucket import S3Bucket, BUCKET, LOCATION
+from cloudify_boto3.common.tests.test_base import \
+    TestBase, mock_decorator
+from cloudify_boto3.s3.resources.bucket import \
+    S3Bucket, RESOURCE_NAME, LOCATION
 from mock import patch, MagicMock
 from cloudify_boto3.s3.resources import bucket
 
@@ -44,7 +46,7 @@ class TestS3Backet(TestBase):
         res = self.bucket.properties
         self.assertIsNone(res)
 
-        value = [{'Name': 'test_name'}]
+        value = [{'Bucket': 'test_name'}]
         self.bucket.client = self.make_client_function('list_buckets',
                                                        return_value=value)
         res = self.bucket.properties
@@ -52,10 +54,10 @@ class TestS3Backet(TestBase):
 
         self.bucket.resource_id = 'test_name'
         res = self.bucket.properties
-        self.assertEqual(res['Name'], 'test_name')
+        self.assertEqual(res['Bucket'], 'test_name')
 
     def test_class_status(self):
-        value = [{'Name': 'test_name', 'Status': 'ok'}]
+        value = [{'Bucket': 'test_name', 'Status': 'ok'}]
         self.bucket.client = self.make_client_function('list_buckets',
                                                        return_value=value)
         res = self.bucket.status
@@ -88,7 +90,7 @@ class TestS3Backet(TestBase):
         self.bucket.delete(params)
         self.assertTrue(self.bucket.client.delete_bucket.called)
 
-        params = {BUCKET: 'bucket', LOCATION: 'location'}
+        params = {RESOURCE_NAME: 'bucket', LOCATION: 'location'}
         self.bucket.delete(params)
         self.assertEqual(params[LOCATION], 'location')
 
@@ -100,7 +102,7 @@ class TestS3Backet(TestBase):
 
     def test_create(self):
         ctx = self.get_mock_ctx("Backet")
-        config = {BUCKET: 'bucket'}
+        config = {RESOURCE_NAME: 'bucket'}
         iface = MagicMock()
         iface.create = self.mock_return({LOCATION: 'location'})
         bucket.create(ctx, iface, config)

@@ -16,7 +16,7 @@ from mock import MagicMock
 import unittest
 
 from botocore.exceptions import UnknownServiceError
-
+from cloudify_boto3.common.constants import EXTERNAL_RESOURCE_ID
 from cloudify_boto3.common.tests.test_base import CLIENT_CONFIG
 from cloudify_boto3.kms.tests.test_kms import TestKMS
 
@@ -29,6 +29,7 @@ GRANT_TH = ['cloudify.nodes.Root',
 
 NODE_PROPERTIES = {
     'use_external_resource': False,
+    'resource_id': 'TestGrant',
     'resource_config': {
         "kwargs": {
             "Name": "TestGrant",
@@ -93,6 +94,7 @@ class TestKMSGrant(TestKMS):
         _ctx = self._prepare_context(
             GRANT_TH, NODE_PROPERTIES
         )
+        del _ctx.instance.runtime_properties[EXTERNAL_RESOURCE_ID]
 
         self.fake_client.create_grant = MagicMock(return_value={
             'GrantId': "grant_id",
@@ -100,7 +102,6 @@ class TestKMSGrant(TestKMS):
         })
 
         grant.create(ctx=_ctx, resource_config=None, iface=None)
-
         self.fake_boto.assert_called_with('kms', **CLIENT_CONFIG)
 
         self.fake_client.create_grant.assert_called_with(

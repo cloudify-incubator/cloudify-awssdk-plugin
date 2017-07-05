@@ -15,8 +15,8 @@
 import unittest
 from cloudify_boto3.common.tests.test_base import TestBase, mock_decorator
 from cloudify_boto3.elb.resources.classic.policy import (ELBClassicPolicy,
-                                                         POLICY_NAMES,
-                                                         POLICY_NAME,
+                                                         RESOURCE_NAMES,
+                                                         RESOURCE_NAME,
                                                          LB_NAME, LB_PORT,
                                                          LISTENER_TYPE)
 from cloudify_boto3.common.constants import EXTERNAL_RESOURCE_ID
@@ -126,25 +126,25 @@ class TestELBClassicPolicy(TestBase):
                 {EXTERNAL_RESOURCE_ID: 'ext_id',
                  'resource_config': {'Listeners': [{LB_PORT: 'port'}]}}))
         iface = MagicMock()
-        config = {LB_NAME: 'policy', LB_PORT: 'port', POLICY_NAMES: 'names'}
+        config = {LB_NAME: 'policy', LB_PORT: 'port', RESOURCE_NAMES: 'names'}
         policy.start_sticky(ctx, iface, config)
         self.assertTrue(iface.start.called)
 
-        config = {LB_PORT: 'port', POLICY_NAMES: 'names'}
+        config = {LB_PORT: 'port', RESOURCE_NAMES: 'names'}
         ctx = self.get_mock_ctx("ELB", {}, {'resource_config': {}})
         with patch(PATCH_PREFIX + 'utils') as utils:
             utils.find_rels_by_node_type = self.mock_return([ctx_target])
             policy.start_sticky(ctx, iface, config)
             self.assertTrue(iface.start.called)
 
-        config = {POLICY_NAMES: 'names'}
+        config = {RESOURCE_NAMES: 'names'}
         ctx = self.get_mock_ctx("ELB", {}, {'resource_config': {}})
         with patch(PATCH_PREFIX + 'utils') as utils:
             utils.find_rels_by_node_type = self.mock_return([ctx_target])
             policy.start_sticky(ctx, iface, config)
             self.assertTrue(iface.start.called)
 
-        config = {LB_NAME: 'policy', POLICY_NAMES: 'names'}
+        config = {LB_NAME: 'policy', RESOURCE_NAMES: 'names'}
         ctx = self.get_mock_ctx("ELB", {}, {'resource_config': {}})
         with patch(PATCH_PREFIX + 'utils') as utils:
             utils.find_rels_by_node_type = MagicMock(side_effect=_side)
@@ -153,7 +153,7 @@ class TestELBClassicPolicy(TestBase):
 
         config = {}
         ctx = self.get_mock_ctx("ELB", {}, {'resource_config': {},
-                                            POLICY_NAME: 'name'})
+                                            RESOURCE_NAME: 'name'})
         with patch(PATCH_PREFIX + 'utils') as utils:
             utils.find_rels_by_node_type = self.mock_return([ctx_target])
             policy.start_sticky(ctx, iface, config)
@@ -162,7 +162,7 @@ class TestELBClassicPolicy(TestBase):
     def test_delete(self):
         ctx = self.get_mock_ctx("ELB", {}, {'resource_config': {}})
         iface = MagicMock()
-        config = {LB_NAME: 'policy', LB_PORT: 'port', POLICY_NAMES: 'names'}
+        config = {LB_NAME: 'policy', LB_PORT: 'port', RESOURCE_NAMES: 'names'}
         policy.delete(ctx, iface, config)
         self.assertTrue(iface.delete.called)
 

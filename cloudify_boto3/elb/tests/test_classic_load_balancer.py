@@ -15,7 +15,7 @@
 import unittest
 from cloudify_boto3.common.tests.test_base import TestBase, mock_decorator
 from cloudify_boto3.elb.resources.classic.load_balancer import (
-    ELBClassicLoadBalancer, LB_NAME)
+    ELBClassicLoadBalancer, RESOURCE_NAME)
 from cloudify_boto3.common.constants import EXTERNAL_RESOURCE_ID
 from mock import patch, MagicMock
 from cloudify_boto3.elb.resources.classic import load_balancer
@@ -130,7 +130,7 @@ class TestELBClassicLoadBalancer(TestBase):
 
         ctx = self.get_mock_ctx("ELB", {}, {'resource_config': {}})
         iface = MagicMock()
-        config = {LB_NAME: 'name'}
+        config = {RESOURCE_NAME: 'name'}
         with patch(PATCH_PREFIX + 'utils') as utils:
             utils.find_rels_by_node_type = self.mock_return('net')
             load_balancer.create(ctx, iface, config)
@@ -145,7 +145,7 @@ class TestELBClassicLoadBalancer(TestBase):
 
         ctx = self.get_mock_ctx("ELB", {}, {'resource_config': {}})
         iface = MagicMock()
-        config = {LB_NAME: 'name'}
+        config = {RESOURCE_NAME: 'name'}
         load_balancer.start(ctx, iface, config)
         self.assertTrue(iface.modify_attributes.called)
 
@@ -156,7 +156,7 @@ class TestELBClassicLoadBalancer(TestBase):
         self.assertTrue(iface.delete.called)
 
         iface = MagicMock()
-        config = {LB_NAME: 'name'}
+        config = {RESOURCE_NAME: 'name'}
         load_balancer.delete(iface, config)
         self.assertTrue(iface.delete.called)
 

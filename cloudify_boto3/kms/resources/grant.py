@@ -24,6 +24,7 @@ from cloudify_boto3.common.constants import EXTERNAL_RESOURCE_ID
 # Boto
 
 RESOURCE_TYPE = 'KMS Key Grant'
+RESOURCE_NAME = 'Name'
 KEY_TYPE = 'cloudify.nodes.aws.kms.CustomerMasterKey'
 KEY_ID = 'KeyId'
 GRANT_ID = 'GrantId'
@@ -76,10 +77,18 @@ def prepare(ctx, resource_config, **_):
 @decorators.aws_resource(KMSKeyGrant, RESOURCE_TYPE)
 def create(ctx, iface, resource_config, **_):
     """Creates an AWS KMS Key Grant"""
-
     # Create a copy of the resource config for clean manipulation.
     params = \
         dict() if not resource_config else resource_config.copy()
+    resource_id = \
+        utils.get_resource_id(
+            ctx.node,
+            ctx.instance,
+            params.get(RESOURCE_NAME),
+            use_instance_id=True
+        )
+    params[RESOURCE_NAME] = resource_id
+    utils.update_resource_id(ctx.instance, resource_id)
 
     key_id = params.get(KEY_ID)
     if not key_id:

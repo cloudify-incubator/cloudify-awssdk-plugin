@@ -15,7 +15,8 @@
 import unittest
 from cloudify_boto3.common.tests.test_base import TestBase, mock_decorator
 from cloudify_boto3.elb.resources.load_balancer import (ELBLoadBalancer,
-                                                        LB_ARN, LB_NAME,
+                                                        LB_ARN,
+                                                        RESOURCE_NAME,
                                                         LB_ATTR)
 from cloudify_boto3.common.constants import EXTERNAL_RESOURCE_ID
 from mock import patch, MagicMock
@@ -79,7 +80,7 @@ class TestELBLoadBalancer(TestBase):
         self.assertEqual(res, 'ok')
 
     def test_class_create(self):
-        value = {'LoadBalancers': [{LB_NAME: 'name', LB_ARN: 'arn'}]}
+        value = {'LoadBalancers': [{RESOURCE_NAME: 'name', LB_ARN: 'arn'}]}
         self.load_balancer.client = self.make_client_function(
             'create_load_balancer',
             return_value=value)

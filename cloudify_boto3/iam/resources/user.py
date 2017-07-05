@@ -25,6 +25,7 @@ from cloudify_boto3.iam.resources.group import IAMGroup
 from botocore.exceptions import ClientError
 
 RESOURCE_TYPE = 'IAM User'
+RESOURCE_NAME = 'UserName'
 
 
 class IAMUser(IAMBase):
@@ -158,9 +159,20 @@ class IAMUser(IAMBase):
 def create(ctx, iface, resource_config, **_):
     '''Creates an AWS IAM User'''
     # Build API params
-    resource_config.update(dict(UserName=iface.resource_id))
+    params = \
+        dict() if not resource_config else resource_config.copy()
+    resource_id = \
+        iface.resource_id or \
+        utils.get_resource_id(
+            ctx.node,
+            ctx.instance,
+            params.get(RESOURCE_NAME),
+            use_instance_id=True)
+    params[RESOURCE_NAME] = resource_id
+    utils.update_resource_id(ctx.instance, resource_id)
+
     # Actually create the resource
-    res_id, res_arn = iface.create(resource_config)
+    res_id, res_arn = iface.create(params)
     utils.update_resource_id(ctx.instance, res_id)
     utils.update_resource_arn(ctx.instance, res_arn)
 

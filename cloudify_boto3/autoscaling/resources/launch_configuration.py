@@ -100,7 +100,17 @@ def prepare(ctx, resource_config, **_):
 @decorators.aws_resource(AutoscalingLaunchConfiguration, RESOURCE_TYPE)
 def create(ctx, iface, resource_config, **_):
     """Creates an AWS Autoscaling Autoscaling Launch Configuration"""
-    params = resource_config.copy()
+    params = \
+        dict() if not resource_config else resource_config.copy()
+    resource_id = \
+        iface.resource_id or \
+        utils.get_resource_id(
+            ctx.node,
+            ctx.instance,
+            params.get(RESOURCE_NAME),
+            use_instance_id=True)
+    params[RESOURCE_NAME] = resource_id
+    utils.update_resource_id(ctx.instance, resource_id)
 
     # Add Security Groups
     secgroups_list = params.get(SECGROUPS, [])

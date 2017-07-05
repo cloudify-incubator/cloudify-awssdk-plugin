@@ -24,8 +24,7 @@ from cloudify_boto3.s3 import S3Base
 from botocore.exceptions import ClientError
 
 RESOURCE_TYPE = 'S3 Bucket'
-BUCKET = 'Bucket'
-RESOURCE_NAME = 'Name'
+RESOURCE_NAME = 'Bucket'
 LOCATION = 'Location'
 
 
@@ -105,9 +104,15 @@ def create(ctx, iface, resource_config, **_):
     # Create a copy of the resource config for clean manipulation.
     params = \
         dict() if not resource_config else resource_config.copy()
-
-    bucket_name = params.get(BUCKET)
-    utils.update_resource_id(ctx.instance, bucket_name)
+    resource_id = \
+        utils.get_resource_id(
+            ctx.node,
+            ctx.instance,
+            params.get(RESOURCE_NAME),
+            use_instance_id=True
+        )
+    params[RESOURCE_NAME] = resource_id
+    utils.update_resource_id(ctx.instance, resource_id)
 
     # Actually create the resource
     bucket = iface.create(resource_config)
@@ -124,11 +129,11 @@ def delete(iface, resource_config, **_):
     params = \
         dict() if not resource_config else resource_config.copy()
 
-    bucket = params.get(BUCKET)
-    # Add the required BUCKET parameter.
+    bucket = params.get(RESOURCE_NAME)
+    # Add the required RESOURCE_NAME parameter.
     if not bucket:
         bucket = iface.resource_id
-        params.update({BUCKET: bucket})
+        params.update({RESOURCE_NAME: bucket})
 
     # Actually delete the resource
     iface.delete_objects(bucket)

@@ -25,7 +25,7 @@ from cloudify_boto3.iam import IAMBase
 RESOURCE_TYPE = 'IAM Role Policy'
 ROLE_NAME = 'RoleName'
 ROLE_TYPE = 'cloudify.nodes.aws.iam.Role'
-POLICY_NAME = 'PolicyName'
+RESOURCE_NAME = 'PolicyName'
 
 
 class IAMRolePolicy(IAMBase):
@@ -72,6 +72,15 @@ def create(ctx, iface, resource_config, **_):
     # Build API params
     params = \
         dict() if not resource_config else resource_config.copy()
+    resource_id = \
+        utils.get_resource_id(
+            ctx.node,
+            ctx.instance,
+            params.get(RESOURCE_NAME),
+            use_instance_id=True
+        ) or iface.resource_id
+    params[RESOURCE_NAME] = resource_id
+    utils.update_resource_id(ctx.instance, resource_id)
 
     # Add RoleName
     role_name = params.get(ROLE_NAME, '')
@@ -80,13 +89,6 @@ def create(ctx, iface, resource_config, **_):
             utils.find_resource_id_by_type(
                 ctx.instance,
                 ROLE_TYPE)
-    # Add Policy Name
-    policy_name = params.get(POLICY_NAME, '')
-    if not policy_name:
-        params[POLICY_NAME] = \
-            ctx.node.properties.get('resource_id') or \
-            ctx.instance.id
-
     if 'PolicyDocument' in params and \
             isinstance(params['PolicyDocument'], dict):
         params['PolicyDocument'] = json_dumps(params['PolicyDocument'])
@@ -110,9 +112,9 @@ def delete(ctx, iface, resource_config, **_):
                 ctx.instance,
                 ROLE_TYPE)
     # Add Policy Name
-    policy_name = params.get(POLICY_NAME, '')
+    policy_name = params.get(RESOURCE_NAME, '')
     if not policy_name:
-        params[POLICY_NAME] = \
+        params[RESOURCE_NAME] = \
             ctx.node.properties.get('resource_id') or \
             ctx.instance.id
 

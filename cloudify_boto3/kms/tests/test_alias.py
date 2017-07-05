@@ -17,6 +17,7 @@ import unittest
 
 from botocore.exceptions import UnknownServiceError
 
+from cloudify_boto3.common.constants import EXTERNAL_RESOURCE_ID
 from cloudify_boto3.common.tests.test_base import CLIENT_CONFIG
 from cloudify_boto3.kms.tests.test_kms import TestKMS
 
@@ -67,6 +68,7 @@ class TestKMSAlias(TestKMS):
 
     def test_create(self):
         _ctx = self._prepare_context(ALIAS_TH, NODE_PROPERTIES)
+        del _ctx.instance.runtime_properties[EXTERNAL_RESOURCE_ID]
 
         self.fake_client.create_alias = MagicMock(return_value={})
 
@@ -80,7 +82,7 @@ class TestKMSAlias(TestKMS):
 
         self.assertEqual(
             _ctx.instance.runtime_properties, {
-                'aws_resource_id': 'aws_resource', 'resource_config': {}
+                'aws_resource_id': 'alias/test_key', 'resource_config': {}
             }
         )
 

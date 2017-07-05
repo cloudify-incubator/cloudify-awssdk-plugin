@@ -52,8 +52,9 @@ node_templates:
     type: cloudify.nodes.aws.SNS.Topic
     properties:
       resource_config:
-        kwargs:
-          Name: TestCloudifyTopic
+        kwargs: {}
+#        kwargs:
+#          Name: TestCloudifyTopic
       client_config: *client_config
 
   cloudwatch_event1:
@@ -94,12 +95,13 @@ node_templates:
           State: 'ENABLED'
       client_config: *client_config
 
-  cloudwatch_alarm1:
+  cwa:
     type: cloudify.nodes.aws.cloudwatch.Alarm
     properties:
+      resource_id: { concat: [ {get_input: aws_region_name }, 'cwa' ] }
       resource_config:
         kwargs:
-          AlarmName: test-cloudwatch1
+          AlarmName: cwa
           ActionsEnabled: true
           AlarmActions:
           - { concat: [ 'arn:aws:automate:', { get_input: aws_region_name }, ':ec2:terminate'] }

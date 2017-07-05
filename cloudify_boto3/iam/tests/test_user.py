@@ -19,6 +19,7 @@ from cloudify.state import current_ctx
 from cloudify_boto3.common.tests.test_base import TestBase, CLIENT_CONFIG
 from cloudify_boto3.common.tests.test_base import DELETE_RESPONSE
 from cloudify_boto3.common.tests.test_base import DEFAULT_RUNTIME_PROPERTIES
+from cloudify_boto3.common.constants import EXTERNAL_RESOURCE_ID
 from cloudify_boto3.iam.resources import user
 
 
@@ -27,7 +28,7 @@ USER_TH = ['cloudify.nodes.Root',
            'cloudify.nodes.aws.iam.User']
 
 NODE_PROPERTIES = {
-    'resource_id': 'CloudifyUser',
+    'resource_id': 'user_name_id',
     'use_external_resource': False,
     'resource_config': {
         'kwargs': {
@@ -77,6 +78,7 @@ class TestIAMUser(TestBase):
         )
 
         current_ctx.set(_ctx)
+        del _ctx.instance.runtime_properties[EXTERNAL_RESOURCE_ID]
 
         self.fake_client.create_user = MagicMock(return_value={
             'User': {
@@ -86,11 +88,10 @@ class TestIAMUser(TestBase):
         })
 
         user.create(ctx=_ctx, resource_config=None, iface=None)
-
         self.fake_boto.assert_called_with('iam', **CLIENT_CONFIG)
 
         self.fake_client.create_user.assert_called_with(
-            Path='user_path', UserName='aws_resource'
+            Path='user_path', UserName='user_name_id'
         )
 
         self.assertEqual(

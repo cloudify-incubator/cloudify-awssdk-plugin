@@ -30,7 +30,7 @@ from cloudify_boto3.common.constants import (
 from botocore.exceptions import ClientError
 
 RESOURCE_TYPE = 'ELB Load Balancer'
-LB_NAME = 'LoadBalancerName'
+RESOURCE_NAME = 'LoadBalancerName'
 LB_ARN = 'LoadBalancerArn'
 LB_ATTR = 'Attributes'
 SUBNET_TYPE = 'cloudify.nodes.aws.ec2.Subnet'
@@ -83,7 +83,7 @@ class ELBLoadBalancer(ELBBase):
                           % (self.type_name, params))
         res = self.client.create_load_balancer(**params)
         self.logger.debug('Response: %s' % res)
-        self.update_resource_id(res['LoadBalancers'][0][LB_NAME])
+        self.update_resource_id(res['LoadBalancers'][0][RESOURCE_NAME])
         return self.resource_id, res['LoadBalancers'][0][LB_ARN]
 
     def delete(self, params=None):
@@ -125,10 +125,19 @@ def prepare(ctx, resource_config, **_):
 def create(ctx, iface, resource_config, **_):
     '''Creates an AWS ELB load balancer'''
     # Build API params
-    cfg = \
-        ctx.instance.runtime_properties['resource_config'] or resource_config
+    params = \
+        dict() if not resource_config else resource_config.copy()
+    resource_id = \
+        iface.resource_id or \
+        utils.get_resource_id(
+            ctx.node,
+            ctx.instance,
+            params.get('Name'),
+            use_instance_id=True)
+    params['Name'] = resource_id
+    utils.update_resource_id(ctx.instance, resource_id)
+
     # LB attributes are only applied in modify operation.
-    params = cfg.copy()
     params.pop(LB_ATTR, {})
     # Add Subnets
     subnets_from_params = params.get(SUBNETS, [])
@@ -155,8 +164,6 @@ def create(ctx, iface, resource_config, **_):
         secgroups_from_params.append(secgroup_id)
     params[SECGROUPS] = secgroups_from_params
 
-    if iface.resource_id and 'Name' not in params.keys():
-        params.update(dict(Name=iface.resource_id))
     # Actually create the resource
     iface.create(params)
 

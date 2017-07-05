@@ -62,6 +62,7 @@ node_templates:
   pmcfy_as:
     type: cloudify.nodes.aws.autoscaling.Group
     properties:
+      resource_id: pmcfy_as
       resource_config:
         kwargs:
           AutoScalingGroupName: pmcfy_as

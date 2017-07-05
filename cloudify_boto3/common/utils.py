@@ -46,7 +46,10 @@ def get_resource_string(
     return str(value) if value else None
 
 
-def get_resource_id(node=None, instance=None,
+def get_resource_id(node=None,
+                    instance=None,
+                    resource_name=None,
+                    use_instance_id=False,
                     raise_on_missing=False):
     '''
         Gets the (external) resource ID of a Cloudify node and/or instance.
@@ -57,6 +60,8 @@ def get_resource_id(node=None, instance=None,
         Cloudify node instance.
     :param boolean raise_on_missing: If True, causes this method to raise
         an exception if the resource ID is not found.
+    :param string resource_name: [RESOURCE_]NAME as set in resource_config.
+        For example "LaunchConfigurationName".
     :raises: :exc:`cloudify.exceptions.NonRecoverableError`
     '''
     resource_id = get_resource_string(
@@ -66,6 +71,10 @@ def get_resource_id(node=None, instance=None,
             'Missing resource ID! Node=%s, Instance=%s' % (
                 node.id if node else None,
                 instance.id if instance else None))
+    elif resource_name and not resource_id:
+        return resource_name
+    elif use_instance_id and not resource_id:
+        return ctx.instance.id
     return resource_id
 
 

@@ -27,7 +27,7 @@ from cloudify_boto3.common.constants import EXTERNAL_RESOURCE_ID
 from botocore.exceptions import ClientError
 
 RESOURCE_TYPE = 'ELB Classic Load Balancer'
-LB_NAME = 'LoadBalancerName'
+RESOURCE_NAME = 'LoadBalancerName'
 LB_ARN = 'LoadBalancerArn'
 SUBNET_TYPE = 'cloudify.nodes.aws.ec2.Subnet'
 SUBNET_TYPE_DEPRECATED = 'cloudify.aws.nodes.Subnet'
@@ -144,6 +144,17 @@ def create(ctx, iface, resource_config, **_):
     # Create a copy of the resource config for clean manipulation.
     params = \
         dict() if not resource_config else resource_config.copy()
+    resource_id = \
+        iface.resource_id or \
+        utils.get_resource_id(
+            ctx.node,
+            ctx.instance,
+            params.get(RESOURCE_NAME),
+            use_instance_id=True)
+    params[RESOURCE_NAME] = resource_id
+    utils.update_resource_id(ctx.instance, resource_id)
+    ctx.instance.runtime_properties[RESOURCE_NAME] = \
+        resource_id
 
     # Add Subnets
     subnets_list = params.get(SUBNETS, [])
@@ -164,14 +175,6 @@ def create(ctx, iface, resource_config, **_):
             SECGROUP_TYPE,
             secgroups_list)
 
-    lb = params.get(LB_NAME)
-    if iface.resource_id and not lb:
-        lb = iface.resource_id
-        params.update(({LB_NAME: lb}))
-
-    utils.update_resource_id(ctx.instance, lb)
-    ctx.instance.runtime_properties[LB_NAME] = lb
-
     # Actually create the resource
     dns_name = iface.create(params)
     ctx.instance.runtime_properties['DNSName'] = dns_name
@@ -187,10 +190,10 @@ def start(ctx, iface, resource_config, **_):
     params = \
         dict() if not resource_config else resource_config.copy()
 
-    lb = params.get(LB_NAME)
+    lb = params.get(RESOURCE_NAME)
     if not lb:
-        lb = ctx.instance.runtime_properties.get(LB_NAME)
-        params.update(({LB_NAME: lb}))
+        lb = ctx.instance.runtime_properties.get(RESOURCE_NAME)
+        params.update(({RESOURCE_NAME: lb}))
 
     # Actually modify the resource
     attributes = iface.modify_attributes(params)
@@ -210,7 +213,7 @@ def delete(iface, resource_config, **_):
 
     lb_arn = params.get(LB_ARN)
     if not lb_arn:
-        params.update({LB_NAME: iface.resource_id})
+        params.update({RESOURCE_NAME: iface.resource_id})
 
     iface.delete(params)
 
@@ -225,7 +228,7 @@ def assoc(ctx, **_):
     iface = \
         ELBClassicLoadBalancer(ctx.target.node, lb, logger=ctx.logger)
     iface.register_instances(
-        {LB_NAME: lb, 'Instances': [{'InstanceId': instance_id}]})
+        {RESOURCE_NAME: lb, 'Instances': [{'InstanceId': instance_id}]})
     if 'instances' not in ctx.target.instance.runtime_properties.keys():
         ctx.target.instance.runtime_properties['instances'] = []
     instances_list = ctx.target.instance.runtime_properties['instances']
@@ -245,7 +248,7 @@ def disassoc(ctx, **_):
     iface = \
         ELBClassicLoadBalancer(ctx.target.node, lb, logger=ctx.logger)
     iface.deregister_instances(
-        {LB_NAME: lb, 'Instances': [{'InstanceId': instance_id}]})
+        {RESOURCE_NAME: lb, 'Instances': [{'InstanceId': instance_id}]})
     instances_list = ctx.target.instance.runtime_properties['instances']
     instances_list.remove(instance_id)
     ctx.target.instance.runtime_properties['instances'] = instances_list
