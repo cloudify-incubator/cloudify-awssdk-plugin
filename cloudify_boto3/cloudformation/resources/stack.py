@@ -27,8 +27,8 @@ from datetime import datetime
 import json
 
 RESOURCE_TYPE = 'CloudFormation Stack'
-NAME = 'StackName'
-NAMES = 'StackNames'
+RESOURCE_NAME = 'StackName'
+RESOURCE_NAMES = 'StackNames'
 STACKS = 'Stacks'
 TEMPLATEBODY = 'TemplateBody'
 STATUS = 'StackStatus'
@@ -46,7 +46,7 @@ class CloudFormationStack(AWSCloudFormationBase):
     @property
     def properties(self):
         """Gets the properties of an external resource"""
-        params = {NAME: self.resource_id}
+        params = {RESOURCE_NAME: self.resource_id}
         try:
             resources = \
                 self.client.describe_stacks(**params)
@@ -68,7 +68,7 @@ class CloudFormationStack(AWSCloudFormationBase):
             Create a new AWS CloudFormation Stack.
         """
         if not self.resource_id:
-            setattr(self, 'resource_id', params.get(NAME))
+            setattr(self, 'resource_id', params.get(RESOURCE_NAME))
         self.logger.debug('Creating %s with parameters: %s'
                           % (self.type_name, params))
         res = self.client.create_stack(**params)
@@ -103,7 +103,7 @@ def create(ctx, iface, resource_config, **_):
     params = \
         dict() if not resource_config else resource_config.copy()
 
-    stack_name = params.get(NAME)
+    stack_name = params.get(RESOURCE_NAME)
     utils.update_resource_id(ctx.instance, stack_name)
 
     template_body = params.get(TEMPLATEBODY, {})
@@ -154,7 +154,7 @@ def delete(iface, resource_config, **_):
     # Create a copy of the resource config for clean manipulation.
     params = \
         dict() if not resource_config else resource_config.copy()
-    name = params.get(NAME)
+    name = params.get(RESOURCE_NAME)
     if not name:
         name = iface.resource_id
-    iface.delete({NAME: name})
+    iface.delete({RESOURCE_NAME: name})

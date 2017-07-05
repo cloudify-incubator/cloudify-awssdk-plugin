@@ -25,7 +25,7 @@ from botocore.exceptions import ClientError
 
 RESOURCE_TYPE = 'S3 Bucket'
 BUCKET = 'Bucket'
-NAME = 'Name'
+RESOURCE_NAME = 'Name'
 LOCATION = 'Location'
 
 
@@ -46,7 +46,7 @@ class S3Bucket(S3Base):
             pass
         else:
             for resource in resources:
-                if resource.get(NAME) is self.resource_id:
+                if resource.get(RESOURCE_NAME) is self.resource_id:
                     return resource
             return None
 

@@ -24,8 +24,8 @@ from cloudify_boto3.cloudwatch import AWSCloudwatchBase
 from botocore.exceptions import ClientError
 
 RESOURCE_TYPE = 'Cloudwatch Alarm'
-NAME = 'AlarmName'
-NAMES = 'AlarmNames'
+RESOURCE_NAME = 'AlarmName'
+RESOURCE_NAMES = 'AlarmNames'
 METRIC_ALARMS = 'MetricAlarms'
 
 
@@ -40,7 +40,7 @@ class CloudwatchAlarm(AWSCloudwatchBase):
     @property
     def properties(self):
         """Gets the properties of an external resource"""
-        params = {NAMES: [self.resource_id]}
+        params = {RESOURCE_NAMES: [self.resource_id]}
         try:
             resources = \
                 self.client.describe_alarms(**params)
@@ -62,7 +62,7 @@ class CloudwatchAlarm(AWSCloudwatchBase):
             Create a new AWS Cloudwatch Alarm.
         """
         if not self.resource_id:
-            setattr(self, 'resource_id', params.get(NAME))
+            setattr(self, 'resource_id', params.get(RESOURCE_NAME))
         self.logger.debug('Creating %s with parameters: %s'
                           % (self.type_name, params))
         res = self.client.put_metric_alarm(**params)
@@ -94,7 +94,7 @@ def create(ctx, iface, resource_config, **_):
     params = \
         dict() if not resource_config else resource_config.copy()
 
-    alarm_name = params.get(NAME)
+    alarm_name = params.get(RESOURCE_NAME)
     utils.update_resource_id(ctx.instance, alarm_name)
     # Actually create the resource
     iface.create(params)
@@ -107,6 +107,6 @@ def delete(iface, resource_config, **_):
     # Create a copy of the resource config for clean manipulation.
     params = \
         dict() if not resource_config else resource_config.copy()
-    if NAMES not in params.keys():
-        params.update({NAMES: [iface.resource_id]})
+    if RESOURCE_NAMES not in params.keys():
+        params.update({RESOURCE_NAMES: [iface.resource_id]})
     iface.delete(params)

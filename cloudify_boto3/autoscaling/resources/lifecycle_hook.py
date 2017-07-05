@@ -25,8 +25,8 @@ from botocore.exceptions import ClientError
 
 RESOURCE_TYPE = 'Autoscaling Lifecycle Hook'
 HOOKS = 'LifecycleHooks'
-HOOK_NAMES = 'LifecycleHookNames'
-HOOK_NAME = 'LifecycleHookName'
+RESOURCE_NAMES = 'LifecycleHookNames'
+RESOURCE_NAME = 'LifecycleHookName'
 GROUP_NAME = 'AutoScalingGroupName'
 GROUP_TYPE = 'cloudify.nodes.aws.autoscaling.Group'
 
@@ -42,7 +42,7 @@ class AutoscalingLifecycleHook(AutoscalingBase):
     @property
     def properties(self):
         """Gets the properties of an external resource"""
-        params = {HOOK_NAMES: [self.resource_id]}
+        params = {RESOURCE_NAMES: [self.resource_id]}
         try:
             resources = \
                 self.client.describe_lifecycle_hooks(**params)
@@ -64,7 +64,7 @@ class AutoscalingLifecycleHook(AutoscalingBase):
             Create a new AWS Autoscaling Lifecycle Hook.
         """
         if not self.resource_id:
-            setattr(self, 'resource_id', params.get(HOOK_NAME))
+            setattr(self, 'resource_id', params.get(RESOURCE_NAME))
         self.logger.debug('Creating %s with parameters: %s'
                           % (self.type_name, params))
         res = self.client.put_lifecycle_hook(**params)
@@ -94,7 +94,7 @@ def create(ctx, iface, resource_config, **_):
     """Creates an AWS Autoscaling Lifecycle Hook"""
     params = resource_config.copy()
     utils.update_resource_id(
-        ctx.instance, params.get(HOOK_NAME))
+        ctx.instance, params.get(RESOURCE_NAME))
 
     # Ensure the $GROUP_NAME parameter is populated.
     autoscaling_group = params.get(GROUP_NAME)
@@ -127,6 +127,6 @@ def delete(ctx, iface, resource_config, **_):
         params.update(
             {GROUP_NAME: autoscaling_group})
 
-    if HOOK_NAME not in params.keys():
-        params.update({HOOK_NAME: iface.resource_id})
+    if RESOURCE_NAME not in params.keys():
+        params.update({RESOURCE_NAME: iface.resource_id})
     iface.delete(params)

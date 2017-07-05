@@ -26,8 +26,8 @@ from botocore.exceptions import ClientError
 RESOURCE_TYPE = 'Autoscaling Policy'
 GROUP_NAME = 'AutoScalingGroupName'
 SCALING_POLICIES = 'ScalingPolicies'
-POLICY_NAMES = 'PolicyNames'
-POLICY_NAME = 'PolicyName'
+RESOURCE_NAMES = 'PolicyNames'
+RESOURCE_NAME = 'PolicyName'
 POLICY_ARN = 'PolicyARN'
 POLICY_TYPES = 'PolicyTypes'
 GROUP_TYPE = 'cloudify.nodes.aws.autoscaling.Group'
@@ -44,7 +44,7 @@ class AutoscalingPolicy(AutoscalingBase):
     @property
     def properties(self):
         """Gets the properties of an external resource"""
-        params = {POLICY_NAMES: [self.resource_id]}
+        params = {RESOURCE_NAMES: [self.resource_id]}
         try:
             resources = \
                 self.client.describe_policies(**params)
@@ -66,7 +66,7 @@ class AutoscalingPolicy(AutoscalingBase):
             Create a new AWS Autoscaling Autoscaling Policy.
         """
         if not self.resource_id:
-            setattr(self, 'resource_id', params.get(POLICY_NAME))
+            setattr(self, 'resource_id', params.get(RESOURCE_NAME))
         self.logger.debug('Creating %s with parameters: %s'
                           % (self.type_name, params))
         res = self.client.put_scaling_policy(**params)
@@ -96,7 +96,7 @@ def create(ctx, iface, resource_config, **_):
     """Creates an AWS Autoscaling Autoscaling Policy"""
     params = resource_config.copy()
     utils.update_resource_id(
-        ctx.instance, params.get(POLICY_NAME))
+        ctx.instance, params.get(RESOURCE_NAME))
 
     # Ensure the $GROUP_NAME parameter is populated.
     autoscaling_group = params.get(GROUP_NAME)
@@ -131,7 +131,7 @@ def delete(ctx, iface, resource_config, **_):
         params.update(
             {GROUP_NAME: autoscaling_group})
 
-    if POLICY_NAME not in params.keys():
-        params.update({POLICY_NAME: iface.resource_id})
+    if RESOURCE_NAME not in params.keys():
+        params.update({RESOURCE_NAME: iface.resource_id})
 
     iface.delete(params)

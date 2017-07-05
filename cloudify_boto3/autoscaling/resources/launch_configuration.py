@@ -25,8 +25,8 @@ from botocore.exceptions import ClientError
 
 RESOURCE_TYPE = 'Autoscaling Launch Configuration'
 LCS = 'LaunchConfigurations'
-LC_NAMES = 'LaunchConfigurationNames'
-LC_NAME = 'LaunchConfigurationName'
+RESOURCE_NAMES = 'LaunchConfigurationNames'
+RESOURCE_NAME = 'LaunchConfigurationName'
 LC_ARN = 'LaunchConfigurationARN'
 IMAGEID = 'ImageId'
 INSTANCEID = 'InstanceId'
@@ -48,7 +48,7 @@ class AutoscalingLaunchConfiguration(AutoscalingBase):
     @property
     def properties(self):
         """Gets the properties of an external resource"""
-        params = {LC_NAMES: [self.resource_id]}
+        params = {RESOURCE_NAMES: [self.resource_id]}
         try:
             resources = \
                 self.client.describe_launch_configurations(**params)
@@ -70,7 +70,7 @@ class AutoscalingLaunchConfiguration(AutoscalingBase):
             Create a new AWS Autoscaling Autoscaling Launch Configuration.
         """
         if not self.resource_id:
-            setattr(self, 'resource_id', params.get(LC_NAME))
+            setattr(self, 'resource_id', params.get(RESOURCE_NAME))
         self.logger.debug('Creating %s with parameters: %s'
                           % (self.type_name, params))
         res = self.client.create_launch_configuration(**params)
@@ -131,8 +131,8 @@ def create(ctx, iface, resource_config, **_):
         params.update({INSTANCE_TYPE_PROPERTY: instance_type})
 
     utils.update_resource_id(
-        ctx.instance, params.get(LC_NAME))
-    iface.update_resource_id(params.get(LC_NAME))
+        ctx.instance, params.get(RESOURCE_NAME))
+    iface.update_resource_id(params.get(RESOURCE_NAME))
     # Actually create the resource
     resource_arn = iface.create(params)
     utils.update_resource_arn(
@@ -146,6 +146,6 @@ def delete(iface, resource_config, **_):
     # Create a copy of the resource config for clean manipulation.
     params = \
         dict() if not resource_config else resource_config.copy()
-    if LC_NAME not in params.keys():
-        params.update({LC_NAME: iface.resource_id})
+    if RESOURCE_NAME not in params.keys():
+        params.update({RESOURCE_NAME: iface.resource_id})
     iface.delete(params)

@@ -26,8 +26,8 @@ from botocore.exceptions import ClientError
 
 RESOURCE_TYPE = 'Autoscaling Group'
 GROUPS = 'AutoScalingGroups'
-GROUP_NAMES = 'AutoScalingGroupNames'
-GROUP_NAME = 'AutoScalingGroupName'
+RESOURCE_NAMES = 'AutoScalingGroupNames'
+RESOURCE_NAME = 'AutoScalingGroupName'
 GROUP_ARN = 'AutoScalingGroupARN'
 LC_NAME = 'LaunchConfigurationName'
 LC_TYPE = 'cloudify.nodes.aws.autoscaling.LaunchConfiguration'
@@ -51,7 +51,7 @@ class AutoscalingGroup(AutoscalingBase):
     @property
     def properties(self):
         """Gets the properties of an external resource"""
-        params = {GROUP_NAMES: [self.resource_id]}
+        params = {RESOURCE_NAMES: [self.resource_id]}
         try:
             resources = \
                 self.client.describe_auto_scaling_groups(**params)
@@ -73,13 +73,13 @@ class AutoscalingGroup(AutoscalingBase):
             Create a new AWS Autoscaling Group.
         """
         if not self.resource_id:
-            setattr(self, 'resource_id', params.get(GROUP_NAME))
+            setattr(self, 'resource_id', params.get(RESOURCE_NAME))
         self.logger.debug('Creating %s with parameters: %s'
                           % (self.type_name, params))
         res = self.client.create_auto_scaling_group(**params)
         self.logger.debug('Response: %s' % res)
         autoscaling_group = self.properties
-        res_id = autoscaling_group.get(GROUP_NAME)
+        res_id = autoscaling_group.get(RESOURCE_NAME)
         res_arn = autoscaling_group.get(GROUP_ARN)
         return res_id, res_arn
 
@@ -172,7 +172,7 @@ def create(ctx, iface, resource_config, **_):
         params[SUBNET_LIST] = ', '.join(subnet_list)
 
     utils.update_resource_id(
-        ctx.instance, params.get(GROUP_NAME))
+        ctx.instance, params.get(RESOURCE_NAME))
     # Actually create the resource
     resource_id, resource_arn = iface.create(params)
     iface.update_resource_id(resource_id)
@@ -198,7 +198,7 @@ def stop(iface,
     # If rules would allow scaling
     if minsize != 0 and desired_cap != 0 and maxsize != 0:
         stop_parameters = {
-            GROUP_NAME: iface.resource_id,
+            RESOURCE_NAME: iface.resource_id,
             'MinSize': 0,
             'MaxSize': 0,
             'DesiredCapacity': 0
@@ -223,13 +223,13 @@ def delete(iface, resource_config, **_):
     params = \
         dict() if not resource_config else resource_config.copy()
 
-    if GROUP_NAME not in params.keys():
-        params.update({GROUP_NAME: iface.resource_id})
+    if RESOURCE_NAME not in params.keys():
+        params.update({RESOURCE_NAME: iface.resource_id})
 
     autoscaling_group = iface.properties
     instances = autoscaling_group.get(INSTANCES)
     iface.remove_instances(
-        {GROUP_NAME: params.get(GROUP_NAME),
+        {RESOURCE_NAME: params.get(RESOURCE_NAME),
          'ShouldDecrementDesiredCapacity': False,
          INSTANCE_IDS:
              [instance.get(INSTANCE_ID) for instance in instances]})
