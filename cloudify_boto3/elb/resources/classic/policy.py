@@ -17,11 +17,15 @@
     ~~~~~~~~~~~~
     AWS ELB classic policy interface
 """
+# Boto
+from botocore.exceptions import ClientError
+
 # Cloudify
 from cloudify_boto3.common import decorators, utils
 from cloudify_boto3.elb import ELBBase
 from cloudify_boto3.common.connection import Boto3Connection
 from cloudify_boto3.common.constants import EXTERNAL_RESOURCE_ID
+from cloudify.exceptions import OperationRetry
 
 RESOURCE_TYPE = 'ELB classic policy'
 RESOURCE_NAME = 'PolicyName'
@@ -260,4 +264,9 @@ def delete(ctx, iface, resource_config, **_):
         RESOURCE_NAME: policy
     }
 
-    iface.delete(lb_delete_params)
+    try:
+        iface.delete(lb_delete_params)
+    except ClientError as e:
+        if _.get('force'):
+            raise OperationRetry('Retrying: {0}'.format(str(e)))
+        pass
