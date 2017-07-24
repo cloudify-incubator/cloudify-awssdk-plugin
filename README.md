@@ -2,5 +2,3 @@
 
 # cloudify-awssdk-plugin
 Cloudify plugin for the official AWS Python SDK
-
-Use both this plugin and [cloudify-aws-plugin](https://github.com/cloudify-cosmo/cloudify-aws-plugin/tags) in your blueprints. Both are officially supported.

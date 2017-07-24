@@ -1,0 +1,65 @@
+1.0.0:
+- autoscaling_group
+- autoscaling launch_configuration
+- autoscaling lifecycle_hook
+- autoscaling notification_configuration
+- autoscaling policy
+- cloudformation stack
+- cloudwatch alarm
+- cloudwatch event
+- cloudwatch rule
+- cloudwatch target
+- dynamodb table
+- ec2 customer_gateway (vpc)
+- ec2 dhcp (vpc)
+- ec2 elasticip (vpc)
+- ec2 eni
+- ec2 image
+- ec2 internet_gateway
+- ec2 nat_gateway (vpc)
+- ec2 networkacl (vpc)
+- ec2 networkaclentry (vpc)
+- ec2 route (vpc)
+- ec2 routetable (vpc)
+- ec2 securitygroup (vpc)
+- ec2 subnet (vpc)
+- ec2 tags
+- ec2 vpc (vpc)
+- ec2 vpn_gateway (vpc)
+- efs file_system
+- efs mount_target
+- efs tags
+- elb listener
+- elb load_balancer
+- elb rule
+- elb target_group
+- iam  access_key
+- iam group
+- iam instance_profile
+- iam login_profile
+- iam  policy
+- iam  role
+- iam role_policy
+- kms user
+- kms alias
+- kms grant
+- kms key
+- lambda function
+- lambda invoke
+- lambda permission
+- rds instance
+- rds instance_read_replica
+- rds option
+- rds option_group
+- rds parameter
+- rds parameter_group
+- rds subnet_group
+- route53 hosted_zone
+- route53 record_set
+- s3 bucket
+- s3 bucket_policy
+- s3 lifecycle_configuration
+- s3 tagging
+- sns subscription
+- sns topic
+- sqs queue
