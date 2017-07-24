@@ -67,7 +67,7 @@ node_templates:
     interfaces:
       cloudify.interfaces.lifecycle:
         configure:
-          implementation: awssdk.cloudify_boto3.autoscaling.resources.autoscaling_group.create
+          implementation: awssdk.cloudify_awssdk.autoscaling.resources.autoscaling_group.create
           inputs:
             resource_config:
               # LaunchConfigurationName: { get_attribute: [ launch_configuration, aws_resource_id ] }
@@ -82,7 +82,7 @@ node_templates:
               LoadBalancerNames:
               - { get_attribute: [ elb, aws_resource_id ] }
         delete:
-          implementation: awssdk.cloudify_boto3.autoscaling.resources.autoscaling_group.delete
+          implementation: awssdk.cloudify_awssdk.autoscaling.resources.autoscaling_group.delete
           inputs:
             resource_config:
               ForceDelete: true
@@ -108,7 +108,7 @@ node_templates:
 #    interfaces:
 #      cloudify.interfaces.lifecycle:
 #        configure:
-#          implementation: awssdk.cloudify_boto3.autoscaling.resources.launch_configuration.create
+#          implementation: awssdk.cloudify_awssdk.autoscaling.resources.launch_configuration.create
 #          inputs:
 #            resource_config:
 #              LaunchConfigurationName: pmcfy_ex_lc
@@ -320,7 +320,7 @@ node_templates:
     interfaces:
       cloudify.interfaces.lifecycle:
         start:
-          implementation: awssdk.cloudify_boto3.elb.resources.classic.load_balancer.start
+          implementation: awssdk.cloudify_awssdk.elb.resources.classic.load_balancer.start
           inputs:
             resource_config:
               LoadBalancerAttributes:

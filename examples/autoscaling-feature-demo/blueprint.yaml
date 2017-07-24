@@ -79,7 +79,7 @@ node_templates:
     interfaces:
       cloudify.interfaces.lifecycle:
         delete:
-          implementation: awssdk.cloudify_boto3.autoscaling.resources.autoscaling_group.delete
+          implementation: awssdk.cloudify_awssdk.autoscaling.resources.autoscaling_group.delete
           inputs:
             resource_config:
               ForceDelete: true

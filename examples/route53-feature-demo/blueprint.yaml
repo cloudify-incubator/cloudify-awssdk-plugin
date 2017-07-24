@@ -46,7 +46,7 @@ node_templates:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.route53.resources.record_set.prepare
+          implementation: awssdk.cloudify_awssdk.route53.resources.record_set.prepare
           inputs:
             resource_config:
               Action: CREATE

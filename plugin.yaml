@@ -1,7 +1,7 @@
 plugins:
   awssdk:
     executor: central_deployment_agent
-    package_name: cloudify-boto3-plugin
+    package_name: cloudify-awssdk-plugin
     package_version: '1.0.0'
 
 data_types:
@@ -410,7 +410,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.dynamodb.resources.table.create
+          implementation: awssdk.cloudify_awssdk.dynamodb.resources.table.create
           inputs:
             aws_resource_id:
               description: >
@@ -439,7 +439,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.dynamodb.resources.table.delete
+          implementation: awssdk.cloudify_awssdk.dynamodb.resources.table.delete
           inputs:
             aws_resource_id:
               description: >
@@ -494,7 +494,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.iam.resources.group.create
+          implementation: awssdk.cloudify_awssdk.iam.resources.group.create
           inputs:
             aws_resource_id:
               description: >
@@ -523,7 +523,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.iam.resources.group.delete
+          implementation: awssdk.cloudify_awssdk.iam.resources.group.delete
           inputs:
             aws_resource_id:
               description: >
@@ -565,7 +565,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         configure:
-          implementation: awssdk.cloudify_boto3.iam.resources.access_key.configure
+          implementation: awssdk.cloudify_awssdk.iam.resources.access_key.configure
           inputs:
             runtime_properties:
               description: >
@@ -594,7 +594,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         configure:
-          implementation: awssdk.cloudify_boto3.iam.resources.login_profile.configure
+          implementation: awssdk.cloudify_awssdk.iam.resources.login_profile.configure
           inputs:
             runtime_properties:
               description: >
@@ -636,7 +636,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.iam.resources.user.create
+          implementation: awssdk.cloudify_awssdk.iam.resources.user.create
           inputs:
             aws_resource_id:
               description: >
@@ -665,7 +665,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.iam.resources.user.delete
+          implementation: awssdk.cloudify_awssdk.iam.resources.user.delete
           inputs:
             aws_resource_id:
               description: >
@@ -720,7 +720,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.iam.resources.role.create
+          implementation: awssdk.cloudify_awssdk.iam.resources.role.create
           inputs:
             aws_resource_id:
               description: >
@@ -749,7 +749,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.iam.resources.role.delete
+          implementation: awssdk.cloudify_awssdk.iam.resources.role.delete
           inputs:
             aws_resource_id:
               description: >
@@ -804,7 +804,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.iam.resources.role_policy.create
+          implementation: awssdk.cloudify_awssdk.iam.resources.role_policy.create
           inputs:
             aws_resource_id:
               description: >
@@ -833,7 +833,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.iam.resources.role_policy.delete
+          implementation: awssdk.cloudify_awssdk.iam.resources.role_policy.delete
           inputs:
             aws_resource_id:
               description: >
@@ -888,7 +888,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.iam.resources.instance_profile.create
+          implementation: awssdk.cloudify_awssdk.iam.resources.instance_profile.create
           inputs:
             aws_resource_id:
               description: >
@@ -917,7 +917,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.iam.resources.instance_profile.delete
+          implementation: awssdk.cloudify_awssdk.iam.resources.instance_profile.delete
           inputs:
             aws_resource_id:
               description: >
@@ -972,7 +972,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.iam.resources.policy.create
+          implementation: awssdk.cloudify_awssdk.iam.resources.policy.create
           inputs:
             aws_resource_id:
               description: >
@@ -1001,7 +1001,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.iam.resources.policy.delete
+          implementation: awssdk.cloudify_awssdk.iam.resources.policy.delete
           inputs:
             aws_resource_id:
               description: >
@@ -1056,7 +1056,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.lambda_serverless.resources.function.create
+          implementation: awssdk.cloudify_awssdk.lambda_serverless.resources.function.create
           inputs:
             aws_resource_id:
               description: >
@@ -1085,7 +1085,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.lambda_serverless.resources.function.delete
+          implementation: awssdk.cloudify_awssdk.lambda_serverless.resources.function.delete
           inputs:
             aws_resource_id:
               description: >
@@ -1128,7 +1128,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         configure:
-          implementation: awssdk.cloudify_boto3.lambda_serverless.resources.invoke.configure
+          implementation: awssdk.cloudify_awssdk.lambda_serverless.resources.invoke.configure
           inputs:
             runtime_properties:
               description: >
@@ -1171,7 +1171,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.lambda_serverless.resources.permission.prepare
+          implementation: awssdk.cloudify_awssdk.lambda_serverless.resources.permission.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -1200,7 +1200,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.lambda_serverless.resources.permission.create
+          implementation: awssdk.cloudify_awssdk.lambda_serverless.resources.permission.create
           inputs:
             aws_resource_id:
               description: >
@@ -1229,7 +1229,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.lambda_serverless.resources.permission.delete
+          implementation: awssdk.cloudify_awssdk.lambda_serverless.resources.permission.delete
           inputs:
             aws_resource_id:
               description: >
@@ -1284,7 +1284,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.rds.resources.instance.prepare
+          implementation: awssdk.cloudify_awssdk.rds.resources.instance.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -1313,7 +1313,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.rds.resources.instance.create
+          implementation: awssdk.cloudify_awssdk.rds.resources.instance.create
           inputs:
             aws_resource_id:
               description: >
@@ -1342,7 +1342,7 @@ node_types:
               required: false
               default: {}
         start:
-          implementation: awssdk.cloudify_boto3.rds.resources.instance.start
+          implementation: awssdk.cloudify_awssdk.rds.resources.instance.start
           inputs:
             aws_resource_id:
               description: >
@@ -1371,7 +1371,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.rds.resources.instance.delete
+          implementation: awssdk.cloudify_awssdk.rds.resources.instance.delete
           inputs:
             aws_resource_id:
               description: >
@@ -1426,7 +1426,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.rds.resources.instance_read_replica.prepare
+          implementation: awssdk.cloudify_awssdk.rds.resources.instance_read_replica.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -1455,7 +1455,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.rds.resources.instance_read_replica.create
+          implementation: awssdk.cloudify_awssdk.rds.resources.instance_read_replica.create
           inputs:
             aws_resource_id:
               description: >
@@ -1484,7 +1484,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.rds.resources.instance_read_replica.delete
+          implementation: awssdk.cloudify_awssdk.rds.resources.instance_read_replica.delete
           inputs:
             aws_resource_id:
               description: >
@@ -1539,7 +1539,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.rds.resources.subnet_group.prepare
+          implementation: awssdk.cloudify_awssdk.rds.resources.subnet_group.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -1568,7 +1568,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.rds.resources.subnet_group.create
+          implementation: awssdk.cloudify_awssdk.rds.resources.subnet_group.create
           inputs:
             aws_resource_id:
               description: >
@@ -1597,7 +1597,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.rds.resources.subnet_group.delete
+          implementation: awssdk.cloudify_awssdk.rds.resources.subnet_group.delete
           inputs:
             aws_resource_id:
               description: >
@@ -1652,7 +1652,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.rds.resources.option_group.create
+          implementation: awssdk.cloudify_awssdk.rds.resources.option_group.create
           inputs:
             aws_resource_id:
               description: >
@@ -1681,7 +1681,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.rds.resources.option_group.delete
+          implementation: awssdk.cloudify_awssdk.rds.resources.option_group.delete
           inputs:
             aws_resource_id:
               description: >
@@ -1736,7 +1736,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         configure:
-          implementation: awssdk.cloudify_boto3.rds.resources.option.configure
+          implementation: awssdk.cloudify_awssdk.rds.resources.option.configure
           inputs:
             aws_resource_id:
               description: >
@@ -1791,7 +1791,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.rds.resources.parameter_group.create
+          implementation: awssdk.cloudify_awssdk.rds.resources.parameter_group.create
           inputs:
             aws_resource_id:
               description: >
@@ -1820,7 +1820,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.rds.resources.parameter_group.configure
+          implementation: awssdk.cloudify_awssdk.rds.resources.parameter_group.configure
           inputs:
             aws_resource_id:
               description: >
@@ -1849,7 +1849,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.rds.resources.parameter_group.delete
+          implementation: awssdk.cloudify_awssdk.rds.resources.parameter_group.delete
           inputs:
             aws_resource_id:
               description: >
@@ -1904,7 +1904,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         configure:
-          implementation: awssdk.cloudify_boto3.rds.resources.parameter.configure
+          implementation: awssdk.cloudify_awssdk.rds.resources.parameter.configure
           inputs:
             aws_resource_id:
               description: >
@@ -1959,7 +1959,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.route53.resources.hosted_zone.prepare
+          implementation: awssdk.cloudify_awssdk.route53.resources.hosted_zone.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -1988,7 +1988,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.route53.resources.hosted_zone.create
+          implementation: awssdk.cloudify_awssdk.route53.resources.hosted_zone.create
           inputs:
             aws_resource_id:
               description: >
@@ -2017,7 +2017,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.route53.resources.hosted_zone.delete
+          implementation: awssdk.cloudify_awssdk.route53.resources.hosted_zone.delete
           inputs:
             aws_resource_id:
               description: >
@@ -2080,7 +2080,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.route53.resources.record_set.prepare
+          implementation: awssdk.cloudify_awssdk.route53.resources.record_set.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -2109,7 +2109,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.route53.resources.record_set.create
+          implementation: awssdk.cloudify_awssdk.route53.resources.record_set.create
           inputs:
             aws_resource_id:
               description: >
@@ -2138,7 +2138,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.route53.resources.record_set.delete
+          implementation: awssdk.cloudify_awssdk.route53.resources.record_set.delete
           inputs:
             aws_resource_id:
               description: >
@@ -2193,7 +2193,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.sqs.resources.queue.prepare
+          implementation: awssdk.cloudify_awssdk.sqs.resources.queue.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -2222,7 +2222,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.sqs.resources.queue.create
+          implementation: awssdk.cloudify_awssdk.sqs.resources.queue.create
           inputs:
             aws_resource_id:
               description: >
@@ -2251,7 +2251,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.sqs.resources.queue.delete
+          implementation: awssdk.cloudify_awssdk.sqs.resources.queue.delete
           inputs:
             aws_resource_id:
               description: >
@@ -2306,7 +2306,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.sns.resources.topic.prepare
+          implementation: awssdk.cloudify_awssdk.sns.resources.topic.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -2335,7 +2335,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.sns.resources.topic.create
+          implementation: awssdk.cloudify_awssdk.sns.resources.topic.create
           inputs:
             aws_resource_id:
               description: >
@@ -2364,7 +2364,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.sns.resources.topic.delete
+          implementation: awssdk.cloudify_awssdk.sns.resources.topic.delete
           inputs:
             aws_resource_id:
               description: >
@@ -2418,7 +2418,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.sns.resources.subscription.prepare
+          implementation: awssdk.cloudify_awssdk.sns.resources.subscription.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -2447,7 +2447,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.sns.resources.subscription.create
+          implementation: awssdk.cloudify_awssdk.sns.resources.subscription.create
           inputs:
             aws_resource_id:
               description: >
@@ -2476,7 +2476,7 @@ node_types:
               required: false
               default: {}
         start:
-          implementation: awssdk.cloudify_boto3.sns.resources.subscription.start
+          implementation: awssdk.cloudify_awssdk.sns.resources.subscription.start
           inputs:
             aws_resource_id:
               description: >
@@ -2505,7 +2505,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.sns.resources.subscription.delete
+          implementation: awssdk.cloudify_awssdk.sns.resources.subscription.delete
           inputs:
             aws_resource_id:
               description: >
@@ -2560,7 +2560,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.elb.resources.load_balancer.prepare
+          implementation: awssdk.cloudify_awssdk.elb.resources.load_balancer.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -2589,7 +2589,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.elb.resources.load_balancer.create
+          implementation: awssdk.cloudify_awssdk.elb.resources.load_balancer.create
           inputs:
             aws_resource_id:
               description: >
@@ -2618,7 +2618,7 @@ node_types:
               required: false
               default: {}
         start:
-          implementation: awssdk.cloudify_boto3.elb.resources.load_balancer.modify
+          implementation: awssdk.cloudify_awssdk.elb.resources.load_balancer.modify
           inputs:
             aws_resource_id:
               description: >
@@ -2647,7 +2647,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.elb.resources.load_balancer.delete
+          implementation: awssdk.cloudify_awssdk.elb.resources.load_balancer.delete
           inputs:
             aws_resource_id:
               description: >
@@ -2701,7 +2701,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.elb.resources.classic.load_balancer.prepare
+          implementation: awssdk.cloudify_awssdk.elb.resources.classic.load_balancer.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -2730,7 +2730,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.elb.resources.classic.load_balancer.create
+          implementation: awssdk.cloudify_awssdk.elb.resources.classic.load_balancer.create
           inputs:
             aws_resource_id:
               description: >
@@ -2759,7 +2759,7 @@ node_types:
               required: false
               default: {}
         start:
-          implementation: awssdk.cloudify_boto3.elb.resources.classic.load_balancer.start
+          implementation: awssdk.cloudify_awssdk.elb.resources.classic.load_balancer.start
           inputs:
             aws_resource_id:
               description: >
@@ -2788,7 +2788,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.elb.resources.classic.load_balancer.delete
+          implementation: awssdk.cloudify_awssdk.elb.resources.classic.load_balancer.delete
           inputs:
             aws_resource_id:
               description: >
@@ -2842,7 +2842,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.elb.resources.classic.health_check.prepare
+          implementation: awssdk.cloudify_awssdk.elb.resources.classic.health_check.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -2871,7 +2871,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.elb.resources.classic.health_check.create
+          implementation: awssdk.cloudify_awssdk.elb.resources.classic.health_check.create
           inputs:
             aws_resource_id:
               description: >
@@ -2925,7 +2925,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.elb.resources.listener.prepare
+          implementation: awssdk.cloudify_awssdk.elb.resources.listener.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -2954,7 +2954,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.elb.resources.listener.create
+          implementation: awssdk.cloudify_awssdk.elb.resources.listener.create
           inputs:
             aws_resource_id:
               description: >
@@ -2983,7 +2983,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.elb.resources.listener.delete
+          implementation: awssdk.cloudify_awssdk.elb.resources.listener.delete
           inputs:
             aws_resource_id:
               description: >
@@ -3037,7 +3037,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.elb.resources.classic.listener.prepare
+          implementation: awssdk.cloudify_awssdk.elb.resources.classic.listener.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -3066,7 +3066,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.elb.resources.classic.listener.create
+          implementation: awssdk.cloudify_awssdk.elb.resources.classic.listener.create
           inputs:
             aws_resource_id:
               description: >
@@ -3095,7 +3095,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.elb.resources.classic.listener.delete
+          implementation: awssdk.cloudify_awssdk.elb.resources.classic.listener.delete
           inputs:
             aws_resource_id:
               description: >
@@ -3149,7 +3149,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.elb.resources.rule.prepare
+          implementation: awssdk.cloudify_awssdk.elb.resources.rule.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -3178,7 +3178,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.elb.resources.rule.create
+          implementation: awssdk.cloudify_awssdk.elb.resources.rule.create
           inputs:
             aws_resource_id:
               description: >
@@ -3207,7 +3207,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.elb.resources.rule.delete
+          implementation: awssdk.cloudify_awssdk.elb.resources.rule.delete
           inputs:
             aws_resource_id:
               description: >
@@ -3261,7 +3261,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.elb.resources.target_group.prepare
+          implementation: awssdk.cloudify_awssdk.elb.resources.target_group.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -3290,7 +3290,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.elb.resources.target_group.create
+          implementation: awssdk.cloudify_awssdk.elb.resources.target_group.create
           inputs:
             aws_resource_id:
               description: >
@@ -3319,7 +3319,7 @@ node_types:
               required: false
               default: {}
         start:
-          implementation: awssdk.cloudify_boto3.elb.resources.target_group.modify
+          implementation: awssdk.cloudify_awssdk.elb.resources.target_group.modify
           inputs:
             aws_resource_id:
               description: >
@@ -3348,7 +3348,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.elb.resources.target_group.delete
+          implementation: awssdk.cloudify_awssdk.elb.resources.target_group.delete
           inputs:
             aws_resource_id:
               description: >
@@ -3402,7 +3402,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.elb.resources.classic.policy.prepare
+          implementation: awssdk.cloudify_awssdk.elb.resources.classic.policy.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -3431,7 +3431,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.elb.resources.classic.policy.create
+          implementation: awssdk.cloudify_awssdk.elb.resources.classic.policy.create
           inputs:
             aws_resource_id:
               description: >
@@ -3460,7 +3460,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.elb.resources.classic.policy.delete
+          implementation: awssdk.cloudify_awssdk.elb.resources.classic.policy.delete
           inputs:
             aws_resource_id:
               description: >
@@ -3494,7 +3494,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         configure:
-          implementation: awssdk.cloudify_boto3.elb.resources.classic.policy.create_sticky
+          implementation: awssdk.cloudify_awssdk.elb.resources.classic.policy.create_sticky
           inputs:
             aws_resource_id:
               description: >
@@ -3523,7 +3523,7 @@ node_types:
               required: false
               default: {}
         start:
-          implementation: awssdk.cloudify_boto3.elb.resources.classic.policy.start_sticky
+          implementation: awssdk.cloudify_awssdk.elb.resources.classic.policy.start_sticky
           inputs:
             aws_resource_id:
               description: >
@@ -3577,7 +3577,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.s3.resources.bucket.prepare
+          implementation: awssdk.cloudify_awssdk.s3.resources.bucket.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -3606,7 +3606,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.s3.resources.bucket.create
+          implementation: awssdk.cloudify_awssdk.s3.resources.bucket.create
           inputs:
             aws_resource_id:
               description: >
@@ -3635,7 +3635,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.s3.resources.bucket.delete
+          implementation: awssdk.cloudify_awssdk.s3.resources.bucket.delete
           inputs:
             aws_resource_id:
               description: >
@@ -3689,7 +3689,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.s3.resources.bucket_policy.prepare
+          implementation: awssdk.cloudify_awssdk.s3.resources.bucket_policy.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -3718,7 +3718,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.s3.resources.bucket_policy.create
+          implementation: awssdk.cloudify_awssdk.s3.resources.bucket_policy.create
           inputs:
             aws_resource_id:
               description: >
@@ -3747,7 +3747,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.s3.resources.bucket_policy.delete
+          implementation: awssdk.cloudify_awssdk.s3.resources.bucket_policy.delete
           inputs:
             aws_resource_id:
               description: >
@@ -3801,7 +3801,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.s3.resources.lifecycle_configuration.prepare
+          implementation: awssdk.cloudify_awssdk.s3.resources.lifecycle_configuration.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -3830,7 +3830,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.s3.resources.lifecycle_configuration.create
+          implementation: awssdk.cloudify_awssdk.s3.resources.lifecycle_configuration.create
           inputs:
             aws_resource_id:
               description: >
@@ -3859,7 +3859,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.s3.resources.lifecycle_configuration.delete
+          implementation: awssdk.cloudify_awssdk.s3.resources.lifecycle_configuration.delete
           inputs:
             aws_resource_id:
               description: >
@@ -3913,7 +3913,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.s3.resources.tagging.prepare
+          implementation: awssdk.cloudify_awssdk.s3.resources.tagging.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -3942,7 +3942,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.s3.resources.tagging.create
+          implementation: awssdk.cloudify_awssdk.s3.resources.tagging.create
           inputs:
             aws_resource_id:
               description: >
@@ -3971,7 +3971,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.s3.resources.tagging.delete
+          implementation: awssdk.cloudify_awssdk.s3.resources.tagging.delete
           inputs:
             aws_resource_id:
               description: >
@@ -4025,7 +4025,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.ec2.resources.vpc.prepare
+          implementation: awssdk.cloudify_awssdk.ec2.resources.vpc.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -4054,7 +4054,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.ec2.resources.vpc.create
+          implementation: awssdk.cloudify_awssdk.ec2.resources.vpc.create
           inputs:
             aws_resource_id:
               description: >
@@ -4083,7 +4083,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.ec2.resources.vpc.delete
+          implementation: awssdk.cloudify_awssdk.ec2.resources.vpc.delete
           inputs:
             aws_resource_id:
               description: >
@@ -4137,7 +4137,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.ec2.resources.subnet.prepare
+          implementation: awssdk.cloudify_awssdk.ec2.resources.subnet.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -4166,7 +4166,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.ec2.resources.subnet.create
+          implementation: awssdk.cloudify_awssdk.ec2.resources.subnet.create
           inputs:
             aws_resource_id:
               description: >
@@ -4195,7 +4195,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.ec2.resources.subnet.delete
+          implementation: awssdk.cloudify_awssdk.ec2.resources.subnet.delete
           inputs:
             aws_resource_id:
               description: >
@@ -4249,7 +4249,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.ec2.resources.securitygroup.prepare
+          implementation: awssdk.cloudify_awssdk.ec2.resources.securitygroup.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -4278,7 +4278,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.ec2.resources.securitygroup.create
+          implementation: awssdk.cloudify_awssdk.ec2.resources.securitygroup.create
           inputs:
             aws_resource_id:
               description: >
@@ -4307,7 +4307,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.ec2.resources.securitygroup.delete
+          implementation: awssdk.cloudify_awssdk.ec2.resources.securitygroup.delete
           inputs:
             aws_resource_id:
               description: >
@@ -4361,7 +4361,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         start:
-          implementation: awssdk.cloudify_boto3.ec2.resources.securitygroup.authorize_ingress_rules
+          implementation: awssdk.cloudify_awssdk.ec2.resources.securitygroup.authorize_ingress_rules
           inputs:
             aws_resource_id:
               description: >
@@ -4390,7 +4390,7 @@ node_types:
               required: false
               default: {}
         stop:
-          implementation: awssdk.cloudify_boto3.ec2.resources.securitygroup.revoke_ingress_rules
+          implementation: awssdk.cloudify_awssdk.ec2.resources.securitygroup.revoke_ingress_rules
           inputs:
             aws_resource_id:
               description: >
@@ -4444,7 +4444,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         start:
-          implementation: awssdk.cloudify_boto3.ec2.resources.securitygroup.authorize_egress_rules
+          implementation: awssdk.cloudify_awssdk.ec2.resources.securitygroup.authorize_egress_rules
           inputs:
             aws_resource_id:
               description: >
@@ -4473,7 +4473,7 @@ node_types:
               required: false
               default: {}
         stop:
-          implementation: awssdk.cloudify_boto3.ec2.resources.securitygroup.revoke_egress_rules
+          implementation: awssdk.cloudify_awssdk.ec2.resources.securitygroup.revoke_egress_rules
           inputs:
             aws_resource_id:
               description: >
@@ -4527,7 +4527,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.ec2.resources.nat_gateway.prepare
+          implementation: awssdk.cloudify_awssdk.ec2.resources.nat_gateway.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -4556,7 +4556,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.ec2.resources.nat_gateway.create
+          implementation: awssdk.cloudify_awssdk.ec2.resources.nat_gateway.create
           inputs:
             aws_resource_id:
               description: >
@@ -4585,7 +4585,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.ec2.resources.nat_gateway.delete
+          implementation: awssdk.cloudify_awssdk.ec2.resources.nat_gateway.delete
           inputs:
             aws_resource_id:
               description: >
@@ -4639,7 +4639,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.ec2.resources.eni.prepare
+          implementation: awssdk.cloudify_awssdk.ec2.resources.eni.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -4668,7 +4668,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.ec2.resources.eni.create
+          implementation: awssdk.cloudify_awssdk.ec2.resources.eni.create
           inputs:
             aws_resource_id:
               description: >
@@ -4697,7 +4697,7 @@ node_types:
               required: false
               default: {}
         start:
-          implementation: awssdk.cloudify_boto3.ec2.resources.eni.attach
+          implementation: awssdk.cloudify_awssdk.ec2.resources.eni.attach
           inputs:
             aws_resource_id:
               description: >
@@ -4726,7 +4726,7 @@ node_types:
               required: false
               default: {}
         stop:
-          implementation: awssdk.cloudify_boto3.ec2.resources.eni.detach
+          implementation: awssdk.cloudify_awssdk.ec2.resources.eni.detach
           inputs:
             aws_resource_id:
               description: >
@@ -4755,7 +4755,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.ec2.resources.eni.delete
+          implementation: awssdk.cloudify_awssdk.ec2.resources.eni.delete
           inputs:
             aws_resource_id:
               description: >
@@ -4809,7 +4809,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.ec2.resources.elasticip.prepare
+          implementation: awssdk.cloudify_awssdk.ec2.resources.elasticip.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -4838,7 +4838,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.ec2.resources.elasticip.create
+          implementation: awssdk.cloudify_awssdk.ec2.resources.elasticip.create
           inputs:
             aws_resource_id:
               description: >
@@ -4867,7 +4867,7 @@ node_types:
               required: false
               default: {}
         start:
-          implementation: awssdk.cloudify_boto3.ec2.resources.elasticip.attach
+          implementation: awssdk.cloudify_awssdk.ec2.resources.elasticip.attach
           inputs:
             aws_resource_id:
               description: >
@@ -4896,7 +4896,7 @@ node_types:
               required: false
               default: {}
         stop:
-          implementation: awssdk.cloudify_boto3.ec2.resources.elasticip.detach
+          implementation: awssdk.cloudify_awssdk.ec2.resources.elasticip.detach
           inputs:
             aws_resource_id:
               description: >
@@ -4925,7 +4925,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.ec2.resources.elasticip.delete
+          implementation: awssdk.cloudify_awssdk.ec2.resources.elasticip.delete
           inputs:
             aws_resource_id:
               description: >
@@ -4979,7 +4979,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.ec2.resources.networkacl.prepare
+          implementation: awssdk.cloudify_awssdk.ec2.resources.networkacl.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -5008,7 +5008,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.ec2.resources.networkacl.create
+          implementation: awssdk.cloudify_awssdk.ec2.resources.networkacl.create
           inputs:
             aws_resource_id:
               description: >
@@ -5037,7 +5037,7 @@ node_types:
               required: false
               default: {}
         start:
-          implementation: awssdk.cloudify_boto3.ec2.resources.networkacl.attach
+          implementation: awssdk.cloudify_awssdk.ec2.resources.networkacl.attach
           inputs:
             aws_resource_id:
               description: >
@@ -5066,7 +5066,7 @@ node_types:
               required: false
               default: {}
         stop:
-          implementation: awssdk.cloudify_boto3.ec2.resources.networkacl.detach
+          implementation: awssdk.cloudify_awssdk.ec2.resources.networkacl.detach
           inputs:
             aws_resource_id:
               description: >
@@ -5095,7 +5095,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.ec2.resources.networkacl.delete
+          implementation: awssdk.cloudify_awssdk.ec2.resources.networkacl.delete
           inputs:
             aws_resource_id:
               description: >
@@ -5149,7 +5149,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.ec2.resources.networkaclentry.prepare
+          implementation: awssdk.cloudify_awssdk.ec2.resources.networkaclentry.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -5178,7 +5178,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.ec2.resources.networkaclentry.create
+          implementation: awssdk.cloudify_awssdk.ec2.resources.networkaclentry.create
           inputs:
             aws_resource_id:
               description: >
@@ -5207,7 +5207,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.ec2.resources.networkaclentry.delete
+          implementation: awssdk.cloudify_awssdk.ec2.resources.networkaclentry.delete
           inputs:
             aws_resource_id:
               description: >
@@ -5261,7 +5261,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.ec2.resources.dhcp.prepare
+          implementation: awssdk.cloudify_awssdk.ec2.resources.dhcp.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -5290,7 +5290,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.ec2.resources.dhcp.create
+          implementation: awssdk.cloudify_awssdk.ec2.resources.dhcp.create
           inputs:
             aws_resource_id:
               description: >
@@ -5319,7 +5319,7 @@ node_types:
               required: false
               default: {}
         start:
-          implementation: awssdk.cloudify_boto3.ec2.resources.dhcp.attach
+          implementation: awssdk.cloudify_awssdk.ec2.resources.dhcp.attach
           inputs:
             aws_resource_id:
               description: >
@@ -5348,7 +5348,7 @@ node_types:
               required: false
               default: {}
         stop:
-          implementation: awssdk.cloudify_boto3.ec2.resources.dhcp.detach
+          implementation: awssdk.cloudify_awssdk.ec2.resources.dhcp.detach
           inputs:
             aws_resource_id:
               description: >
@@ -5377,7 +5377,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.ec2.resources.dhcp.delete
+          implementation: awssdk.cloudify_awssdk.ec2.resources.dhcp.delete
           inputs:
             aws_resource_id:
               description: >
@@ -5431,7 +5431,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.ec2.resources.vpn_gateway.prepare
+          implementation: awssdk.cloudify_awssdk.ec2.resources.vpn_gateway.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -5460,7 +5460,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.ec2.resources.vpn_gateway.create
+          implementation: awssdk.cloudify_awssdk.ec2.resources.vpn_gateway.create
           inputs:
             aws_resource_id:
               description: >
@@ -5489,7 +5489,7 @@ node_types:
               required: false
               default: {}
         start:
-          implementation: awssdk.cloudify_boto3.ec2.resources.vpn_gateway.attach
+          implementation: awssdk.cloudify_awssdk.ec2.resources.vpn_gateway.attach
           inputs:
             aws_resource_id:
               description: >
@@ -5518,7 +5518,7 @@ node_types:
               required: false
               default: {}
         stop:
-          implementation: awssdk.cloudify_boto3.ec2.resources.vpn_gateway.detach
+          implementation: awssdk.cloudify_awssdk.ec2.resources.vpn_gateway.detach
           inputs:
             aws_resource_id:
               description: >
@@ -5547,7 +5547,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.ec2.resources.vpn_gateway.delete
+          implementation: awssdk.cloudify_awssdk.ec2.resources.vpn_gateway.delete
           inputs:
             aws_resource_id:
               description: >
@@ -5601,7 +5601,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.ec2.resources.customer_gateway.prepare
+          implementation: awssdk.cloudify_awssdk.ec2.resources.customer_gateway.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -5630,7 +5630,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.ec2.resources.customer_gateway.create
+          implementation: awssdk.cloudify_awssdk.ec2.resources.customer_gateway.create
           inputs:
             aws_resource_id:
               description: >
@@ -5659,7 +5659,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.ec2.resources.customer_gateway.delete
+          implementation: awssdk.cloudify_awssdk.ec2.resources.customer_gateway.delete
           inputs:
             aws_resource_id:
               description: >
@@ -5713,7 +5713,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.ec2.resources.internet_gateway.prepare
+          implementation: awssdk.cloudify_awssdk.ec2.resources.internet_gateway.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -5742,7 +5742,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.ec2.resources.internet_gateway.create
+          implementation: awssdk.cloudify_awssdk.ec2.resources.internet_gateway.create
           inputs:
             aws_resource_id:
               description: >
@@ -5771,7 +5771,7 @@ node_types:
               required: false
               default: {}
         start:
-          implementation: awssdk.cloudify_boto3.ec2.resources.internet_gateway.attach
+          implementation: awssdk.cloudify_awssdk.ec2.resources.internet_gateway.attach
           inputs:
             aws_resource_id:
               description: >
@@ -5800,7 +5800,7 @@ node_types:
               required: false
               default: {}
         stop:
-          implementation: awssdk.cloudify_boto3.ec2.resources.internet_gateway.detach
+          implementation: awssdk.cloudify_awssdk.ec2.resources.internet_gateway.detach
           inputs:
             aws_resource_id:
               description: >
@@ -5829,7 +5829,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.ec2.resources.internet_gateway.delete
+          implementation: awssdk.cloudify_awssdk.ec2.resources.internet_gateway.delete
           inputs:
             aws_resource_id:
               description: >
@@ -5884,7 +5884,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.ec2.resources.routetable.prepare
+          implementation: awssdk.cloudify_awssdk.ec2.resources.routetable.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -5913,7 +5913,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.ec2.resources.routetable.create
+          implementation: awssdk.cloudify_awssdk.ec2.resources.routetable.create
           inputs:
             aws_resource_id:
               description: >
@@ -5942,7 +5942,7 @@ node_types:
               required: false
               default: {}
         start:
-          implementation: awssdk.cloudify_boto3.ec2.resources.routetable.attach
+          implementation: awssdk.cloudify_awssdk.ec2.resources.routetable.attach
           inputs:
             aws_resource_id:
               description: >
@@ -5971,7 +5971,7 @@ node_types:
               required: false
               default: {}
         stop:
-          implementation: awssdk.cloudify_boto3.ec2.resources.routetable.detach
+          implementation: awssdk.cloudify_awssdk.ec2.resources.routetable.detach
           inputs:
             aws_resource_id:
               description: >
@@ -6000,7 +6000,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.ec2.resources.routetable.delete
+          implementation: awssdk.cloudify_awssdk.ec2.resources.routetable.delete
           inputs:
             aws_resource_id:
               description: >
@@ -6054,7 +6054,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.ec2.resources.route.prepare
+          implementation: awssdk.cloudify_awssdk.ec2.resources.route.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -6083,7 +6083,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.ec2.resources.route.create
+          implementation: awssdk.cloudify_awssdk.ec2.resources.route.create
           inputs:
             aws_resource_id:
               description: >
@@ -6112,7 +6112,7 @@ node_types:
               required: false
               default: {}
         stop:
-          implementation: awssdk.cloudify_boto3.ec2.resources.route.create
+          implementation: awssdk.cloudify_awssdk.ec2.resources.route.create
           inputs:
             aws_resource_id:
               description: >
@@ -6141,7 +6141,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.ec2.resources.route.delete
+          implementation: awssdk.cloudify_awssdk.ec2.resources.route.delete
           inputs:
             aws_resource_id:
               description: >
@@ -6195,7 +6195,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.ec2.resources.image.prepare
+          implementation: awssdk.cloudify_awssdk.ec2.resources.image.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -6249,7 +6249,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.ec2.resources.tags.prepare
+          implementation: awssdk.cloudify_awssdk.ec2.resources.tags.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -6278,7 +6278,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.ec2.resources.tags.create
+          implementation: awssdk.cloudify_awssdk.ec2.resources.tags.create
           inputs:
             aws_resource_id:
               description: >
@@ -6307,7 +6307,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.ec2.resources.tags.delete
+          implementation: awssdk.cloudify_awssdk.ec2.resources.tags.delete
           inputs:
             aws_resource_id:
               description: >
@@ -6361,7 +6361,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.autoscaling.resources.autoscaling_group.prepare
+          implementation: awssdk.cloudify_awssdk.autoscaling.resources.autoscaling_group.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -6390,7 +6390,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.autoscaling.resources.autoscaling_group.create
+          implementation: awssdk.cloudify_awssdk.autoscaling.resources.autoscaling_group.create
           inputs:
             aws_resource_id:
               description: >
@@ -6419,7 +6419,7 @@ node_types:
               required: false
               default: {}
         stop:
-          implementation: awssdk.cloudify_boto3.autoscaling.resources.autoscaling_group.stop
+          implementation: awssdk.cloudify_awssdk.autoscaling.resources.autoscaling_group.stop
           inputs:
             aws_resource_id:
               description: >
@@ -6448,7 +6448,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.autoscaling.resources.autoscaling_group.delete
+          implementation: awssdk.cloudify_awssdk.autoscaling.resources.autoscaling_group.delete
           inputs:
             aws_resource_id:
               description: >
@@ -6502,7 +6502,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.autoscaling.resources.launch_configuration.prepare
+          implementation: awssdk.cloudify_awssdk.autoscaling.resources.launch_configuration.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -6531,7 +6531,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.autoscaling.resources.launch_configuration.create
+          implementation: awssdk.cloudify_awssdk.autoscaling.resources.launch_configuration.create
           inputs:
             aws_resource_id:
               description: >
@@ -6560,7 +6560,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.autoscaling.resources.launch_configuration.delete
+          implementation: awssdk.cloudify_awssdk.autoscaling.resources.launch_configuration.delete
           inputs:
             aws_resource_id:
               description: >
@@ -6614,7 +6614,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.autoscaling.resources.policy.prepare
+          implementation: awssdk.cloudify_awssdk.autoscaling.resources.policy.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -6643,7 +6643,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.autoscaling.resources.policy.create
+          implementation: awssdk.cloudify_awssdk.autoscaling.resources.policy.create
           inputs:
             aws_resource_id:
               description: >
@@ -6672,7 +6672,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.autoscaling.resources.policy.delete
+          implementation: awssdk.cloudify_awssdk.autoscaling.resources.policy.delete
           inputs:
             aws_resource_id:
               description: >
@@ -6726,7 +6726,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.autoscaling.resources.lifecycle_hook.prepare
+          implementation: awssdk.cloudify_awssdk.autoscaling.resources.lifecycle_hook.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -6755,7 +6755,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.autoscaling.resources.lifecycle_hook.create
+          implementation: awssdk.cloudify_awssdk.autoscaling.resources.lifecycle_hook.create
           inputs:
             aws_resource_id:
               description: >
@@ -6784,7 +6784,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.autoscaling.resources.lifecycle_hook.delete
+          implementation: awssdk.cloudify_awssdk.autoscaling.resources.lifecycle_hook.delete
           inputs:
             aws_resource_id:
               description: >
@@ -6838,7 +6838,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.autoscaling.resources.notification_configuration.prepare
+          implementation: awssdk.cloudify_awssdk.autoscaling.resources.notification_configuration.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -6867,7 +6867,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.autoscaling.resources.notification_configuration.create
+          implementation: awssdk.cloudify_awssdk.autoscaling.resources.notification_configuration.create
           inputs:
             aws_resource_id:
               description: >
@@ -6896,7 +6896,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.autoscaling.resources.notification_configuration.delete
+          implementation: awssdk.cloudify_awssdk.autoscaling.resources.notification_configuration.delete
           inputs:
             aws_resource_id:
               description: >
@@ -6950,7 +6950,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.cloudwatch.resources.alarm.prepare
+          implementation: awssdk.cloudify_awssdk.cloudwatch.resources.alarm.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -6979,7 +6979,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.cloudwatch.resources.alarm.create
+          implementation: awssdk.cloudify_awssdk.cloudwatch.resources.alarm.create
           inputs:
             aws_resource_id:
               description: >
@@ -7008,7 +7008,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.cloudwatch.resources.alarm.delete
+          implementation: awssdk.cloudify_awssdk.cloudwatch.resources.alarm.delete
           inputs:
             aws_resource_id:
               description: >
@@ -7062,7 +7062,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.cloudwatch.resources.rule.prepare
+          implementation: awssdk.cloudify_awssdk.cloudwatch.resources.rule.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -7091,7 +7091,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.cloudwatch.resources.rule.create
+          implementation: awssdk.cloudify_awssdk.cloudwatch.resources.rule.create
           inputs:
             aws_resource_id:
               description: >
@@ -7120,7 +7120,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.cloudwatch.resources.rule.delete
+          implementation: awssdk.cloudify_awssdk.cloudwatch.resources.rule.delete
           inputs:
             aws_resource_id:
               description: >
@@ -7174,7 +7174,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.cloudwatch.resources.event.prepare
+          implementation: awssdk.cloudify_awssdk.cloudwatch.resources.event.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -7203,7 +7203,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.cloudwatch.resources.event.create
+          implementation: awssdk.cloudify_awssdk.cloudwatch.resources.event.create
           inputs:
             aws_resource_id:
               description: >
@@ -7257,7 +7257,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.cloudwatch.resources.target.prepare
+          implementation: awssdk.cloudify_awssdk.cloudwatch.resources.target.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -7286,7 +7286,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.cloudwatch.resources.target.create
+          implementation: awssdk.cloudify_awssdk.cloudwatch.resources.target.create
           inputs:
             aws_resource_id:
               description: >
@@ -7315,7 +7315,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.cloudwatch.resources.target.delete
+          implementation: awssdk.cloudify_awssdk.cloudwatch.resources.target.delete
           inputs:
             aws_resource_id:
               description: >
@@ -7369,7 +7369,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.efs.resources.file_system.prepare
+          implementation: awssdk.cloudify_awssdk.efs.resources.file_system.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -7398,7 +7398,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.efs.resources.file_system.create
+          implementation: awssdk.cloudify_awssdk.efs.resources.file_system.create
           inputs:
             aws_resource_id:
               description: >
@@ -7427,7 +7427,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.efs.resources.file_system.delete
+          implementation: awssdk.cloudify_awssdk.efs.resources.file_system.delete
           inputs:
             aws_resource_id:
               description: >
@@ -7481,7 +7481,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.efs.resources.mount_target.prepare
+          implementation: awssdk.cloudify_awssdk.efs.resources.mount_target.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -7510,7 +7510,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.efs.resources.mount_target.create
+          implementation: awssdk.cloudify_awssdk.efs.resources.mount_target.create
           inputs:
             aws_resource_id:
               description: >
@@ -7539,7 +7539,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.efs.resources.mount_target.delete
+          implementation: awssdk.cloudify_awssdk.efs.resources.mount_target.delete
           inputs:
             aws_resource_id:
               description: >
@@ -7593,7 +7593,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.efs.resources.tags.prepare
+          implementation: awssdk.cloudify_awssdk.efs.resources.tags.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -7622,7 +7622,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.efs.resources.tags.create
+          implementation: awssdk.cloudify_awssdk.efs.resources.tags.create
           inputs:
             aws_resource_id:
               description: >
@@ -7651,7 +7651,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.efs.resources.tags.delete
+          implementation: awssdk.cloudify_awssdk.efs.resources.tags.delete
           inputs:
             aws_resource_id:
               description: >
@@ -7705,7 +7705,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.kms.resources.key.prepare
+          implementation: awssdk.cloudify_awssdk.kms.resources.key.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -7734,7 +7734,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.kms.resources.key.create
+          implementation: awssdk.cloudify_awssdk.kms.resources.key.create
           inputs:
             aws_resource_id:
               description: >
@@ -7763,7 +7763,7 @@ node_types:
               required: false
               default: {}
         start:
-          implementation: awssdk.cloudify_boto3.kms.resources.key.enable
+          implementation: awssdk.cloudify_awssdk.kms.resources.key.enable
           inputs:
             aws_resource_id:
               description: >
@@ -7792,7 +7792,7 @@ node_types:
               required: false
               default: {}
         stop:
-          implementation: awssdk.cloudify_boto3.kms.resources.key.disable
+          implementation: awssdk.cloudify_awssdk.kms.resources.key.disable
           inputs:
             aws_resource_id:
               description: >
@@ -7821,7 +7821,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.kms.resources.key.delete
+          implementation: awssdk.cloudify_awssdk.kms.resources.key.delete
           inputs:
             aws_resource_id:
               description: >
@@ -7875,7 +7875,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.kms.resources.alias.prepare
+          implementation: awssdk.cloudify_awssdk.kms.resources.alias.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -7904,7 +7904,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.kms.resources.alias.create
+          implementation: awssdk.cloudify_awssdk.kms.resources.alias.create
           inputs:
             aws_resource_id:
               description: >
@@ -7933,7 +7933,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.kms.resources.alias.delete
+          implementation: awssdk.cloudify_awssdk.kms.resources.alias.delete
           inputs:
             aws_resource_id:
               description: >
@@ -7987,7 +7987,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.kms.resources.grant.prepare
+          implementation: awssdk.cloudify_awssdk.kms.resources.grant.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -8016,7 +8016,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.kms.resources.grant.create
+          implementation: awssdk.cloudify_awssdk.kms.resources.grant.create
           inputs:
             aws_resource_id:
               description: >
@@ -8045,7 +8045,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.kms.resources.grant.delete
+          implementation: awssdk.cloudify_awssdk.kms.resources.grant.delete
           inputs:
             aws_resource_id:
               description: >
@@ -8099,7 +8099,7 @@ node_types:
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
-          implementation: awssdk.cloudify_boto3.cloudformation.resources.stack.prepare
+          implementation: awssdk.cloudify_awssdk.cloudformation.resources.stack.prepare
           inputs:
             aws_resource_id:
               description: >
@@ -8128,7 +8128,7 @@ node_types:
               required: false
               default: {}
         configure:
-          implementation: awssdk.cloudify_boto3.cloudformation.resources.stack.create
+          implementation: awssdk.cloudify_awssdk.cloudformation.resources.stack.create
           inputs:
             aws_resource_id:
               description: >
@@ -8157,7 +8157,7 @@ node_types:
               required: false
               default: {}
         start:
-          implementation: awssdk.cloudify_boto3.cloudformation.resources.stack.start
+          implementation: awssdk.cloudify_awssdk.cloudformation.resources.stack.start
           inputs:
             aws_resource_id:
               description: >
@@ -8186,7 +8186,7 @@ node_types:
               required: false
               default: {}
         delete:
-          implementation: awssdk.cloudify_boto3.cloudformation.resources.stack.delete
+          implementation: awssdk.cloudify_awssdk.cloudformation.resources.stack.delete
           inputs:
             aws_resource_id:
               description: >
@@ -8275,8 +8275,8 @@ relationships:
     derived_from: cloudify.relationships.aws.connected_to
     source_interfaces:
       cloudify.interfaces.relationship_lifecycle:
-        establish: { implementation: awssdk.cloudify_boto3.iam.resources.user.attach_to }
-        unlink: { implementation: awssdk.cloudify_boto3.iam.resources.user.detach_from }
+        establish: { implementation: awssdk.cloudify_awssdk.iam.resources.user.attach_to }
+        unlink: { implementation: awssdk.cloudify_awssdk.iam.resources.user.detach_from }
 
   ##
   # IAM GROUP
@@ -8287,8 +8287,8 @@ relationships:
     derived_from: cloudify.relationships.aws.connected_to
     source_interfaces:
       cloudify.interfaces.relationship_lifecycle:
-        establish: { implementation: awssdk.cloudify_boto3.iam.resources.group.attach_to }
-        unlink: { implementation: awssdk.cloudify_boto3.iam.resources.group.detach_from }
+        establish: { implementation: awssdk.cloudify_awssdk.iam.resources.group.attach_to }
+        unlink: { implementation: awssdk.cloudify_awssdk.iam.resources.group.detach_from }
 
   ##
   # IAM ACCESS KEY
@@ -8298,8 +8298,8 @@ relationships:
     derived_from: cloudify.relationships.aws.connected_to
     source_interfaces:
       cloudify.interfaces.relationship_lifecycle:
-        establish: { implementation: awssdk.cloudify_boto3.iam.resources.access_key.attach_to }
-        unlink: { implementation: awssdk.cloudify_boto3.iam.resources.access_key.detach_from }
+        establish: { implementation: awssdk.cloudify_awssdk.iam.resources.access_key.attach_to }
+        unlink: { implementation: awssdk.cloudify_awssdk.iam.resources.access_key.detach_from }
 
   ##
   # IAM LOGIN PROFILE
@@ -8309,8 +8309,8 @@ relationships:
     derived_from: cloudify.relationships.aws.connected_to
     source_interfaces:
       cloudify.interfaces.relationship_lifecycle:
-        establish: { implementation: awssdk.cloudify_boto3.iam.resources.login_profile.attach_to }
-        unlink: { implementation: awssdk.cloudify_boto3.iam.resources.login_profile.detach_from }
+        establish: { implementation: awssdk.cloudify_awssdk.iam.resources.login_profile.attach_to }
+        unlink: { implementation: awssdk.cloudify_awssdk.iam.resources.login_profile.detach_from }
 
   ##
   # IAM ROLE
@@ -8320,8 +8320,8 @@ relationships:
     derived_from: cloudify.relationships.aws.connected_to
     source_interfaces:
       cloudify.interfaces.relationship_lifecycle:
-        establish: { implementation: awssdk.cloudify_boto3.iam.resources.role.attach_to }
-        unlink: { implementation: awssdk.cloudify_boto3.iam.resources.role.detach_from }
+        establish: { implementation: awssdk.cloudify_awssdk.iam.resources.role.attach_to }
+        unlink: { implementation: awssdk.cloudify_awssdk.iam.resources.role.detach_from }
 
 
   ####
@@ -8336,8 +8336,8 @@ relationships:
     derived_from: cloudify.relationships.aws.connected_to
     source_interfaces:
       cloudify.interfaces.relationship_lifecycle:
-        establish: { implementation: awssdk.cloudify_boto3.lambda_serverless.resources.invoke.attach_to }
-        unlink: { implementation: awssdk.cloudify_boto3.lambda_serverless.resources.invoke.detach_from }
+        establish: { implementation: awssdk.cloudify_awssdk.lambda_serverless.resources.invoke.attach_to }
+        unlink: { implementation: awssdk.cloudify_awssdk.lambda_serverless.resources.invoke.detach_from }
 
   ##
   # LAMBDA PERMISSION
@@ -8347,8 +8347,8 @@ relationships:
     derived_from: cloudify.relationships.aws.connected_to
     source_interfaces:
       cloudify.interfaces.relationship_lifecycle:
-        preconfigure: { implementation: awssdk.cloudify_boto3.lambda_serverless.resources.permission.prepare_assoc }
-        unlink: { implementation: awssdk.cloudify_boto3.lambda_serverless.resources.permission.detach_from }
+        preconfigure: { implementation: awssdk.cloudify_awssdk.lambda_serverless.resources.permission.prepare_assoc }
+        unlink: { implementation: awssdk.cloudify_awssdk.lambda_serverless.resources.permission.detach_from }
 
 
   ####
@@ -8367,7 +8367,7 @@ relationships:
     source_interfaces:
       cloudify.interfaces.relationship_lifecycle:
         preconfigure:
-          implementation: awssdk.cloudify_boto3.rds.resources.instance_read_replica.prepare_assoc
+          implementation: awssdk.cloudify_awssdk.rds.resources.instance_read_replica.prepare_assoc
           inputs:
             iam_role_type_key:
               description: >
@@ -8390,7 +8390,7 @@ relationships:
                 relationship target is of type IAM Role.
               type: string
               default: aws_resource_arn
-        unlink: { implementation: awssdk.cloudify_boto3.rds.resources.instance_read_replica.detach_from }
+        unlink: { implementation: awssdk.cloudify_awssdk.rds.resources.instance_read_replica.detach_from }
 
   ##
   # RDS INSTANCE
@@ -8405,7 +8405,7 @@ relationships:
     source_interfaces:
       cloudify.interfaces.relationship_lifecycle:
         preconfigure:
-          implementation: awssdk.cloudify_boto3.rds.resources.instance.prepare_assoc
+          implementation: awssdk.cloudify_awssdk.rds.resources.instance.prepare_assoc
           inputs:
             iam_role_type_key:
               description: >
@@ -8428,7 +8428,7 @@ relationships:
                 relationship target is of type IAM Role.
               type: string
               default: aws_resource_arn
-        unlink: { implementation: awssdk.cloudify_boto3.rds.resources.instance.detach_from }
+        unlink: { implementation: awssdk.cloudify_awssdk.rds.resources.instance.detach_from }
 
   ##
   # RDS SUBNET GROUP
@@ -8438,8 +8438,8 @@ relationships:
     derived_from: cloudify.relationships.aws.connected_to
     source_interfaces:
       cloudify.interfaces.relationship_lifecycle:
-        preconfigure: { implementation: awssdk.cloudify_boto3.rds.resources.subnet_group.prepare_assoc }
-        unlink: { implementation: awssdk.cloudify_boto3.rds.resources.subnet_group.detach_from }
+        preconfigure: { implementation: awssdk.cloudify_awssdk.rds.resources.subnet_group.prepare_assoc }
+        unlink: { implementation: awssdk.cloudify_awssdk.rds.resources.subnet_group.detach_from }
 
   ##
   # RDS PARAMETER GROUP
@@ -8449,8 +8449,8 @@ relationships:
     derived_from: cloudify.relationships.aws.connected_to
     source_interfaces:
       cloudify.interfaces.relationship_lifecycle:
-        establish: { implementation: awssdk.cloudify_boto3.rds.resources.parameter_group.attach_to }
-        unlink: { implementation: awssdk.cloudify_boto3.rds.resources.parameter_group.detach_from }
+        establish: { implementation: awssdk.cloudify_awssdk.rds.resources.parameter_group.attach_to }
+        unlink: { implementation: awssdk.cloudify_awssdk.rds.resources.parameter_group.detach_from }
 
   ##
   # RDS PARAMETER
@@ -8460,8 +8460,8 @@ relationships:
     derived_from: cloudify.relationships.aws.connected_to
     source_interfaces:
       cloudify.interfaces.relationship_lifecycle:
-        establish: { implementation: awssdk.cloudify_boto3.rds.resources.parameter.attach_to }
-        unlink: { implementation: awssdk.cloudify_boto3.rds.resources.parameter.detach_from }
+        establish: { implementation: awssdk.cloudify_awssdk.rds.resources.parameter.attach_to }
+        unlink: { implementation: awssdk.cloudify_awssdk.rds.resources.parameter.detach_from }
 
   ##
   # RDS OPTION GROUP
@@ -8471,8 +8471,8 @@ relationships:
     derived_from: cloudify.relationships.aws.connected_to
     source_interfaces:
       cloudify.interfaces.relationship_lifecycle:
-        establish: { implementation: awssdk.cloudify_boto3.rds.resources.option_group.attach_to }
-        unlink: { implementation: awssdk.cloudify_boto3.rds.resources.option_group.detach_from }
+        establish: { implementation: awssdk.cloudify_awssdk.rds.resources.option_group.attach_to }
+        unlink: { implementation: awssdk.cloudify_awssdk.rds.resources.option_group.detach_from }
 
   ##
   # RDS OPTION
@@ -8482,8 +8482,8 @@ relationships:
     derived_from: cloudify.relationships.aws.connected_to
     source_interfaces:
       cloudify.interfaces.relationship_lifecycle:
-        establish: { implementation: awssdk.cloudify_boto3.rds.resources.option.attach_to }
-        unlink: { implementation: awssdk.cloudify_boto3.rds.resources.option.detach_from }
+        establish: { implementation: awssdk.cloudify_awssdk.rds.resources.option.attach_to }
+        unlink: { implementation: awssdk.cloudify_awssdk.rds.resources.option.detach_from }
 
 
   ####
@@ -8498,8 +8498,8 @@ relationships:
     derived_from: cloudify.relationships.aws.connected_to
     source_interfaces:
       cloudify.interfaces.relationship_lifecycle:
-        preconfigure: { implementation: awssdk.cloudify_boto3.route53.resources.hosted_zone.prepare_assoc }
-        unlink: { implementation: awssdk.cloudify_boto3.route53.resources.hosted_zone.detach_from }
+        preconfigure: { implementation: awssdk.cloudify_awssdk.route53.resources.hosted_zone.prepare_assoc }
+        unlink: { implementation: awssdk.cloudify_awssdk.route53.resources.hosted_zone.detach_from }
 
   ##
   # ROUTE53 RESOURCE RECORD SET
@@ -8509,8 +8509,8 @@ relationships:
     derived_from: cloudify.relationships.aws.connected_to
     source_interfaces:
       cloudify.interfaces.relationship_lifecycle:
-        preconfigure: { implementation: awssdk.cloudify_boto3.route53.resources.record_set.prepare_assoc }
-        unlink: { implementation: awssdk.cloudify_boto3.route53.resources.record_set.detach_from }
+        preconfigure: { implementation: awssdk.cloudify_awssdk.route53.resources.record_set.prepare_assoc }
+        unlink: { implementation: awssdk.cloudify_awssdk.route53.resources.record_set.detach_from }
 
   ##
   # Instance to LB
@@ -8519,5 +8519,5 @@ relationships:
     derived_from: cloudify.relationships.aws.connected_to
     source_interfaces:
       cloudify.interfaces.relationship_lifecycle:
-        establish: { implementation: awssdk.cloudify_boto3.elb.resources.classic.load_balancer.assoc }
-        unlink: { implementation: awssdk.cloudify_boto3.elb.resources.classic.load_balancer.disassoc }
+        establish: { implementation: awssdk.cloudify_awssdk.elb.resources.classic.load_balancer.assoc }
+        unlink: { implementation: awssdk.cloudify_awssdk.elb.resources.classic.load_balancer.disassoc }

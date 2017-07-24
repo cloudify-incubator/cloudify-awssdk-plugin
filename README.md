@@ -1,2 +1,2 @@
-# cloudify-boto3-plugin
+# cloudify-awssdk-plugin
 Cloudify plugin for the official AWS Python SDK

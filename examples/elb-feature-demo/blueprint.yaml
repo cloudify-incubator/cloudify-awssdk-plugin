@@ -17,7 +17,7 @@ inputs:
 
   aws_region_name:
     type: string
-    default: { get_secret: aws_region_name }
+    default: { get_secret: ec2_region_name }
 
 dsl_definitions:
 
@@ -154,7 +154,7 @@ node_templates:
     interfaces:
       cloudify.interfaces.lifecycle:
         start:
-          implementation: awssdk.cloudify_boto3.elb.resources.classic.load_balancer.start
+          implementation: awssdk.cloudify_awssdk.elb.resources.classic.load_balancer.start
           inputs:
             resource_config:
               LoadBalancerAttributes:
