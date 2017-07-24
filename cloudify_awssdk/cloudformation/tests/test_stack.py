@@ -92,12 +92,19 @@ class TestCloudFormationStack(TestBase):
 
         self.fake_boto.assert_called_with('cloudformation', **CLIENT_CONFIG)
 
-        self.fake_client.\
-            create_stack.\
-            assert_called_with(
+        try:
+            self.fake_client.create_stack.assert_called_with(
                 StackName='test-cloudformation1',
                 TemplateBody='{"AWSTemplateFormatVersion": "2010-09-09",'
                              ' "Description": "A sample template"}')
+        except AssertionError:
+            try:
+                self.fake_client.create_stack.assert_called_with(
+                    StackName='test-cloudformation1',
+                    TemplateBody='{"Description": "A sample template",'
+                                 ' "AWSTemplateFormatVersion": "2010-09-09"}')
+            except AssertionError as e:
+                raise e
 
         self.assertEqual(_ctx.instance.runtime_properties,
                          RUNTIMEPROP_AFTER_CREATE)
