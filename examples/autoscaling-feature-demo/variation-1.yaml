@@ -17,7 +17,7 @@ inputs:
 
   aws_region_name:
     type: string
-    default: { get_secret: aws_region_name }
+    default: { get_secret: ec2_region_name }
 
   image_id:
     description: This AMI is matched to us-east-1.
