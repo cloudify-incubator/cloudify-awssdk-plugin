@@ -136,10 +136,7 @@ node_templates:
               - ParameterName: lc_time_names
                 ParameterValue: en_US
                 ApplyMethod: immediate
-    relationships:
-    - type: cloudify.relationships.aws.rds.parameter_group.connected_to
-      target: rds_parameter_1
-      
+
   rds_option_group:
     type: cloudify.nodes.aws.rds.OptionGroup
     properties:
@@ -153,16 +150,7 @@ node_templates:
     relationships:
     - type: cloudify.relationships.aws.rds.option_group.connected_to
       target: rds_option_1
-                
-  rds_parameter_1:
-    type: cloudify.nodes.aws.rds.Parameter
-    properties:
-      resource_config:
-        kwargs:
-          ParameterName: log_timestamps
-          ParameterValue: UTC
-          ApplyMethod: immediate
-      
+
   rds_option_1:
     type: cloudify.nodes.aws.rds.Option
     properties:
