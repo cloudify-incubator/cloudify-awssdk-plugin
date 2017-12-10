@@ -31,7 +31,7 @@ from cloudify_awssdk.ecs import ECSBase
 from cloudify_awssdk.common.constants import EXTERNAL_RESOURCE_ID
 
 from cloudify.exceptions import NonRecoverableError
-    
+
 RESOURCE_TYPE = 'ECS Service'
 CLUSTER = 'cluster'
 CLUSTER_TYPE = 'cloudify.nodes.aws.ECS.Cluster'
