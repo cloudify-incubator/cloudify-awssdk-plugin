@@ -28,7 +28,8 @@ dsl_definitions:
 
 node_templates:
 
-  elasticip:
+  # Requester VPC Config
+  elasticip_vpc_requster:
     type: cloudify.nodes.aws.ec2.ElasticIP
     properties:
       resource_config:
@@ -37,27 +38,27 @@ node_templates:
       client_config: *client_config
     relationships:
       - type: cloudify.relationships.connected_to
-        target: network_interface
+        target: network_interface_vpc_requster
 
-  network_interface:
+  network_interface_vpc_requster:
     type: cloudify.nodes.aws.ec2.Interface
     properties:
       client_config: *client_config
     relationships:
       - type: cloudify.relationships.connected_to
-        target: subnet
+        target: subnet_vpc_requster
 
-  network_acl:
+  network_acl_vpc_requster:
     type: cloudify.nodes.aws.ec2.NetworkACL
     properties:
       client_config: *client_config
     relationships:
       - type: cloudify.relationships.contained_in
-        target: vpc
+        target: vpc_requester
       - type: cloudify.relationships.connected_to
-        target: subnet
+        target: subnet_vpc_requster
 
-  network_acl_entry:
+  network_acl_entry_vpc_requster:
     type: cloudify.nodes.aws.ec2.NetworkAclEntry
     properties:
       resource_config:
@@ -70,9 +71,9 @@ node_templates:
       client_config: *client_config
     relationships:
       - type: cloudify.relationships.contained_in
-        target: network_acl
+        target: network_acl_vpc_requster
 
-  dhcp_options:
+  dhcp_options_vpc_requster:
     type: cloudify.nodes.aws.ec2.DHCPOptions
     properties:
       resource_config:
@@ -84,9 +85,9 @@ node_templates:
       client_config: *client_config
     relationships:
       - type: cloudify.relationships.connected_to
-        target: vpc
+        target: vpc_requester
 
-  vpn_gateway:
+  vpn_gateway_vpc_requester:
     type: cloudify.nodes.aws.ec2.VPNGateway
     properties:
       resource_config:
@@ -95,9 +96,9 @@ node_templates:
       client_config: *client_config
     relationships:
       - type: cloudify.relationships.connected_to
-        target: vpc
+        target: vpc_requester
 
-  customer_gateway:
+  customer_gateway_vpc_requester:
     type: cloudify.nodes.aws.ec2.CustomerGateway
     properties:
       resource_config:
@@ -107,15 +108,15 @@ node_templates:
           BgpAsn: 65000
       client_config: *client_config
 
-  igw:
+  igw_vpc_requester:
     type: cloudify.nodes.aws.ec2.InternetGateway
     properties:
       client_config: *client_config
     relationships:
       - type: cloudify.relationships.connected_to
-        target: vpc
+        target: vpc_requester
 
-  route:
+  route_vpc_requester:
     type: cloudify.nodes.aws.ec2.Route
     properties:
       resource_config:
@@ -124,21 +125,21 @@ node_templates:
       client_config: *client_config
     relationships:
       - type: cloudify.relationships.contained_in
-        target: route_table
+        target: route_table_vpc_requester
       - type: cloudify.relationships.connected_to
-        target: igw
+        target: igw_vpc_requester
 
-  route_table:
+  route_table_vpc_requester:
     type: cloudify.nodes.aws.ec2.RouteTable
     properties:
       client_config: *client_config
     relationships:
       - type: cloudify.relationships.contained_in
-        target: vpc
+        target: vpc_requester
       - type: cloudify.relationships.connected_to
-        target: subnet
+        target: subnet_vpc_requster
 
-  tags:
+  tags_vpc_requester:
     type: cloudify.nodes.aws.ec2.Tags
     properties:
       resource_config:
@@ -149,11 +150,11 @@ node_templates:
       client_config: *client_config
     relationships:
     - type: cloudify.relationships.depends_on
-      target: vpc
+      target: vpc_requester
     - type: cloudify.relationships.depends_on
-      target: subnet
+      target: subnet_vpc_requster
 
-  securitygroup2_egress:
+  securitygroup2_egress_vpc_requster:
     type: cloudify.nodes.aws.ec2.SecurityGroupRuleEgress
     properties:
       client_config: *client_config
@@ -161,7 +162,7 @@ node_templates:
       cloudify.interfaces.lifecycle:
         start:
           inputs:
-            aws_resource_id: { get_attribute: [ securitygroup2, aws_resource_id ]}
+            aws_resource_id: { get_attribute: [ securitygroup2_vpc_requster, aws_resource_id ]}
             resource_config:
               IpPermissions:
               - FromPort: 443
@@ -170,10 +171,10 @@ node_templates:
                 IpRanges:
                 - CidrIp: 0.0.0.0/0
                 UserIdGroupPairs:
-                - GroupId: { get_attribute: [ securitygroup1, aws_resource_id ] }
+                - GroupId: { get_attribute: [ securitygroup1_vpc_requster, aws_resource_id ] }
         stop:
           inputs:
-            aws_resource_id: { get_attribute: [ securitygroup2, aws_resource_id ]}
+            aws_resource_id: { get_attribute: [ securitygroup2_vpc_requster, aws_resource_id ]}
             resource_config:
               IpPermissions:
               - FromPort: 443
@@ -182,14 +183,14 @@ node_templates:
                 IpRanges:
                 - CidrIp: 0.0.0.0/0
                 UserIdGroupPairs:
-                - GroupId: { get_attribute: [ securitygroup1, aws_resource_id ] }
+                - GroupId: { get_attribute: [ securitygroup1_vpc_requster, aws_resource_id ] }
     relationships:
     - type: cloudify.relationships.contained_in
-      target: securitygroup2
+      target: securitygroup2_vpc_requster
     - type: cloudify.relationships.depends_on
-      target: securitygroup1
+      target: securitygroup1_vpc_requster
 
-  securitygroup2_ingress:
+  securitygroup2_ingress_vpc_requster:
     type: cloudify.nodes.aws.ec2.SecurityGroupRuleIngress
     properties:
       client_config: *client_config
@@ -197,7 +198,7 @@ node_templates:
       cloudify.interfaces.lifecycle:
         start:
           inputs:
-            aws_resource_id: { get_attribute: [ securitygroup2, aws_resource_id ]}
+            aws_resource_id: { get_attribute: [ securitygroup2_vpc_requster, aws_resource_id ]}
             resource_config:
               IpPermissions:
               - FromPort: 443
@@ -206,10 +207,10 @@ node_templates:
                 IpRanges:
                 - CidrIp: 0.0.0.0/0
                 UserIdGroupPairs:
-                - GroupId: { get_attribute: [ securitygroup1, aws_resource_id ] }
+                - GroupId: { get_attribute: [ securitygroup1_vpc_requster, aws_resource_id ] }
         stop:
           inputs:
-            aws_resource_id: { get_attribute: [ securitygroup2, aws_resource_id ]}
+            aws_resource_id: { get_attribute: [ securitygroup2_vpc_requster, aws_resource_id ]}
             resource_config:
               IpPermissions:
               - FromPort: 443
@@ -218,14 +219,14 @@ node_templates:
                 IpRanges:
                 - CidrIp: 0.0.0.0/0
                 UserIdGroupPairs:
-                - GroupId: { get_attribute: [ securitygroup1, aws_resource_id ] }
+                - GroupId: { get_attribute: [ securitygroup1_vpc_requster, aws_resource_id ] }
     relationships:
     - type: cloudify.relationships.contained_in
-      target: securitygroup2
+      target: securitygroup2_vpc_requster
     - type: cloudify.relationships.depends_on
-      target: securitygroup1
+      target: securitygroup1_vpc_requster
 
-  securitygroup1_egress:
+  securitygroup1_egress_vpc_requster:
     type: cloudify.nodes.aws.ec2.SecurityGroupRuleEgress
     properties:
       client_config: *client_config
@@ -233,7 +234,7 @@ node_templates:
       cloudify.interfaces.lifecycle:
         start:
           inputs:
-            aws_resource_id: { get_attribute: [ securitygroup1, aws_resource_id ]}
+            aws_resource_id: { get_attribute: [ securitygroup1_vpc_requster, aws_resource_id ]}
             resource_config:
               IpPermissions:
               - FromPort: 443
@@ -242,10 +243,10 @@ node_templates:
                 IpRanges:
                 - CidrIp: 0.0.0.0/0
                 UserIdGroupPairs:
-                - GroupId: { get_attribute: [ securitygroup2, aws_resource_id ] }
+                - GroupId: { get_attribute: [ securitygroup2_vpc_requster, aws_resource_id ] }
         stop:
           inputs:
-            aws_resource_id: { get_attribute: [ securitygroup1, aws_resource_id ]}
+            aws_resource_id: { get_attribute: [ securitygroup1_vpc_requster, aws_resource_id ]}
             resource_config:
               IpPermissions:
               - FromPort: 443
@@ -254,14 +255,14 @@ node_templates:
                 IpRanges:
                 - CidrIp: 0.0.0.0/0
                 UserIdGroupPairs:
-                - GroupId: { get_attribute: [ securitygroup2, aws_resource_id ] }
+                - GroupId: { get_attribute: [ securitygroup2_vpc_requster, aws_resource_id ] }
     relationships:
     - type: cloudify.relationships.contained_in
-      target: securitygroup1
+      target: securitygroup1_vpc_requster
     - type: cloudify.relationships.depends_on
-      target: securitygroup2
+      target: securitygroup2_vpc_requster
 
-  securitygroup1_ingress:
+  securitygroup1_ingress_vpc_requster:
     type: cloudify.nodes.aws.ec2.SecurityGroupRuleIngress
     properties:
       client_config: *client_config
@@ -269,7 +270,7 @@ node_templates:
       cloudify.interfaces.lifecycle:
         start:
           inputs:
-            aws_resource_id: { get_attribute: [ securitygroup1, aws_resource_id ]}
+            aws_resource_id: { get_attribute: [ securitygroup1_vpc_requster, aws_resource_id ]}
             resource_config:
               IpPermissions:
               - FromPort: 443
@@ -278,10 +279,10 @@ node_templates:
                 IpRanges:
                 - CidrIp: 0.0.0.0/0
                 UserIdGroupPairs:
-                - GroupId: { get_attribute: [ securitygroup2, aws_resource_id ] }
+                - GroupId: { get_attribute: [ securitygroup2_vpc_requster, aws_resource_id ] }
         stop:
           inputs:
-            aws_resource_id: { get_attribute: [ securitygroup1, aws_resource_id ]}
+            aws_resource_id: { get_attribute: [ securitygroup1_vpc_requster, aws_resource_id ]}
             resource_config:
               IpPermissions:
               - FromPort: 443
@@ -290,14 +291,14 @@ node_templates:
                 IpRanges:
                 - CidrIp: 0.0.0.0/0
                 UserIdGroupPairs:
-                - GroupId: { get_attribute: [ securitygroup2, aws_resource_id ] }
+                - GroupId: { get_attribute: [ securitygroup2_vpc_requster, aws_resource_id ] }
     relationships:
     - type: cloudify.relationships.contained_in
-      target: securitygroup1
+      target: securitygroup1_vpc_requster
     - type: cloudify.relationships.depends_on
-      target: securitygroup2
+      target: securitygroup2_vpc_requster
 
-  securitygroup2:
+  securitygroup2_vpc_requster:
     type: cloudify.nodes.aws.ec2.SecurityGroup
     properties:
       resource_config:
@@ -307,9 +308,9 @@ node_templates:
       client_config: *client_config
     relationships:
     - type: cloudify.relationships.depends_on
-      target: vpc
+      target: vpc_requester
 
-  securitygroup1:
+  securitygroup1_vpc_requster:
     type: cloudify.nodes.aws.ec2.SecurityGroup
     properties:
       resource_config:
@@ -319,9 +320,9 @@ node_templates:
       client_config: *client_config
     relationships:
     - type: cloudify.relationships.depends_on
-      target: vpc
+      target: vpc_requester
 
-  subnet:
+  subnet_vpc_requster:
     type: cloudify.nodes.aws.ec2.Subnet
     properties:
       resource_config:
@@ -330,12 +331,436 @@ node_templates:
       client_config: *client_config
     relationships:
       - type: cloudify.relationships.depends_on
-        target: vpc
+        target: vpc_requester
 
-  vpc:
+  vpn_connection_vpc_requster:
+    type: cloudify.nodes.aws.ec2.VPNConnection
+    properties:
+      client_config: *client_config
+    interfaces:
+      cloudify.interfaces.lifecycle:
+         create:
+           inputs:
+             resource_config:
+               CustomerGatewayId: { get_attribute: [customer_gateway_vpc_requester, aws_resource_id] }
+               Type: 'ipsec.1'
+               VpnGatewayId: { get_attribute: [vpn_gateway_vpc_requester, aws_resource_id] }
+               Options:
+                 StaticRoutesOnly: True
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: vpn_gateway_vpc_requester
+      - type: cloudify.relationships.depends_on
+        target: customer_gateway_vpc_requester
+
+  vpn_connection_route_vpc_requester:
+    type: cloudify.nodes.aws.ec2.VPNConnectionRoute
+    properties:
+      client_config: *client_config
+    interfaces:
+      cloudify.interfaces.lifecycle:
+         create:
+           inputs:
+             resource_config:
+               VpnConnectionId: { get_attribute: [vpn_connection_vpc_requster,aws_resource_id] }
+               DestinationCidrBlock: '10.0.0.0/24'
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: vpn_connection_vpc_requster
+
+  vpc_requester:
     type: cloudify.nodes.aws.ec2.Vpc
+    properties:
+      client_config: *client_config
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          inputs:
+            resource_config:
+              CidrBlock: '10.0.0.0/16'
+
+  # Accepter VPC Config
+  elasticip_vpc_accepter:
+    type: cloudify.nodes.aws.ec2.ElasticIP
     properties:
       resource_config:
         kwargs:
-          CidrBlock: '10.0.0.0/16'
+          Domain: 'vpc'
       client_config: *client_config
+    relationships:
+      - type: cloudify.relationships.connected_to
+        target: network_interface_vpc_accepter
+
+  network_interface_vpc_accepter:
+    type: cloudify.nodes.aws.ec2.Interface
+    properties:
+      client_config: *client_config
+    relationships:
+      - type: cloudify.relationships.connected_to
+        target: subnet_vpc_accepter
+
+  network_acl_vpc_accepter:
+    type: cloudify.nodes.aws.ec2.NetworkACL
+    properties:
+      client_config: *client_config
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: vpc_accepter
+      - type: cloudify.relationships.connected_to
+        target: subnet_vpc_accepter
+
+  network_acl_entry_vpc_accepter:
+    type: cloudify.nodes.aws.ec2.NetworkAclEntry
+    properties:
+      resource_config:
+        kwargs:
+          RuleNumber: 100
+          Protocol: '-1'
+          RuleAction: 'allow'
+          Egress: False
+          CidrBlock: '0.0.0.0/0'
+      client_config: *client_config
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: network_acl_vpc_accepter
+
+  dhcp_options_vpc_accepter:
+    type: cloudify.nodes.aws.ec2.DHCPOptions
+    properties:
+      resource_config:
+        kwargs:
+          DhcpConfigurations:
+            - Key: domain-name
+              Values:
+                - example.com
+      client_config: *client_config
+    relationships:
+      - type: cloudify.relationships.connected_to
+        target: vpc_accepter
+
+  vpn_gateway_vpc_accepter:
+    type: cloudify.nodes.aws.ec2.VPNGateway
+    properties:
+      resource_config:
+        kwargs:
+          Type: 'ipsec.1'
+      client_config: *client_config
+    relationships:
+      - type: cloudify.relationships.connected_to
+        target: vpc_accepter
+
+  customer_gateway_vpc_accepter:
+    type: cloudify.nodes.aws.ec2.CustomerGateway
+    properties:
+      resource_config:
+        kwargs:
+          Type: 'ipsec.1'
+          PublicIp: '34.224.150.135'
+          BgpAsn: 65000
+      client_config: *client_config
+
+  igw_vpc_accepter:
+    type: cloudify.nodes.aws.ec2.InternetGateway
+    properties:
+      client_config: *client_config
+    relationships:
+      - type: cloudify.relationships.connected_to
+        target: vpc_accepter
+
+  route_vpc_accepter:
+    type: cloudify.nodes.aws.ec2.Route
+    properties:
+      resource_config:
+        kwargs:
+          DestinationCidrBlock: '0.0.0.0/0'
+      client_config: *client_config
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: route_table_vpc_accepter
+      - type: cloudify.relationships.connected_to
+        target: igw_vpc_accepter
+
+  route_table_vpc_accepter:
+    type: cloudify.nodes.aws.ec2.RouteTable
+    properties:
+      client_config: *client_config
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: vpc_accepter
+      - type: cloudify.relationships.connected_to
+        target: subnet_vpc_accepter
+
+  tags_vpc_accepter:
+    type: cloudify.nodes.aws.ec2.Tags
+    properties:
+      resource_config:
+        kwargs:
+          Tags:
+          - Key: Blueprint
+            Value: ec2-vpc-feature-demo
+      client_config: *client_config
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: vpc_accepter
+    - type: cloudify.relationships.depends_on
+      target: subnet_vpc_accepter
+
+  securitygroup2_egress_vpc_accepter:
+    type: cloudify.nodes.aws.ec2.SecurityGroupRuleEgress
+    properties:
+      client_config: *client_config
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        start:
+          inputs:
+            aws_resource_id: { get_attribute: [ securitygroup2_vpc_accepter, aws_resource_id ]}
+            resource_config:
+              IpPermissions:
+              - FromPort: 443
+                ToPort: 443
+                IpProtocol: tcp
+                IpRanges:
+                - CidrIp: 0.0.0.0/0
+                UserIdGroupPairs:
+                - GroupId: { get_attribute: [ securitygroup1_vpc_accepter, aws_resource_id ] }
+        stop:
+          inputs:
+            aws_resource_id: { get_attribute: [ securitygroup2_vpc_accepter, aws_resource_id ]}
+            resource_config:
+              IpPermissions:
+              - FromPort: 443
+                ToPort: 443
+                IpProtocol: tcp
+                IpRanges:
+                - CidrIp: 0.0.0.0/0
+                UserIdGroupPairs:
+                - GroupId: { get_attribute: [ securitygroup1_vpc_accepter, aws_resource_id ] }
+    relationships:
+    - type: cloudify.relationships.contained_in
+      target: securitygroup2_vpc_accepter
+    - type: cloudify.relationships.depends_on
+      target: securitygroup1_vpc_accepter
+
+  securitygroup2_ingress_vpc_accepter:
+    type: cloudify.nodes.aws.ec2.SecurityGroupRuleIngress
+    properties:
+      client_config: *client_config
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        start:
+          inputs:
+            aws_resource_id: { get_attribute: [ securitygroup2_vpc_accepter, aws_resource_id ]}
+            resource_config:
+              IpPermissions:
+              - FromPort: 443
+                ToPort: 443
+                IpProtocol: tcp
+                IpRanges:
+                - CidrIp: 0.0.0.0/0
+                UserIdGroupPairs:
+                - GroupId: { get_attribute: [ securitygroup1_vpc_accepter, aws_resource_id ] }
+        stop:
+          inputs:
+            aws_resource_id: { get_attribute: [ securitygroup2_vpc_accepter, aws_resource_id ]}
+            resource_config:
+              IpPermissions:
+              - FromPort: 443
+                ToPort: 443
+                IpProtocol: tcp
+                IpRanges:
+                - CidrIp: 0.0.0.0/0
+                UserIdGroupPairs:
+                - GroupId: { get_attribute: [ securitygroup1_vpc_accepter, aws_resource_id ] }
+    relationships:
+    - type: cloudify.relationships.contained_in
+      target: securitygroup2_vpc_accepter
+    - type: cloudify.relationships.depends_on
+      target: securitygroup1_vpc_accepter
+
+  securitygroup1_egress_vpc_accepter:
+    type: cloudify.nodes.aws.ec2.SecurityGroupRuleEgress
+    properties:
+      client_config: *client_config
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        start:
+          inputs:
+            aws_resource_id: { get_attribute: [ securitygroup1_vpc_accepter, aws_resource_id ]}
+            resource_config:
+              IpPermissions:
+              - FromPort: 443
+                ToPort: 443
+                IpProtocol: tcp
+                IpRanges:
+                - CidrIp: 0.0.0.0/0
+                UserIdGroupPairs:
+                - GroupId: { get_attribute: [ securitygroup2_vpc_accepter, aws_resource_id ] }
+        stop:
+          inputs:
+            aws_resource_id: { get_attribute: [ securitygroup1_vpc_accepter, aws_resource_id ]}
+            resource_config:
+              IpPermissions:
+              - FromPort: 443
+                ToPort: 443
+                IpProtocol: tcp
+                IpRanges:
+                - CidrIp: 0.0.0.0/0
+                UserIdGroupPairs:
+                - GroupId: { get_attribute: [ securitygroup2_vpc_accepter, aws_resource_id ] }
+    relationships:
+    - type: cloudify.relationships.contained_in
+      target: securitygroup1_vpc_accepter
+    - type: cloudify.relationships.depends_on
+      target: securitygroup2_vpc_accepter
+
+  securitygroup1_ingress_vpc_accepter:
+    type: cloudify.nodes.aws.ec2.SecurityGroupRuleIngress
+    properties:
+      client_config: *client_config
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        start:
+          inputs:
+            aws_resource_id: { get_attribute: [ securitygroup1_vpc_accepter, aws_resource_id ]}
+            resource_config:
+              IpPermissions:
+              - FromPort: 443
+                ToPort: 443
+                IpProtocol: tcp
+                IpRanges:
+                - CidrIp: 0.0.0.0/0
+                UserIdGroupPairs:
+                - GroupId: { get_attribute: [ securitygroup2_vpc_accepter, aws_resource_id ] }
+        stop:
+          inputs:
+            aws_resource_id: { get_attribute: [ securitygroup1_vpc_accepter, aws_resource_id ]}
+            resource_config:
+              IpPermissions:
+              - FromPort: 443
+                ToPort: 443
+                IpProtocol: tcp
+                IpRanges:
+                - CidrIp: 0.0.0.0/0
+                UserIdGroupPairs:
+                - GroupId: { get_attribute: [ securitygroup2_vpc_accepter, aws_resource_id ] }
+    relationships:
+    - type: cloudify.relationships.contained_in
+      target: securitygroup1_vpc_accepter
+    - type: cloudify.relationships.depends_on
+      target: securitygroup2_vpc_accepter
+
+  securitygroup2_vpc_accepter:
+    type: cloudify.nodes.aws.ec2.SecurityGroup
+    properties:
+      resource_config:
+        kwargs:
+          GroupName: SecurityGroup2
+          Description: Example Security Group 2
+      client_config: *client_config
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: vpc_accepter
+
+  securitygroup1_vpc_accepter:
+    type: cloudify.nodes.aws.ec2.SecurityGroup
+    properties:
+      resource_config:
+        kwargs:
+          GroupName: SecurityGroup1
+          Description: Example Security Group 1
+      client_config: *client_config
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: vpc_accepter
+
+  subnet_vpc_accepter:
+    type: cloudify.nodes.aws.ec2.Subnet
+    properties:
+      resource_config:
+        kwargs:
+          CidrBlock: '172.32.0.0/16'
+      client_config: *client_config
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: vpc_accepter
+
+  vpn_connection_vpc_accepter:
+    type: cloudify.nodes.aws.ec2.VPNConnection
+    properties:
+      client_config: *client_config
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          inputs:
+            resource_config:
+              CustomerGatewayId: { get_attribute: [customer_gateway_vpc_accepter, aws_resource_id] }
+              Type: 'ipsec.1'
+              VpnGatewayId: { get_attribute: [vpn_gateway_vpc_accepter, aws_resource_id] }
+              Options:
+                StaticRoutesOnly: True
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: vpn_gateway_vpc_accepter
+      - type: cloudify.relationships.depends_on
+        target: customer_gateway_vpc_accepter
+
+  vpn_connection_route_vpc_accepter:
+    type: cloudify.nodes.aws.ec2.VPNConnectionRoute
+    properties:
+      client_config: *client_config
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          inputs:
+            resource_config:
+              VpnConnectionId: { get_attribute: [vpn_connection_vpc_accepter, aws_resource_id] }
+              DestinationCidrBlock: '172.32.0.0/16'
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: vpn_connection_vpc_accepter
+
+  vpc_accepter:
+    type: cloudify.nodes.aws.ec2.Vpc
+    properties:
+      client_config: *client_config
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          inputs:
+            resource_config:
+              CidrBlock: '172.32.0.0/16'
+
+  # Peering Between Two VPC (Requester And Accepter)
+  vpc_peering:
+    type: cloudify.nodes.aws.ec2.VpcPeering
+    properties:
+      client_config: *client_config
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          inputs:
+            resource_config:
+              PeerVpcId: { get_attribute: [vpc_requester, aws_resource_id] }
+              VpcId: { get_attribute: [vpc_accepter, aws_resource_id] }
+
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: vpc_accepter
+      - type: cloudify.relationships.depends_on
+        target: vpc_requester
+
+  # Approve VPC Peering Request
+  vpc_peering_request:
+    type: cloudify.nodes.aws.ec2.VpcPeeringAcceptRequest
+    properties:
+      client_config: *client_config
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          inputs:
+            resource_config:
+              VpcPeeringConnectionId: { get_attribute: [vpc_peering, aws_resource_id] }
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: vpc_peering
+

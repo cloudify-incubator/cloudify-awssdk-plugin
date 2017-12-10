@@ -76,6 +76,7 @@ def aws_resource(class_decl=None,
             '''Inner, worker function'''
             ctx = kwargs['ctx']
             props = ctx.node.properties
+            runtime_instance_properties = ctx.instance.runtime_properties
             # Override the resource ID if needed
             resource_id = kwargs.get(EXT_RES_ID)
             if resource_id and not \
@@ -106,6 +107,15 @@ def aws_resource(class_decl=None,
                 # Update the argument
                 kwargs['resource_config'] = kwargs.get('resource_config') or \
                     resource_config or dict()
+
+                # ``resource_config`` could be part of the runtime instance
+                # properties, If ``resource_config`` is empty then check if it
+                # exists on runtime instance properties
+                if not resource_config and runtime_instance_properties \
+                        and runtime_instance_properties.get('resource_config'):
+                    kwargs['resource_config'] =\
+                        runtime_instance_properties['resource_config']
+
             # Check if using external
             if ctx.node.properties.get('use_external_resource', False):
                 resource_id = utils.get_resource_id(

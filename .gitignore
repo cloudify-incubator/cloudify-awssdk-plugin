@@ -92,3 +92,6 @@ ENV/
 inputs.yaml
 local-storage/
 .cloudify/
+
+# IDE
+.idea
