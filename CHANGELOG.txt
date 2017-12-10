@@ -1,3 +1,7 @@
+1.0.1:
+- Add ECS support (Cluster, Service, Task Definition) + Blueprint Example.
+- Fix several bugs with ELBv2.
+
 1.0.0:
 - autoscaling_group
 - autoscaling launch_configuration

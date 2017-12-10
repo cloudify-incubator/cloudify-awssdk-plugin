@@ -84,9 +84,8 @@ class TestELBLoadBalancer(TestBase):
         self.load_balancer.client = self.make_client_function(
             'create_load_balancer',
             return_value=value)
-        res, arn = self.load_balancer.create(value)
-        self.assertEqual(res, 'name')
-        self.assertEqual(arn, 'arn')
+        output = self.load_balancer.create(value)
+        self.assertEqual(output, value)
 
     def test_class_delete(self):
         params = {}

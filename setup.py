@@ -15,47 +15,14 @@
 """Cloudify plugin package config"""
 
 from setuptools import setup
+from setuptools import find_packages
 
 
 setup(
     name='cloudify-awssdk-plugin',
-    version='1.0.0',
+    version='1.1.0',
     license='LICENSE',
-    packages=[
-        'cloudify_awssdk',
-        'cloudify_awssdk.common',
-        'cloudify_awssdk.autoscaling',
-        'cloudify_awssdk.autoscaling.resources',
-        'cloudify_awssdk.cloudwatch',
-        'cloudify_awssdk.cloudwatch.resources',
-        'cloudify_awssdk.cloudformation',
-        'cloudify_awssdk.cloudformation.resources',
-        'cloudify_awssdk.dynamodb',
-        'cloudify_awssdk.dynamodb.resources',
-        'cloudify_awssdk.ec2',
-        'cloudify_awssdk.ec2.resources',
-        'cloudify_awssdk.efs',
-        'cloudify_awssdk.efs.resources',
-        'cloudify_awssdk.elb',
-        'cloudify_awssdk.elb.resources',
-        'cloudify_awssdk.elb.resources.classic',
-        'cloudify_awssdk.iam',
-        'cloudify_awssdk.iam.resources',
-        'cloudify_awssdk.kms',
-        'cloudify_awssdk.kms.resources',
-        'cloudify_awssdk.lambda_serverless',
-        'cloudify_awssdk.lambda_serverless.resources',
-        'cloudify_awssdk.rds',
-        'cloudify_awssdk.rds.resources',
-        'cloudify_awssdk.route53',
-        'cloudify_awssdk.route53.resources',
-        'cloudify_awssdk.s3',
-        'cloudify_awssdk.s3.resources',
-        'cloudify_awssdk.sns',
-        'cloudify_awssdk.sns.resources',
-        'cloudify_awssdk.sqs',
-        'cloudify_awssdk.sqs.resources'
-    ],
+    packages=find_packages(exclude=['tests*']),
     description='A Cloudify plugin for AWS',
     install_requires=[
         'cloudify-plugins-common>=3.4',

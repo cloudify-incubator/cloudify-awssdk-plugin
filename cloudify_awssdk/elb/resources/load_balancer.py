@@ -27,7 +27,9 @@ from cloudify_awssdk.common.constants import (
     EXTERNAL_RESOURCE_ID
 )
 # Boto
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, ParamValidationError
+
+from cloudify.exceptions import NonRecoverableError
 
 RESOURCE_TYPE = 'ELB Load Balancer'
 RESOURCE_NAME = 'LoadBalancerName'
@@ -59,8 +61,8 @@ class ELBLoadBalancer(ELBBase):
         try:
             resources = self.client.describe_load_balancers(
                 Names=[self.resource_id])
-        except ClientError:
-            pass
+        except (ClientError, ParamValidationError) as e:
+            self.logger.warn('Igoring error: {0}'.format(str(e)))
         else:
             return None \
                 if not resources else resources['LoadBalancers'][0]
@@ -83,8 +85,7 @@ class ELBLoadBalancer(ELBBase):
                           % (self.type_name, params))
         res = self.client.create_load_balancer(**params)
         self.logger.debug('Response: %s' % res)
-        self.update_resource_id(res['LoadBalancers'][0][RESOURCE_NAME])
-        return self.resource_id, res['LoadBalancers'][0][LB_ARN]
+        return res
 
     def delete(self, params=None):
         '''
@@ -165,7 +166,18 @@ def create(ctx, iface, resource_config, **_):
     params[SECGROUPS] = secgroups_from_params
 
     # Actually create the resource
-    iface.create(params)
+    output = iface.create(params)
+    lb_id = output['LoadBalancers'][0][RESOURCE_NAME]
+    iface.resource_id = lb_id
+    try:
+        utils.update_resource_id(
+            ctx.instance, lb_id)
+        utils.update_resource_arn(
+            ctx.instance, output['LoadBalancers'][0][LB_ARN])
+    except (IndexError, KeyError) as e:
+        raise NonRecoverableError(
+            '{0}: {1} or {2} not located in response: {3}'.format(
+                str(e), RESOURCE_NAME, LB_ARN, output))
 
 
 @decorators.aws_resource(ELBLoadBalancer,

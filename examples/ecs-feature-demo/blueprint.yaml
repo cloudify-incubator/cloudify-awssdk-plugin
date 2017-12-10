@@ -1,0 +1,404 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+- https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/4.2/resources/rest-service/cloudify/types/types.yaml
+- http://getcloudify.org.s3.amazonaws.com/spec/aws-plugin/1.4.13/plugin.yaml
+# - plugin.yaml
+- https://raw.githubusercontent.com/cloudify-incubator/cloudify-awssdk-plugin/a7683d6eb5967a4003def575e8112aea1c8aed2a/plugin.yaml
+
+inputs:
+
+  aws_access_key_id:
+    type: string
+    default: { get_secret: aws_access_key_id }
+
+  aws_secret_access_key:
+    type: string
+    default: { get_secret: aws_secret_access_key }
+
+  aws_region_name:
+    type: string
+    default: { get_secret: ec2_region_name }
+
+  container_instances_ami:
+    default: ami-eca289fb
+
+  container_instances_instance_type:
+    default: t2.micro
+
+  container_name:
+    default: wordpress
+
+  container_port:
+    default: 80
+
+dsl_definitions:
+
+  client_config: &client_config
+    aws_access_key_id: { get_input: aws_access_key_id }
+    aws_secret_access_key: { get_input: aws_secret_access_key }
+    region_name: { get_input: aws_region_name }
+
+  aws_config: &aws_config
+    aws_access_key_id: { get_input: aws_access_key_id }
+    aws_secret_access_key: { get_input: aws_secret_access_key }
+    ec2_region_name: { get_input: aws_region_name }
+
+node_templates:
+
+  ecs_service:
+    type: cloudify.nodes.aws.ECS.Service
+    properties:
+      client_config: *client_config
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: ecs_cluster
+    - type: cloudify.relationships.depends_on
+      target: elb
+    - type: cloudify.relationships.depends_on
+      target: forward_target_group
+    - type: cloudify.relationships.depends_on
+      target: task_definition
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure:
+          inputs:
+            resource_config:
+              serviceName: 'service_name_1'
+              taskDefinition: { get_property: [ task_definition, resource_config, kwargs, family ] }
+              desiredCount: 1
+              loadBalancers:
+              - targetGroupArn: { get_attribute: [ forward_target_group, aws_resource_arn ] }
+                containerName: { get_input: container_name }
+                containerPort: { get_input: container_port }
+
+  ecs_autoscaling_group:
+    type: cloudify.nodes.aws.autoscaling.Group
+    properties:
+      client_config: *client_config
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: container_instances
+    - type: cloudify.relationships.depends_on
+      target: subnet1
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure:
+          inputs:
+            resource_config:
+              AutoScalingGroupName: ecs_autoscaling_group
+              MinSize: 1
+              MaxSize: 1
+              DesiredCapacity: 1
+              DefaultCooldown: 20
+              AvailabilityZones:
+              - { get_property: [ subnet1, resource_config, kwargs, AvailabilityZone ] }
+              VPCZoneIdentifier: { get_attribute: [ subnet1, aws_resource_id ] }
+        delete:
+          implementation: awssdk.cloudify_awssdk.autoscaling.resources.autoscaling_group.delete
+          inputs:
+            resource_config:
+              ForceDelete: true
+
+  container_instances:
+    type: cloudify.nodes.aws.autoscaling.LaunchConfiguration
+    properties:
+      resource_config:
+        kwargs:
+          ImageId: { get_input: container_instances_ami }
+          InstanceType: { get_input: container_instances_instance_type }
+          LaunchConfigurationName: container_instances
+      client_config: *client_config
+
+  forward_rule:
+    type: cloudify.nodes.aws.elb.Rule
+    properties:
+      client_config: *client_config
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure:
+          inputs:
+            resource_config:
+              Priority: 101
+              Conditions:
+                - Field: 'host-header'
+                  Values:
+                    - example.com
+              Actions:
+                - Type: forward
+                  TargetGroupArn: { get_attribute: [ forward_target_group, aws_resource_arn ] }
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: vpc
+    - type: cloudify.relationships.depends_on
+      target: http_listener
+    - type: cloudify.relationships.depends_on
+      target: forward_target_group
+
+  http_listener:
+    type: cloudify.nodes.aws.elb.Listener
+    properties:
+      client_config: *client_config
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure:
+          inputs:
+            resource_config:
+              Protocol: HTTP
+              Port: 8080
+              DefaultActions:
+                - Type: forward
+                  TargetGroupArn: { get_attribute: [ forward_target_group, aws_resource_arn ] }
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: elb
+    - type: cloudify.relationships.depends_on
+      target: forward_target_group
+
+  forward_target_group:
+    type: cloudify.nodes.aws.elb.TargetGroup
+    properties:
+      resource_config:
+        kwargs:
+          Name: test-elb-target-group
+          Protocol: HTTP
+          Port: 8080
+          HealthCheckProtocol: HTTP
+          HealthCheckPort: '80'
+          HealthCheckIntervalSeconds: 30
+          HealthCheckTimeoutSeconds: 5
+          UnhealthyThresholdCount: 3
+          Matcher:
+            HttpCode: '404'
+          Attributes:
+            - Key: stickiness.enabled
+              Value: 'true'
+      client_config: *client_config
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: vpc
+
+  elb:
+    type: cloudify.nodes.aws.elb.LoadBalancer
+    properties:
+      resource_config:
+        kwargs:
+          Name: test-elb
+          Scheme: internet-facing
+          Attributes:
+            - Key: idle_timeout.timeout_seconds
+              Value: '30'
+      client_config: *client_config
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: subnet1
+    - type: cloudify.relationships.depends_on
+      target: subnet2
+    - type: cloudify.relationships.depends_on
+      target: subnet3
+    - type: cloudify.relationships.depends_on
+      target: securitygroup1
+
+  securitygroup1_ingress:
+    type: cloudify.nodes.aws.ec2.SecurityGroupRuleIngress
+    properties:
+      client_config: *client_config
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        start:
+          inputs:
+            aws_resource_id: { get_attribute: [ securitygroup1, aws_resource_id ]}
+            resource_config:
+              IpPermissions:
+              - FromPort: 22
+                ToPort: 22
+                IpProtocol: tcp
+                IpRanges:
+                - CidrIp: 0.0.0.0/0
+              - FromPort: { get_input: container_port }
+                ToPort: { get_input: container_port }
+                IpProtocol: tcp
+                IpRanges:
+                - CidrIp: 0.0.0.0/0
+              - FromPort: 31000
+                ToPort: 61000
+                IpProtocol: tcp
+                IpRanges:
+                - CidrIp: 0.0.0.0/0
+        stop:
+          inputs:
+            aws_resource_id: { get_attribute: [ securitygroup1, aws_resource_id ]}
+            resource_config:
+              IpPermissions:
+              - FromPort: 22
+                ToPort: 22
+                IpProtocol: tcp
+                IpRanges:
+                - CidrIp: 0.0.0.0/0
+              - FromPort: { get_input: container_port }
+                ToPort: { get_input: container_port }
+                IpProtocol: tcp
+                IpRanges:
+                - CidrIp: 0.0.0.0/0
+              - FromPort: 31000
+                ToPort: 61000
+                IpProtocol: tcp
+                IpRanges:
+                - CidrIp: 0.0.0.0/0
+    relationships:
+    - type: cloudify.relationships.contained_in
+      target: securitygroup1
+
+  securitygroup1:
+    type: cloudify.nodes.aws.ec2.SecurityGroup
+    properties:
+      resource_config:
+        kwargs:
+          GroupName: SecurityGroup1
+          Description: Example Security Group 1
+      client_config: *client_config
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: vpc
+
+  subnet3:
+    type: cloudify.nodes.aws.ec2.Subnet
+    properties:
+      resource_config:
+        kwargs:
+          CidrBlock: '10.0.2.0/24'
+          AvailabilityZone: { concat: [ { get_input: aws_region_name}, 'c' ] }
+      client_config: *client_config
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: vpc
+
+  subnet2:
+    type: cloudify.nodes.aws.ec2.Subnet
+    properties:
+      resource_config:
+        kwargs:
+          CidrBlock: '10.0.1.0/24'
+          AvailabilityZone: { concat: [ { get_input: aws_region_name}, 'b' ] }
+      client_config: *client_config
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: vpc
+
+  route:
+    type: cloudify.nodes.aws.ec2.Route
+    properties:
+      resource_config:
+        kwargs:
+          DestinationCidrBlock: '0.0.0.0/0'
+      client_config: *client_config
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: route_table1
+      - type: cloudify.relationships.connected_to
+        target: igw
+
+  route_table1:
+    type: cloudify.nodes.aws.ec2.RouteTable
+    properties:
+      client_config: *client_config
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: vpc
+      - type: cloudify.relationships.connected_to
+        target: subnet1
+
+  igw:
+    type: cloudify.nodes.aws.ec2.InternetGateway
+    properties:
+      client_config: *client_config
+    relationships:
+      - type: cloudify.relationships.connected_to
+        target: vpc
+
+  subnet1:
+    type: cloudify.nodes.aws.ec2.Subnet
+    properties:
+      resource_config:
+        kwargs:
+          CidrBlock: '10.0.0.0/24'
+          AvailabilityZone: { concat: [ { get_input: aws_region_name}, 'a' ] }
+      client_config: *client_config
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: vpc
+
+  vpc:
+    type: cloudify.nodes.aws.ec2.Vpc
+    properties:
+      resource_config:
+        kwargs:
+          CidrBlock: '10.0.0.0/16'
+      client_config: *client_config
+
+  task_definition:
+    type: cloudify.nodes.aws.ECS.TaskDefinition
+    properties:
+      resource_config:
+        kwargs:
+          family: 'task_definition_1'
+          containerDefinitions: [
+            {
+              "name": "wordpress",
+              "links": [
+                "mysql"
+              ],
+              "image": "wordpress",
+              "essential": true,
+              "portMappings": [
+                {
+                  "containerPort": 80,
+                  "hostPort": 80
+                }
+              ],
+              "memory": 500,
+              "cpu": 10
+            }, {
+              "environment": [
+                {
+                  "name": "MYSQL_ROOT_PASSWORD",
+                  "value": "password"
+                }
+              ],
+              "name": "mysql",
+              "image": "mysql",
+              "cpu": 10,
+              "memory": 500,
+              "essential": true
+            }]
+          # Use JSON as above, or YAML as below.
+          # - name: wordpress
+          #   links:
+          #   - mysql
+          #   image: wordpress
+          #   essential: true
+          #   portMappings:
+          #   - containerPort: 80
+          #     hostPort: 80
+          #   memory: 500
+          #   cpu: 10
+          # - name: mysql
+          #   image: mysql
+          #   essential: true
+          #   memory: 500
+          #   cpu: 10
+          #   environment:
+          #   - name: MYSQL_ROOT_PASSWORD
+          #     value: password
+      client_config: *client_config
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: ecs_cluster
+
+  ecs_cluster:
+    type: cloudify.nodes.aws.ECS.Cluster
+    properties:
+      resource_config:
+        kwargs:
+          clusterName: 'my_cluster'
+      client_config: *client_config
