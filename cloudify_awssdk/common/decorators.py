@@ -17,8 +17,10 @@
     ~~~~~~~~~~~~~~~~~
     AWS decorators
 '''
-# Cloudify
+# Cloudify imports
 from cloudify.exceptions import (OperationRetry, NonRecoverableError)
+
+# Local imports
 from cloudify_awssdk.common import utils
 from cloudify_awssdk.common.constants import (
     EXTERNAL_RESOURCE_ARN as EXT_RES_ARN,
@@ -96,6 +98,8 @@ def aws_resource(class_decl=None,
                 resource_id=utils.get_resource_id(
                     node=ctx.node,
                     instance=ctx.instance)) if class_decl else None
+
+            resource_config = None
             if not ignore_properties:
                 # Normalize resource_config property
                 resource_config = props.get('resource_config') or dict()
@@ -115,6 +119,7 @@ def aws_resource(class_decl=None,
                         and runtime_instance_properties.get('resource_config'):
                     kwargs['resource_config'] =\
                         runtime_instance_properties['resource_config']
+                    resource_config = kwargs['resource_config']
 
             # Check if using external
             if ctx.node.properties.get('use_external_resource', False):
@@ -123,6 +128,13 @@ def aws_resource(class_decl=None,
                 ctx.logger.info('%s ID# "%s" is user-provided.'
                                 % (resource_type, resource_id))
                 if not kwargs.get('force_operation', False):
+                    # If ``force_operation`` is not set then we need to make
+                    #  sure that runtime properties for node instance are
+                    # setting correctly
+                    # Set ``resource_config`` and ``EXT_RES_ID``
+                    ctx.instance.runtime_properties[
+                        'resource_config'] = resource_config
+                    ctx.instance.runtime_properties[EXT_RES_ID] = resource_id
                     return
                 ctx.logger.warn('%s ID# "%s" has force_operation set.'
                                 % (resource_type, resource_id))

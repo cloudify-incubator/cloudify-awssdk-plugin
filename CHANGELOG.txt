@@ -1,3 +1,10 @@
+1.2.0.1:
+- Fix bug with empty runtime properties for node when ``use_external_resource``
+ is set True
+
+1.2.0:
+- VPC Peering.
+
 1.0.1:
 - Add ECS support (Cluster, Service, Task Definition) + Blueprint Example.
 - Fix several bugs with ELBv2.
