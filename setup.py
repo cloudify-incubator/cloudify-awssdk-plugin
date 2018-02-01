@@ -26,7 +26,7 @@ setup(
     description='A Cloudify plugin for AWS',
     install_requires=[
         'cloudify-plugins-common>=3.4',
-        'boto3==1.4.4',
-        'botocore==1.5.44'
+        'boto3==1.5.22',
+        'botocore==1.8.36'
     ]
 )
