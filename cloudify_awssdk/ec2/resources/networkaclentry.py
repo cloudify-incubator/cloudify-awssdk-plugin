@@ -125,7 +125,9 @@ def create(ctx, iface, resource_config, **_):
         return iface.replace(params)
 
     # Actually create the resource
-    iface.create(params)
+    create_response = iface.create(params)
+    ctx.instance.runtime_properties['create_response'] = \
+        utils.JsonCleanuper(create_response).to_dict()
 
 
 @decorators.aws_resource(EC2NetworkAclEntry, RESOURCE_TYPE,

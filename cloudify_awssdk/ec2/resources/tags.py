@@ -98,7 +98,10 @@ def create(ctx, iface, resource_config, **_):
              .get(EXTERNAL_RESOURCE_ID) for rel in targets]
         params['Resources'] = resources
 
-    iface.create(params)
+    # Actually create the resource
+    create_response = iface.create(params)
+    ctx.instance.runtime_properties['create_response'] = \
+        utils.JsonCleanuper(create_response).to_dict()
 
 
 @decorators.aws_resource(EC2Tags, RESOURCE_TYPE)

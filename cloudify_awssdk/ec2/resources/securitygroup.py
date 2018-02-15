@@ -153,8 +153,11 @@ def create(ctx, iface, resource_config, **_):
             vpc.target.instance.runtime_properties.get(
                 EXTERNAL_RESOURCE_ID)
 
-    group = iface.create(params)
-    group_id = group.get(GROUPID, '')
+    # Actually create the resource
+    create_response = iface.create(params)
+    ctx.instance.runtime_properties['create_response'] = \
+        utils.JsonCleanuper(create_response).to_dict()
+    group_id = create_response.get(GROUPID, '')
     iface.update_resource_id(group_id)
     utils.update_resource_id(
         ctx.instance, group_id)

@@ -96,8 +96,11 @@ def create(ctx, iface, resource_config, **_):
     params = \
         dict() if not resource_config else resource_config.copy()
 
-    vpc = iface.create(params)
-    vpc_id = vpc.get(VPC_ID, '')
+    # Actually create the resource
+    create_response = iface.create(params)
+    ctx.instance.runtime_properties['create_response'] = \
+        utils.JsonCleanuper(create_response).to_dict()
+    vpc_id = create_response.get(VPC_ID, '')
     iface.update_resource_id(vpc_id)
     utils.update_resource_id(
         ctx.instance, vpc_id)
