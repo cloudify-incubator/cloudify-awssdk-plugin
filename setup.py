@@ -20,13 +20,13 @@ from setuptools import find_packages
 
 setup(
     name='cloudify-awssdk-plugin',
-    version='1.2.0.2',
+    version='1.2.0.3',
     license='LICENSE',
     packages=find_packages(exclude=['tests*']),
     description='A Cloudify plugin for AWS',
     install_requires=[
         'cloudify-plugins-common>=3.4',
-        'boto3==1.4.4',
-        'botocore==1.5.44'
+        'boto3==1.5.22',
+        'botocore==1.8.36'
     ]
 )
