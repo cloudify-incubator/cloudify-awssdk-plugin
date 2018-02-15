@@ -124,8 +124,11 @@ def create(ctx, iface, resource_config, **_):
             targ.instance.runtime_properties.get(
                 'resource_config', {}).get(CIDR_BLOCK)
 
-    subnet = iface.create(params)
-    subnet_id = subnet.get(SUBNET_ID)
+    # Actually create the resource
+    create_response = iface.create(params)
+    ctx.instance.runtime_properties['create_response'] = \
+        utils.JsonCleanuper(create_response).to_dict()
+    subnet_id = create_response.get(SUBNET_ID)
     iface.update_resource_id(subnet_id)
     utils.update_resource_id(ctx.instance, subnet_id)
 

@@ -120,8 +120,11 @@ def create(ctx, iface, resource_config, **_):
         dict() if not resource_config else resource_config.copy()
 
     # Actually create the resource
-    vpn_gateway = iface.create(params)
-    utils.update_resource_id(ctx.instance, vpn_gateway.get(VPNGATEWAY_ID))
+    # Actually create the resource
+    create_response = iface.create(params)
+    ctx.instance.runtime_properties['create_response'] = \
+        utils.JsonCleanuper(create_response).to_dict()
+    utils.update_resource_id(ctx.instance, create_response.get(VPNGATEWAY_ID))
 
 
 @decorators.aws_resource(EC2VPNGateway, RESOURCE_TYPE,

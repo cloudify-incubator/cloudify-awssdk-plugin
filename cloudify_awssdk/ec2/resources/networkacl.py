@@ -142,8 +142,10 @@ def create(ctx, iface, resource_config, **_):
             targ.target.instance.runtime_properties.get(EXTERNAL_RESOURCE_ID)
 
     # Actually create the resource
-    network_acl = iface.create(params)
-    network_acl_id = network_acl.get(NETWORKACL_ID, '')
+    create_response = iface.create(params)
+    ctx.instance.runtime_properties['create_response'] = \
+        utils.JsonCleanuper(create_response).to_dict()
+    network_acl_id = create_response.get(NETWORKACL_ID, '')
     iface.update_resource_id(network_acl_id)
     utils.update_resource_id(ctx.instance, network_acl_id)
 

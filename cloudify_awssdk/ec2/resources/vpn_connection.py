@@ -100,18 +100,21 @@ def prepare(ctx, resource_config, **_):
 def create(ctx, iface, resource_config, **_):
     """Creates an AWS EC2 VPN Connection"""
     params = dict() if not resource_config else resource_config.copy()
-    response = iface.create(params)
-    if response:
+    # Actually create the resource
+    create_response = iface.create(params)
+    ctx.instance.runtime_properties['create_response'] = \
+        utils.JsonCleanuper(create_response).to_dict()
+    if create_response:
         resource_id = \
             utils.get_resource_id(
                 ctx.node,
                 ctx.instance,
-                response.get(VPN_CONNECTION_ID),
+                create_response.get(VPN_CONNECTION_ID),
                 use_instance_id=True
             )
 
         utils.update_resource_id(ctx.instance, resource_id)
-        prepare_describe_vpn_connection_filter(response, iface)
+        prepare_describe_vpn_connection_filter(create_response, iface)
 
 
 @decorators.aws_resource(EC2VPNConnection, RESOURCE_TYPE)

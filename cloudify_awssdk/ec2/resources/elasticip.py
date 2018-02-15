@@ -116,12 +116,14 @@ def create(ctx, iface, resource_config, **_):
         dict() if not resource_config else resource_config.copy()
 
     # Actually create the resource
-    elasticip = iface.create(params)
-    elasticip_id = elasticip.get(ELASTICIP_ID, '')
+    create_response = iface.create(params)
+    ctx.instance.runtime_properties['create_response'] = \
+        utils.JsonCleanuper(create_response).to_dict()
+    elasticip_id = create_response.get(ELASTICIP_ID, '')
     iface.update_resource_id(elasticip_id)
     utils.update_resource_id(ctx.instance, elasticip_id)
     ctx.instance.runtime_properties['allocation_id'] = \
-        elasticip.get(ALLOCATION_ID)
+        create_response.get(ALLOCATION_ID)
 
 
 @decorators.aws_resource(EC2ElasticIP, RESOURCE_TYPE,
