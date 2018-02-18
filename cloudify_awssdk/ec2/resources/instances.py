@@ -20,15 +20,15 @@
 
 # Common
 import json
-
 # Cloudify
 from cloudify import compute
 from cloudify import ctx
+from cloudify.exceptions import NonRecoverableError
 from cloudify_awssdk.common import decorators, utils
 from cloudify_awssdk.common.constants import EXTERNAL_RESOURCE_ID
 from cloudify_awssdk.ec2 import EC2Base
 # Boto
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, ParamValidationError
 
 RESOURCE_TYPE = 'EC2 Instances'
 RESERVATIONS = 'Reservations'
@@ -207,7 +207,11 @@ def create(ctx, iface, resource_config, **_):
                 nic['DeviceIndex'] = n
     params[NETWORK_INTERFACES] = all_nics
 
-    create_response = iface.create(params)
+    try:
+        create_response = iface.create(params)
+    except ParamValidationError as e:
+        raise NonRecoverableError(str(e))
+
     ctx.instance.runtime_properties['create_response'] = \
         utils.JsonCleanuper(create_response).to_dict()
     instance = create_response.get(INSTANCES, [None])[0]
