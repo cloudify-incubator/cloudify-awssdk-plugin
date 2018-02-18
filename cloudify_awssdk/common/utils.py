@@ -316,3 +316,48 @@ def validate_arn(arn_candidate, arn_regex=constants.ARN_REGEX):
 
 def get_uuid():
     return str(uuid.uuid4())
+
+
+class JsonCleanuper(object):
+
+    def __init__(self, ob):
+        try:
+            resource = ob.to_dict()
+        except AttributeError:
+            resource = ob
+
+        if isinstance(resource, list):
+            self._cleanuped_list(resource)
+        elif isinstance(resource, dict):
+            self._cleanuped_dict(resource)
+
+        self.value = resource
+
+    def _cleanuped_list(self, resource):
+        for k, v in enumerate(resource):
+            if not v:
+                continue
+            if isinstance(v, list):
+                self._cleanuped_list(v)
+            elif isinstance(v, dict):
+                self._cleanuped_dict(v)
+            elif (not isinstance(v, int) and  # integer and bool
+                  not isinstance(v, str) and
+                  not isinstance(v, unicode)):
+                resource[k] = str(v)
+
+    def _cleanuped_dict(self, resource):
+        for k in resource:
+            if not resource[k]:
+                continue
+            if isinstance(resource[k], list):
+                self._cleanuped_list(resource[k])
+            elif isinstance(resource[k], dict):
+                self._cleanuped_dict(resource[k])
+            elif (not isinstance(resource[k], int) and  # integer and bool
+                  not isinstance(resource[k], str) and
+                  not isinstance(resource[k], unicode)):
+                resource[k] = str(resource[k])
+
+    def to_dict(self):
+        return self.value
