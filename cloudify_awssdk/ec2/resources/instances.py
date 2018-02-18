@@ -29,9 +29,6 @@ from cloudify_awssdk.common.constants import EXTERNAL_RESOURCE_ID
 from cloudify_awssdk.ec2 import EC2Base
 # Boto
 from botocore.exceptions import ClientError
-# from cloudify.exceptions import (
-#     NonRecoverableError,
-#     OperationRetry)
 
 RESOURCE_TYPE = 'EC2 Instances'
 RESERVATIONS = 'Reservations'
