@@ -141,7 +141,7 @@ def create(ctx, iface, resource_config, **_):
     iface.update_resource_id(eni_id)
     utils.update_resource_id(ctx.instance, eni_id)
     ctx.instance.runtime_properties['device_index'] = \
-        ctx.instance.runtime_properties.get('device_index', 1)
+        ctx.instance.runtime_properties.get('device_index')
 
 
 @decorators.aws_resource(EC2NetworkInterface, RESOURCE_TYPE,
