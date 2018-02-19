@@ -128,25 +128,30 @@ def create(ctx, iface, resource_config, **_):
 
         # Allow the end user to store the key material in a secret.
         if ctx.node.properties['create_secret'] is True:
+
             try:
                 client = get_rest_client()
             except KeyError:  # No pun intended.
                 raise NonRecoverableError(
                     'create_secret is only supported with a Cloudify Manager.')
-            secret_name = ctx.node.properties.get('secret_name', key_name)
+
             # This makes the line too long for flake8 if included in args.
+            secret_name = ctx.node.properties.get('secret_name', key_name)
             secrets_count = len(client.secrets.list(key=secret_name))
+            secret_value = create_response.get('KeyMaterial')
+
             try:
                 if secrets_count == 0:
                     client.secrets.create(
                         key=secret_name,
-                        value=create_response.get('KeyMaterial'))
+                        value=secret_value)
                 elif secrets_count == 1 and \
-                        ctx.node.properties.get('update_existing_secret', False) is True:
+                        ctx.node.properties.get(
+                            'update_existing_secret', False) is True:
                     client.secrets.update(
                         key=secret_name,
-                        value=create_response.get('KeyMaterial'))
-           except CloudifyClientError as e:
+                        value=secret_value)
+            except CloudifyClientError as e:
                 raise NonRecoverableError(str(e))
 
     cleaned_create_response = \
