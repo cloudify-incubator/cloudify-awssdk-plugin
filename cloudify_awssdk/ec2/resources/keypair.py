@@ -33,6 +33,7 @@ RESOURCE_TYPE = 'EC2 Keypairs'
 KEYPAIRS = 'KeyPairs'
 KEYNAME = 'KeyName'
 KEYNAMES = 'KeyNames'
+PUBLIC_KEY_MATERIAL = 'PublicKeyMaterial'
 
 
 class EC2Keypair(EC2Base):
@@ -74,6 +75,17 @@ class EC2Keypair(EC2Base):
             self.logger.debug('Response: %s' % res)
         return res
 
+    def import_keypair(self, params, log_response=False):
+        '''
+            Create AWS EC2 Instances.
+        '''
+        self.logger.debug('Creating %s with parameters: %s'
+                          % (self.type_name, params))
+        res = self.client.import_key_pair(**params)
+        if log_response is True:
+            self.logger.debug('Response: %s' % res)
+        return res
+
     def delete(self, params):
         '''
             Delete AWS EC2 Instances.
@@ -101,41 +113,51 @@ def create(ctx, iface, resource_config, **_):
 
     if KEYNAME not in params.keys():
         params[KEYNAME] = ctx.instance.id
+    key_name = params[KEYNAME]
 
-    create_response = \
-        iface.create(
-            params,
-            log_response=ctx.node.properties['log_create_response'])
+    if PUBLIC_KEY_MATERIAL in params.keys():
+        create_response = \
+            iface.import_keypair(
+                params,
+                log_response=ctx.node.properties['log_create_response'])
+    else:
+        create_response = \
+            iface.create(
+                params,
+                log_response=ctx.node.properties['log_create_response'])
 
-    key_name = create_response.get(KEYNAME)
+        cleaned_create_response = \
+            utils.JsonCleanuper(create_response).to_dict()
+
+        # Allow the end user to opt-in to storing the key
+        # material in the runtime properties.
+        # Default is false
+        if not ctx.node.properties['store_in_runtime_properties'] is True:
+            del cleaned_create_response['KeyMaterial']
+        ctx.instance.runtime_properties['create_response'] = \
+            cleaned_create_response
+
+        # Allow the end user to store the key material in a secret.
+        if ctx.node.properties['create_secret'] is True:
+            try:
+                client = get_rest_client()
+            except KeyError:  # No pun intended.
+                raise NonRecoverableError(
+                    'create_secret is only supported with a Cloudify Manager.')
+            secret_name = ctx.node.properties.get('secret_name', key_name)
+            # This makes the line too long for flake8 if included in args.
+            update_key = ctx.node.properties['update_existing_secret']
+            try:
+                client.secrets.create(
+                    key=secret_name,
+                    value=create_response.get('KeyMaterial'),
+                    update_if_exists=update_key)
+            except CloudifyClientError as e:
+                raise NonRecoverableError(
+                    'Failed to store secret: {0}.'.format(str(e)))
+
     iface.update_resource_id(key_name)
     utils.update_resource_id(ctx.instance, key_name)
-
-    cleaned_create_response = utils.JsonCleanuper(create_response).to_dict()
-    # Allow the end user to opt-in to storing the key
-    # material in the runtime properties.
-    # Default is false
-    if not ctx.node.properties['store_in_runtime_properties'] is True:
-        del cleaned_create_response['KeyMaterial']
-    ctx.instance.runtime_properties['create_response'] = \
-        cleaned_create_response
-
-    # Allow the end user to store the key material in a secret.
-    if ctx.node.properties['create_secret'] is True:
-        try:
-            client = get_rest_client()
-        except KeyError:  # No pun intended.
-            raise NonRecoverableError(
-                'create_secret is only supported with a Cloudify Manager.')
-        secret_name = ctx.node.properties.get('secret_name', key_name)
-        try:
-            client.secrets.create(
-                key=secret_name,
-                value=create_response.get('KeyMaterial'),
-                update_if_exists=ctx.node.properties['update_existing_secret'])
-        except CloudifyClientError as e:
-            raise NonRecoverableError(
-                'Failed to store secret: {0}.'.format(str(e)))
 
 
 @decorators.aws_resource(EC2Keypair, RESOURCE_TYPE)

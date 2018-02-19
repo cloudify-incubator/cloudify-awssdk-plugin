@@ -15,7 +15,7 @@
 import unittest
 from cloudify_awssdk.common.tests.test_base import TestBase, mock_decorator
 from cloudify_awssdk.ec2.resources.keypair import (
-    EC2Keypair, KEYPAIRS, KEYNAME)
+    EC2Keypair, KEYPAIRS, KEYNAME, PUBLIC_KEY_MATERIAL)
 from mock import patch, MagicMock
 from cloudify_awssdk.ec2.resources import keypair
 from cloudify.state import current_ctx
@@ -92,6 +92,23 @@ class TestEC2Keypair(TestBase):
         ctx = self.get_mock_ctx("EC2Keypair", test_properties=test_properties)
         current_ctx.set(ctx=ctx)
         params = {KEYNAME: 'test_name'}
+        self.keypair.resource_id = 'test_name'
+        iface = MagicMock()
+        value = {KEYNAME: 'test_name'}
+        iface.create = self.mock_return(value)
+        keypair.create(ctx, iface, params)
+        self.assertEqual(self.keypair.resource_id,
+                         'test_name')
+
+    def test_import(self):
+        test_properties = {
+            'log_create_response': False,
+            'store_in_runtime_properties': True,
+            'create_secret': False
+        }
+        ctx = self.get_mock_ctx("EC2Keypair", test_properties=test_properties)
+        current_ctx.set(ctx=ctx)
+        params = {KEYNAME: 'test_name', PUBLIC_KEY_MATERIAL: 'test_material'}
         self.keypair.resource_id = 'test_name'
         iface = MagicMock()
         value = {KEYNAME: 'test_name'}

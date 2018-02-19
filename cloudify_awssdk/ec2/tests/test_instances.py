@@ -15,7 +15,9 @@
 import unittest
 from cloudify_awssdk.common.tests.test_base import TestBase, mock_decorator
 from cloudify_awssdk.ec2.resources.instances import (
-    EC2Instances, INSTANCES, RESERVATIONS, INSTANCE_ID)
+    EC2Instances, INSTANCES, RESERVATIONS, INSTANCE_ID,
+    GROUP_TYPE, NETWORK_INTERFACE_TYPE, SUBNET_TYPE,
+    INSTANCE_IDS)
 from mock import patch, MagicMock
 from cloudify_awssdk.ec2.resources import instances
 from cloudify.state import current_ctx
@@ -73,11 +75,27 @@ class TestEC2Instances(TestBase):
         self.assertEqual(res, 16)
 
     def test_class_create(self):
-        value = {RESERVATIONS: [{INSTANCES: [{INSTANCE_ID: 'test_name'}]}]}
+        value = {RESERVATIONS: [{INSTANCES: [{INSTANCE_IDS: ['test_name']}]}]}
         self.instances.client = \
             self.make_client_function('run_instances',
                                       return_value=value)
         res = self.instances.create(value)
+        self.assertEqual(res, value)
+
+    def test_class_start(self):
+        value = {INSTANCE_IDS: ['test_name']}
+        self.instances.client = \
+            self.make_client_function('start_instances',
+                                      return_value=value)
+        res = self.instances.start(value)
+        self.assertEqual(res, value)
+
+    def test_class_stop(self):
+        value = {INSTANCE_IDS: ['test_name']}
+        self.instances.client = \
+            self.make_client_function('stop_instances',
+                                      return_value=value)
+        res = self.instances.stop(value)
         self.assertEqual(res, value)
 
     def test_class_delete(self):
@@ -139,6 +157,93 @@ class TestEC2Instances(TestBase):
         iface = MagicMock()
         instances.delete(iface, {})
         self.assertTrue(iface.delete.called)
+
+    def test_create_relatonships(self):
+        _source_ctx, _target_ctx, _group_rel = \
+            self._create_common_relationships(
+                'test_node',
+                source_type_hierarchy=['cloudify.nodes.Root',
+                                       'cloudify.nodes.Compute'],
+                target_type_hierarchy=['cloudify.nodes.Root',
+                                       GROUP_TYPE])
+
+        _source_ctx, _target_ctx, _subnet_type = \
+            self._create_common_relationships(
+                'test_node',
+                source_type_hierarchy=['cloudify.nodes.Root',
+                                       'cloudify.nodes.Compute'],
+                target_type_hierarchy=['cloudify.nodes.Root',
+                                       SUBNET_TYPE])
+
+        _source_ctx, _target_ctx, _nic_type = \
+            self._create_common_relationships(
+                'test_node',
+                source_type_hierarchy=['cloudify.nodes.Root',
+                                       'cloudify.nodes.Compute'],
+                target_type_hierarchy=['cloudify.nodes.Root',
+                                       NETWORK_INTERFACE_TYPE])
+
+        _ctx = self.get_mock_ctx(
+            "EC2Instances",
+            test_properties={'os_family': 'linux'},
+            type_hierarchy=['cloudify.nodes.Root', 'cloudify.nodes.Compute'],
+            test_relationships=[_group_rel, _subnet_type, _nic_type])
+        current_ctx.set(_ctx)
+        params = {'ImageId': 'test image', 'InstanceType': 'test type'}
+        iface = MagicMock()
+        self.instances.resource_id = 'test_name'
+        with patch('cloudify_awssdk.common.utils.find_rels_by_node_type'):
+            instances.create(_ctx, iface, params)
+            self.assertEqual(self.instances.resource_id, 'test_name')
+
+    def test_start(self):
+        ctx = self.get_mock_ctx(
+            "EC2Instances",
+            test_properties={'os_family': 'linux'},
+            type_hierarchy=['cloudify.nodes.Root', 'cloudify.nodes.Compute'])
+        current_ctx.set(ctx=ctx)
+        iface = MagicMock()
+        instances.start(ctx, iface, {})
+        self.assertTrue(iface.start.called)
+
+    def test_stop(self):
+        ctx = self.get_mock_ctx(
+            "EC2Instances",
+            test_properties={'os_family': 'linux'},
+            type_hierarchy=['cloudify.nodes.Root', 'cloudify.nodes.Compute'])
+        current_ctx.set(ctx=ctx)
+        iface = MagicMock()
+        instances.stop(ctx, iface, {})
+        self.assertTrue(iface.stop.called)
+
+    def test_with_userdata(self):
+        """ this tests that handle user data returns the expected output
+        """
+        _tp = \
+            {
+                'os_family': 'windows',
+                'agent_config': {'install_method': 'init_script'}
+            }
+
+        ctx = self.get_mock_ctx(
+            "EC2Instances",
+            test_properties=_tp,
+            type_hierarchy=['cloudify.nodes.Root', 'cloudify.nodes.Compute'])
+        current_ctx.set(ctx=ctx)
+        ctx.agent.init_script = lambda: 'SCRIPT'
+        ctx.node.properties['agent_config']['install_method'] = 'init_script'
+        current_ctx.set(ctx=ctx)
+        params = \
+            {
+                'ImageId': 'test image',
+                'InstanceType': 'test type',
+                'UserData': ''
+            }
+        handle_userdata_output = \
+            instances._handle_userdata(params['UserData'])
+        expected_userdata = 'SCRIPT'
+        self.assertIn(expected_userdata,
+                      handle_userdata_output)
 
 
 if __name__ == '__main__':

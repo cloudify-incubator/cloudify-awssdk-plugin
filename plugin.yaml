@@ -291,9 +291,15 @@ data_types:
     properties:
       KeyName:
         type: string
+        required: false
         description: >
           If not provided, this defaults to the node-instance ID.
+      PublicKeyMaterial:
+        type: string
         required: false
+        description: >
+          If PublicKeyMaterial is provided, the import_key_pair operation is executed instead of create_key_pair.
+          See documentation: http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.Client.import_key_pair.
       kwargs:
         description: >
           See documentation for http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.Client.create_key_pair.
