@@ -23,7 +23,7 @@ import json
 # Cloudify
 from cloudify import compute
 from cloudify import ctx
-from cloudify.exceptions import NonRecoverableError
+from cloudify.exceptions import NonRecoverableError, OperationRetry
 from cloudify_awssdk.common import decorators, utils
 from cloudify_awssdk.common.constants import EXTERNAL_RESOURCE_ID
 from cloudify_awssdk.ec2 import EC2Base
@@ -229,15 +229,26 @@ def create(ctx, iface, resource_config, **_):
 
 
 @decorators.aws_resource(EC2Instances, RESOURCE_TYPE)
-@decorators.wait_for_status(
-    status_good=[RUNNING],
-    status_pending=[PENDING, STOPPING, SHUTTING_DOWN])
 def start(ctx, iface, resource_config, **_):
     '''Starts AWS EC2 Instances'''
 
-    params = \
-        dict() if not resource_config else resource_config.copy()
-    iface.start({INSTANCE_IDS: params.get(INSTANCE_IDS, [iface.resource_id])})
+    if iface.status in [RUNNING]:
+        current_properties = iface.properties
+        ctx.instance.runtime_properties['public_ip_address'] = \
+            current_properties.get('PublicIpAddress')
+        ctx.instance.runtime_properties['ip'] = \
+            current_properties.get('PrivateIpAddress')
+
+    elif ctx.operation.retry_number == 0:
+        params = \
+            dict() if not resource_config else resource_config.copy()
+        iface.start(
+            {INSTANCE_IDS: params.get(
+                INSTANCE_IDS, [iface.resource_id])})
+
+    raise OperationRetry(
+        '{0} ID# {1} is still in a pending state.'.format(
+            iface.resource_type, iface.resource_id))
 
 
 @decorators.aws_resource(EC2Instances, RESOURCE_TYPE)
