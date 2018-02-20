@@ -244,6 +244,8 @@ def start(ctx, iface, resource_config, **_):
         ctx.instance.runtime_properties['private_ip_address'] = \
             current_properties.get('PrivateIpAddress')
 
+        return
+
     elif ctx.operation.retry_number == 0:
         params = \
             dict() if not resource_config else resource_config.copy()
