@@ -232,7 +232,7 @@ def create(ctx, iface, resource_config, **_):
 def start(ctx, iface, resource_config, **_):
     '''Starts AWS EC2 Instances'''
 
-    if iface.status in [RUNNING]:
+    if iface.status in [RUNNING] and ctx.operation.retry_number > 0:
         current_properties = iface.properties
         ctx.instance.runtime_properties['public_ip_address'] = \
             current_properties.get('PublicIpAddress')
