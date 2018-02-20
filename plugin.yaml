@@ -4,7 +4,7 @@ plugins:
     executor: central_deployment_agent
     source: https://github.com//cloudify-incubator/cloudify-awssdk-plugin/archive/98-Support-Instance-Keypair.zip
     package_name: cloudify-awssdk-plugin
-    package_version: '2.0.0rc3'
+    package_version: '2.0.0rc4'
 
 data_types:
 
@@ -1686,6 +1686,12 @@ node_types:
           Boto3 method. Key names must match the case that Boto3 requires.
         type: cloudify.datatypes.aws.ec2.Instances.config
         required: false
+      use_public_ip:
+        type: boolean
+        description: >
+          Tells the deployment to use the public IP (if available) of the resource
+          for Cloudify Agent connections
+        default: false
     interfaces:
       cloudify.interfaces.lifecycle:
         create:

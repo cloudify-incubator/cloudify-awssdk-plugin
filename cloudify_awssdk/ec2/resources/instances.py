@@ -222,10 +222,6 @@ def create(ctx, iface, resource_config, **_):
     instance_id = instance.get(INSTANCE_ID, '')
     iface.update_resource_id(instance_id)
     utils.update_resource_id(ctx.instance, instance_id)
-    ctx.instance.runtime_properties['public_ip_address'] = \
-        create_response.get('PublicIpAddress')
-    ctx.instance.runtime_properties['ip'] = \
-        create_response.get('PrivateIpAddress')
 
 
 @decorators.aws_resource(EC2Instances, RESOURCE_TYPE)
@@ -234,11 +230,19 @@ def start(ctx, iface, resource_config, **_):
 
     if iface.status in [RUNNING] and ctx.operation.retry_number > 0:
         current_properties = iface.properties
+
+        if ctx.node.properties['use_public_ip']:
+            ctx.instance.runtime_properties['ip'] = \
+                current_properties.get('PublicIpAddress')
+        else:
+            ctx.instance.runtime_properties['ip'] = \
+                    current_properties.get('PrivateIpAddress')
+
         ctx.instance.runtime_properties['public_ip_address'] = \
             current_properties.get('PublicIpAddress')
-        ctx.instance.runtime_properties['ip'] = \
+
+        ctx.instance.runtime_properties['private_ip_address'] = \
             current_properties.get('PrivateIpAddress')
-        return
 
     elif ctx.operation.retry_number == 0:
         params = \
