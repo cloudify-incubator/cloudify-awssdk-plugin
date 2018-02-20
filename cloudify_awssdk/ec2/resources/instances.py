@@ -238,6 +238,7 @@ def start(ctx, iface, resource_config, **_):
             current_properties.get('PublicIpAddress')
         ctx.instance.runtime_properties['ip'] = \
             current_properties.get('PrivateIpAddress')
+        return
 
     elif ctx.operation.retry_number == 0:
         params = \
@@ -248,7 +249,7 @@ def start(ctx, iface, resource_config, **_):
 
     raise OperationRetry(
         '{0} ID# {1} is still in a pending state.'.format(
-            iface.resource_type, iface.resource_id))
+            iface.type_name, iface.resource_id))
 
 
 @decorators.aws_resource(EC2Instances, RESOURCE_TYPE)
