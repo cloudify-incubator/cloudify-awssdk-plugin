@@ -230,20 +230,14 @@ def start(ctx, iface, resource_config, **_):
 
     if iface.status in [RUNNING] and ctx.operation.retry_number > 0:
         current_properties = iface.properties
-
+        ip = current_properties.get('PrivateIpAddress')
+        pip = current_properties.get('PublicIpAddress')
         if ctx.node.properties['use_public_ip']:
-            ctx.instance.runtime_properties['ip'] = \
-                current_properties.get('PublicIpAddress')
+            ctx.instance.runtime_properties['ip'] = pip
         else:
-            ctx.instance.runtime_properties['ip'] = \
-                current_properties.get('PrivateIpAddress')
-
-        ctx.instance.runtime_properties['public_ip_address'] = \
-            current_properties.get('PublicIpAddress')
-
-        ctx.instance.runtime_properties['private_ip_address'] = \
-            current_properties.get('PrivateIpAddress')
-
+            ctx.instance.runtime_properties['ip'] = ip
+        ctx.instance.runtime_properties['public_ip_address'] = pip
+        ctx.instance.runtime_properties['private_ip_address'] = ip
         return
 
     elif ctx.operation.retry_number == 0:
