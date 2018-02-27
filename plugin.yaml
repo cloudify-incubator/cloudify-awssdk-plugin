@@ -2867,3 +2867,4 @@ relationships:
       cloudify.interfaces.relationship_lifecycle:
         establish: { implementation: awssdk.cloudify_awssdk.elb.resources.classic.load_balancer.assoc }
         unlink: { implementation: awssdk.cloudify_awssdk.elb.resources.classic.load_balancer.disassoc }
+ 
