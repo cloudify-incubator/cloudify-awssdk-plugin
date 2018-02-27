@@ -14,7 +14,7 @@
 #    * limitations under the License.
 '''
     EC2.Instances
-    ~~~~~~~~~~~~~~
+    ~~~~~~~~~~~~~~~
     AWS EC2 Instances interface
 '''
 
