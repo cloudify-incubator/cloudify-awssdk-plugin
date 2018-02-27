@@ -24,6 +24,7 @@ from cloudify_awssdk.ec2 import EC2Base
 from botocore.exceptions import ClientError
 
 RESOURCE_TYPE = 'EC2 NAT Gateway'
+NATGATEWAY = 'NatGateway'
 NATGATEWAYS = 'NatGateways'
 NATGATEWAY_ID = 'NatGatewayId'
 NATGATEWAY_IDS = 'NatGatewayIds'
@@ -135,9 +136,11 @@ def create(ctx, iface, resource_config, **_):
         allocation_id
 
     # Actually create the resource
-    nat_gateway = iface.create(params)
+    create_response = iface.create(params)
+    ctx.instance.runtime_properties['create_response'] = \
+        utils.JsonCleanuper(create_response).to_dict()
     utils.update_resource_id(
-        ctx.instance, nat_gateway.get(NATGATEWAY_ID))
+        ctx.instance, create_response.get(NATGATEWAY_ID))
 
 
 @decorators.aws_resource(EC2NatGateway, RESOURCE_TYPE,

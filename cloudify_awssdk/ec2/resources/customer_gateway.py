@@ -109,9 +109,11 @@ def create(ctx, iface, resource_config, **_):
         params.update({PUBLIC_IP: public_ip})
 
     # Actually create the resource
-    customer_gateway = iface.create(params)
+    create_response = iface.create(params)
+    ctx.instance.runtime_properties['create_response'] = \
+        utils.JsonCleanuper(create_response).to_dict()
     utils.update_resource_id(ctx.instance,
-                             customer_gateway.get(CUSTOMERGATEWAY_ID))
+                             create_response.get(CUSTOMERGATEWAY_ID))
 
 
 @decorators.aws_resource(EC2CustomerGateway, RESOURCE_TYPE,

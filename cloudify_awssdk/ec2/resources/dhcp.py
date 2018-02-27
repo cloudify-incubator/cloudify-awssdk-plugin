@@ -112,8 +112,10 @@ def create(ctx, iface, resource_config, **_):
         dict() if not resource_config else resource_config.copy()
 
     # Actually create the resource
-    dhcp_options = iface.create(params)
-    dhcp_options_id = dhcp_options.get(DHCPOPTIONS_ID, '')
+    create_response = iface.create(params)
+    ctx.instance.runtime_properties['create_response'] = \
+        utils.JsonCleanuper(create_response).to_dict()
+    dhcp_options_id = create_response.get(DHCPOPTIONS_ID, '')
     iface.update_resource_id(dhcp_options_id)
     utils.update_resource_id(ctx.instance, dhcp_options_id)
 

@@ -126,8 +126,11 @@ def create(ctx, iface, resource_config, **_):
         params[VPC_ID] = vpc_id or targ.target\
             .instance.runtime_properties.get(EXTERNAL_RESOURCE_ID)
 
-    route_table = iface.create(params)
-    route_table_id = route_table.get(ROUTETABLE_ID)
+    # Actually create the resource
+    create_response = iface.create(params)
+    ctx.instance.runtime_properties['create_response'] = \
+        utils.JsonCleanuper(create_response).to_dict()
+    route_table_id = create_response.get(ROUTETABLE_ID)
     iface.update_resource_id(route_table_id)
     utils.update_resource_id(ctx.instance,
                              route_table_id)

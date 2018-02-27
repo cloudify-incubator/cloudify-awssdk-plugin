@@ -78,7 +78,10 @@ def create(ctx, iface, resource_config, **_):
             use_instance_id=True
         )
     utils.update_resource_id(ctx.instance, resource_id)
-    iface.create(params)
+    # Actually create the resource
+    create_response = iface.create(params)
+    ctx.instance.runtime_properties['create_response'] = \
+        utils.JsonCleanuper(create_response).to_dict()
 
 
 @decorators.aws_resource(EC2VPNConnectionRoute, RESOURCE_TYPE)

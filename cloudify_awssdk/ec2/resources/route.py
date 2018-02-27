@@ -129,7 +129,10 @@ def create(ctx, iface, resource_config, **_):
                 natgateway_id or targ.target.instance.runtime_properties\
                 .get(EXTERNAL_RESOURCE_ID)
 
-    iface.create(params)
+    # Actually create the resource
+    create_response = iface.create(params)
+    ctx.instance.runtime_properties['create_response'] = \
+        utils.JsonCleanuper(create_response).to_dict()
 
 
 @decorators.aws_resource(EC2Route, RESOURCE_TYPE,

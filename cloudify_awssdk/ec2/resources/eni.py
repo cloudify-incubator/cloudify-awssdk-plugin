@@ -136,12 +136,18 @@ def create(ctx, iface, resource_config, **_):
             targ.target.instance.runtime_properties.get(EXTERNAL_RESOURCE_ID)
 
     # Actually create the resource
-    eni = iface.create(params)
-    eni_id = eni.get(NETWORKINTERFACE_ID, '')
+    create_response = iface.create(params)
+    cleaned_create_response = utils.JsonCleanuper(create_response).to_dict()
+    ctx.instance.runtime_properties['create_response'] = \
+        utils.JsonCleanuper(cleaned_create_response).to_dict()
+    eni_id = cleaned_create_response.get(NETWORKINTERFACE_ID, '')
     iface.update_resource_id(eni_id)
     utils.update_resource_id(ctx.instance, eni_id)
     ctx.instance.runtime_properties['device_index'] = \
-        ctx.instance.runtime_properties.get('device_index', 1)
+        cleaned_create_response.get(
+            'Attachment', {}).get(
+                'DeviceIndex',
+                ctx.instance.runtime_properties.get('device_index'))
 
 
 @decorators.aws_resource(EC2NetworkInterface, RESOURCE_TYPE,

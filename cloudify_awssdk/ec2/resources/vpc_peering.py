@@ -143,13 +143,16 @@ def create(ctx, iface, resource_config, **_):
     if requester_vpc_options:
         del params[REQUESTER_VPC_PEERING_CONNECTION]
 
-    response = iface.create(params)
-    if response:
+    # Actually create the resource
+    create_response = iface.create(params)
+    ctx.instance.runtime_properties['create_response'] = \
+        utils.JsonCleanuper(create_response).to_dict()
+    if create_response:
         resource_id = \
             utils.get_resource_id(
                 ctx.node,
                 ctx.instance,
-                response.get(VPC_PEERING_CONNECTION_ID),
+                create_response.get(VPC_PEERING_CONNECTION_ID),
                 use_instance_id=True
             )
 

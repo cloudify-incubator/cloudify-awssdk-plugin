@@ -2,9 +2,9 @@ plugins:
 
   awssdk:
     executor: central_deployment_agent
-    source: https://github.com//cloudify-incubator/cloudify-awssdk-plugin/archive/1.2.0.3.zip
+    source: https://github.com//cloudify-incubator/cloudify-awssdk-plugin/archive/2.0.0.zip
     package_name: cloudify-awssdk-plugin
-    package_version: '1.2.0.3'
+    package_version: '2.0.0'
 
 data_types:
 
@@ -251,6 +251,58 @@ data_types:
   cloudify.datatypes.aws.ec2.Interface.config:
     properties:
       kwargs:
+        default: {}
+
+  cloudify.datatypes.aws.ec2.Instances.LaunchTemplate:
+    properties:
+      LaunchTemplateId:
+        type: string
+        required: false
+      LaunchTemplateName:
+        type: string
+        required: false
+      Version:
+        type: string
+        required: false
+
+  cloudify.datatypes.aws.ec2.Instances.config:
+    properties:
+      MinCount:
+        type: integer
+        default: 1
+      MaxCount:
+        type: integer
+        default: 1
+      ImageId:
+        type: string
+        required: false
+      InstanceType:
+        type: string
+        required: false
+      LaunchTemplate:
+        type: cloudify.datatypes.aws.ec2.Instances.LaunchTemplate
+        required: false
+      kwargs:
+        description: >
+          See documentation for http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.Client.run_instances.
+        default: {}
+
+  cloudify.datatypes.aws.ec2.Keypair.config:
+    properties:
+      KeyName:
+        type: string
+        required: false
+        description: >
+          If not provided, this defaults to the node-instance ID.
+      PublicKeyMaterial:
+        type: string
+        required: false
+        description: >
+          If PublicKeyMaterial is provided, the import_key_pair operation is executed instead of create_key_pair.
+          See documentation: http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.Client.import_key_pair.
+      kwargs:
+        description: >
+          See documentation for http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.Client.create_key_pair.
         default: {}
 
   cloudify.datatypes.aws.ec2.ElasticIP.config:
@@ -1622,6 +1674,86 @@ node_types:
           implementation: awssdk.cloudify_awssdk.ec2.resources.eni.delete
           inputs: *operation_inputs
 
+  cloudify.nodes.aws.ec2.Instances:
+    derived_from: cloudify.nodes.Compute
+    properties:
+      <<: *external_resource
+      <<: *client_config
+      <<: *resource_id
+      resource_config:
+        description: >
+          Configuration key-value data to be passed as-is to the corresponding
+          Boto3 method. Key names must match the case that Boto3 requires.
+        type: cloudify.datatypes.aws.ec2.Instances.config
+        required: false
+      use_public_ip:
+        type: boolean
+        description: >
+          Tells the deployment to use the public IP (if available) of the resource
+          for Cloudify Agent connections
+        default: false
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: awssdk.cloudify_awssdk.ec2.resources.instances.prepare
+          inputs: *operation_inputs
+        configure:
+          implementation: awssdk.cloudify_awssdk.ec2.resources.instances.create
+          inputs: *operation_inputs
+        start:
+          implementation: awssdk.cloudify_awssdk.ec2.resources.instances.start
+          inputs: *operation_inputs
+        stop:
+          implementation: awssdk.cloudify_awssdk.ec2.resources.instances.stop
+          inputs: *operation_inputs
+        delete:
+          implementation: awssdk.cloudify_awssdk.ec2.resources.instances.delete
+          inputs: *operation_inputs
+
+  cloudify.nodes.aws.ec2.Keypair:
+    derived_from: cloudify.nodes.Root
+    properties:
+      <<: *external_resource
+      <<: *client_config
+      <<: *resource_id
+      resource_config:
+        description: >
+          Configuration key-value data to be passed as-is to the corresponding
+          Boto3 method. Key names must match the case that Boto3 requires.
+        type: cloudify.datatypes.aws.ec2.Keypair.config
+        required: false
+      log_create_response:
+        description: >
+          Opt-in to storing the create API request. Not recommended.
+        default: false
+      store_in_runtime_properties:
+        description: >
+          Opt-in to save the KeyPair KeyMaterial in the node-instance runtime-properties. Not recommended.
+        default: false
+      create_secret:
+        description: >
+          Opt-in to save the KeyPair KeyMaterial in the secret store. Only available in Cloudify Manager.
+        default: false
+      secret_name:
+        description: >
+          If "create_secret" property is true, provide the name of the secret, defaults to KeyName.
+        required: false
+      update_existing_secret:
+        description: >
+          If "create_secret" property is true, and the secret name already exists, overwrite the secret.
+        default: false
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: awssdk.cloudify_awssdk.ec2.resources.keypair.prepare
+          inputs: *operation_inputs
+        configure:
+          implementation: awssdk.cloudify_awssdk.ec2.resources.keypair.create
+          inputs: *operation_inputs
+        delete:
+          implementation: awssdk.cloudify_awssdk.ec2.resources.keypair.delete
+          inputs: *operation_inputs
+
   cloudify.nodes.aws.ec2.ElasticIP:
     derived_from: cloudify.nodes.Root
     properties:
@@ -2735,3 +2867,4 @@ relationships:
       cloudify.interfaces.relationship_lifecycle:
         establish: { implementation: awssdk.cloudify_awssdk.elb.resources.classic.load_balancer.assoc }
         unlink: { implementation: awssdk.cloudify_awssdk.elb.resources.classic.load_balancer.disassoc }
+ 
