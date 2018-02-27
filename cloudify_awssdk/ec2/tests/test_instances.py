@@ -21,6 +21,7 @@ from cloudify_awssdk.ec2.resources.instances import (
 from mock import patch, MagicMock
 from cloudify_awssdk.ec2.resources import instances
 from cloudify.state import current_ctx
+from cloudify.exceptions import OperationRetry
 
 
 class TestEC2Instances(TestBase):
@@ -203,7 +204,12 @@ class TestEC2Instances(TestBase):
             type_hierarchy=['cloudify.nodes.Root', 'cloudify.nodes.Compute'])
         current_ctx.set(ctx=ctx)
         iface = MagicMock()
-        instances.start(ctx, iface, {})
+        iface.status = 0
+        self.instances.resource_id = 'test_name'
+        try:
+            instances.start(ctx, iface, {})
+        except OperationRetry:
+            pass
         self.assertTrue(iface.start.called)
 
     def test_stop(self):

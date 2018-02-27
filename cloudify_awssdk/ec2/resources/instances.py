@@ -236,7 +236,7 @@ def start(ctx, iface, resource_config, **_):
                 current_properties.get('PublicIpAddress')
         else:
             ctx.instance.runtime_properties['ip'] = \
-                    current_properties.get('PrivateIpAddress')
+                current_properties.get('PrivateIpAddress')
 
         ctx.instance.runtime_properties['public_ip_address'] = \
             current_properties.get('PublicIpAddress')
