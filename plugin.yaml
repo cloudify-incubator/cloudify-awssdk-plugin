@@ -2,9 +2,9 @@ plugins:
 
   awssdk:
     executor: central_deployment_agent
-    source: https://github.com//cloudify-incubator/cloudify-awssdk-plugin/archive/98-Support-Instance-Keypair.zip
+    source: https://github.com//cloudify-incubator/cloudify-awssdk-plugin/archive/2.0.0.zip
     package_name: cloudify-awssdk-plugin
-    package_version: '2.0.0rc4'
+    package_version: '2.0.0'
 
 data_types:
 
