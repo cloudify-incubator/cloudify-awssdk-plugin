@@ -32,6 +32,9 @@ inputs:
   private_subnet_cidr:
     default: 10.10.1.0/24
 
+  ebs_volume_attachment_device:
+    default: /dev/sdh
+
 dsl_definitions:
 
   client_config: &client_config
@@ -263,3 +266,34 @@ node_templates:
               MinCount: 1
               ImageId: { get_attribute: [ cloudify_manager_ami, aws_resource_id ] }
               InstanceType: m3.large
+
+  ebs_volume:
+    type: cloudify.nodes.aws.ec2.EBSVolume
+    properties:
+      resource_config:
+        kwargs:
+          AvailabilityZone: { get_input: availability_zone }
+          Size: 6
+          TagSpecifications:
+          - ResourceType: volume
+            Tags:
+            - Key: First
+              Value: First Volume
+            - Key: Second
+              Value: Second Volume
+      client_config: *client_config
+
+  ebs_volume_attachment:
+    type: cloudify.nodes.aws.ec2.EBSAttachment
+    properties:
+      resource_config:
+        kwargs:
+          Device: { get_input: ebs_volume_attachment_device }
+          InstanceId: { get_attribute: [ cloudify_manager, aws_resource_id ] }
+          VolumeId: { get_attribute: [ ebs_volume, aws_resource_id ] }
+      client_config: *client_config
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: ebs_volume
+    - type: cloudify.relationships.depends_on
+      target: cloudify_manager

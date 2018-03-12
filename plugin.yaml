@@ -2,9 +2,9 @@ plugins:
 
   awssdk:
     executor: central_deployment_agent
-    source: https://github.com//cloudify-incubator/cloudify-awssdk-plugin/archive/2.0.0.zip
+    source: https://github.com/cloudify-incubator/cloudify-awssdk-plugin/archive/92-support-volume-type.zip
     package_name: cloudify-awssdk-plugin
-    package_version: '2.0.0'
+    package_version: '2.0.1'
 
 data_types:
 
@@ -361,6 +361,16 @@ data_types:
         default: {}
 
   cloudify.datatypes.aws.ec2.Tags.config:
+    properties:
+      kwargs:
+        default: {}
+
+  cloudify.datatypes.aws.ec2.EBSVolume.config:
+    properties:
+      kwargs:
+        default: {}
+
+  cloudify.datatypes.aws.ec2.EBSAttachment.config:
     properties:
       kwargs:
         default: {}
@@ -2094,6 +2104,54 @@ node_types:
           inputs: *operation_inputs
         delete:
           implementation: awssdk.cloudify_awssdk.ec2.resources.tags.delete
+          inputs: *operation_inputs
+
+  cloudify.nodes.aws.ec2.EBSVolume:
+    derived_from: cloudify.nodes.Root
+    properties:
+      <<: *external_resource
+      <<: *client_config
+      <<: *resource_id
+      resource_config:
+        description: >
+          Configuration key-value data to be passed as-is to the corresponding
+          Boto3 method. Key names must match the case that Boto3 requires.
+        type: cloudify.datatypes.aws.ec2.EBSVolume.config
+        required: false
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: awssdk.cloudify_awssdk.ec2.resources.ebs.prepare
+          inputs: *operation_inputs
+        configure:
+          implementation: awssdk.cloudify_awssdk.ec2.resources.ebs.create
+          inputs: *operation_inputs
+        delete:
+          implementation: awssdk.cloudify_awssdk.ec2.resources.ebs.delete
+          inputs: *operation_inputs
+
+  cloudify.nodes.aws.ec2.EBSAttachment:
+    derived_from: cloudify.nodes.Root
+    properties:
+      <<: *external_resource
+      <<: *client_config
+      <<: *resource_id
+      resource_config:
+        description: >
+          Configuration key-value data to be passed as-is to the corresponding
+          Boto3 method. Key names must match the case that Boto3 requires.
+        type: cloudify.datatypes.aws.ec2.EBSAttachment.config
+        required: false
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: awssdk.cloudify_awssdk.ec2.resources.ebs.prepare
+          inputs: *operation_inputs
+        configure:
+          implementation: awssdk.cloudify_awssdk.ec2.resources.ebs.attach
+          inputs: *operation_inputs
+        delete:
+          implementation: awssdk.cloudify_awssdk.ec2.resources.ebs.detach
           inputs: *operation_inputs
 
   cloudify.nodes.aws.autoscaling.Group:
