@@ -29,10 +29,12 @@ GROUP = 'SecurityGroup'
 GROUPS = 'SecurityGroups'
 GROUPID = 'GroupId'
 GROUPIDS = 'GroupIds'
-VPC_ID = 'VpcId'
+GROUP_NAME = 'GroupName'
+
 VPC_ID = 'VpcId'
 VPC_TYPE = 'cloudify.nodes.aws.ec2.Vpc'
 VPC_TYPE_DEPRECATED = 'cloudify.aws.nodes.Vpc'
+
 CONTIN = 'cloudify.relationships.contained_in'
 
 
@@ -140,6 +142,11 @@ def create(ctx, iface, resource_config, **_):
         dict() if not resource_config else resource_config.copy()
 
     vpc_id = params.get(VPC_ID)
+
+    # Try to get the group_name and if it does not exits then try to
+    # generate new one based on instance_id
+    group_name = params.get(GROUP_NAME)
+    params[GROUP_NAME] = utils.get_ec2_vpc_resource_name(group_name)
 
     if not vpc_id:
         vpc = \

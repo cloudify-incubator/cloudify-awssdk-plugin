@@ -101,6 +101,42 @@ def get_resource_arn(node=None, instance=None,
     return resource_id
 
 
+def get_aws_resource_name(name, regex=r'[^a-zA-Z0-9]+'):
+    """
+    Create AWS accepted name of resource. From AWS specification:
+    "Specifically, the name must be 1-255 characters long and match the
+    regular expression based on aws resources. Default expression
+    :param name: name of resource to be given
+    :param regex: regex to be applied for the resource name ``[^a-zA-Z0-9]+``
+    :return: AWS accepted instance name
+    """
+
+    final_name = re.sub(regex, '', name)
+    # assure the first character is alpha
+    if not final_name[0].isalpha():
+        final_name = '{0}{1}'.format('a', final_name)
+    # trim to the length limit
+    if len(final_name) > constants.MAX_AWS_NAME:
+        remain_len = constants.MAX_AWS_NAME - len(final_name)
+        final_name = final_name[:remain_len]
+    # convert string to lowercase
+    return final_name.lower()
+
+
+# This method return the resource name and in case the resource name is not
+# specified, then the default value will be ASCII characters of the instance_id
+def get_resource_name(name):
+    return name or get_aws_resource_name(ctx.instance.id)
+
+
+# This method return the resource name of the EC2-VPC resource and in case
+# the resource name is not specified, then the default value will be
+# instance_id but with by applying ``[^a-zA-Z0-9- ._:/()#,*@[]+=;{}!$]+`` regex
+def get_ec2_vpc_resource_name(name):
+    regex = 'r[^a-zA-Z0-9- ._:/()#,*@[]+=;{}!$]+'
+    return name or get_aws_resource_name(ctx.instance.id, regex=regex)
+
+
 def update_resource_id(instance, val):
     '''Updates an instance's resource ID'''
     instance.runtime_properties[constants.EXTERNAL_RESOURCE_ID] = str(val)

@@ -23,3 +23,6 @@ EXTERNAL_RESOURCE_ID = 'aws_resource_id'
 EXTERNAL_RESOURCE_ARN = 'aws_resource_arn'
 REL_CONTAINED_IN = 'cloudify.relationships.contained_in'
 ARN_REGEX = '^arn\:aws\:'
+
+
+MAX_AWS_NAME = 255

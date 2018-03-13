@@ -114,8 +114,7 @@ def create(ctx, iface, resource_config, **_):
     params = \
         dict() if not resource_config else resource_config.copy()
 
-    if KEYNAME not in params.keys():
-        params[KEYNAME] = ctx.instance.id
+    params[KEYNAME] = utils.get_resource_name(params.get(KEYNAME))
     key_name = params[KEYNAME]
 
     if PUBLIC_KEY_MATERIAL in params:

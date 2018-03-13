@@ -17,20 +17,6 @@ inputs:
   ec2_region_name:
     default: { get_secret: ec2_region_name }
 
-  ec2_region_endpoint:
-    default: { get_secret: ec2_region_endpoint }
-
-  availability_zone:
-    default: { get_secret: availability_zone }
-
-  vpc_cidr:
-    default: 10.10.0.0/16
-
-  public_subnet_cidr:
-    default: 10.10.0.0/24
-
-  private_subnet_cidr:
-    default: 10.10.1.0/24
 
 dsl_definitions:
 
