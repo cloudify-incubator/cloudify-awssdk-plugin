@@ -2,9 +2,9 @@ plugins:
 
   awssdk:
     executor: central_deployment_agent
-    source: https://github.com/cloudify-incubator/cloudify-awssdk-plugin/archive/92-support-volume-type.zip
+    source: https://github.com/cloudify-incubator/cloudify-awssdk-plugin/archive/2.1.0.zip
     package_name: cloudify-awssdk-plugin
-    package_version: '2.0.1'
+    package_version: '2.1.0'
 
 data_types:
 
