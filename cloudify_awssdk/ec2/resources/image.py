@@ -18,6 +18,7 @@
     AWS EC2 Image interface
 """
 # Cloudify
+from cloudify.exceptions import NonRecoverableError
 from cloudify_awssdk.common import decorators, utils
 from cloudify_awssdk.ec2 import EC2Base
 # Boto
@@ -52,7 +53,11 @@ class EC2Image(EC2Base):
         except ClientError:
             pass
         else:
-            return None if not resources else resources.get(IMAGES)[0]
+            images = [] if not resources else resources.get(IMAGES)
+            if len(images):
+                return images[0]
+            raise NonRecoverableError(
+                "Found no AMIs matching provided filters.")
 
     @property
     def status(self):
