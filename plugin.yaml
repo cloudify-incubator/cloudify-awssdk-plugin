@@ -31,226 +31,275 @@ data_types:
   cloudify.datatypes.aws.dynamodb.Table.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/dynamodb.html#DynamoDB.Client.create_table
         default: {}
 
   cloudify.datatypes.aws.iam.Group.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/iam.html#IAM.Client.create_group
         default: {}
 
   cloudify.datatypes.aws.iam.AccessKey.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/iam.html#IAM.Client.create_access_key
         default: {}
 
   cloudify.datatypes.aws.iam.LoginProfile.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/iam.html#IAM.Client.create_login_profile
         default: {}
 
   cloudify.datatypes.aws.iam.User.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/iam.html#IAM.Client.create_user
         default: {}
 
   cloudify.datatypes.aws.iam.Role.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/iam.html#IAM.Client.create_role
         default: {}
 
   cloudify.datatypes.aws.iam.RolePolicy.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/iam.html#IAM.Client.put_role_policy
         default: {}
 
   cloudify.datatypes.aws.iam.InstanceProfile.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/iam.html#IAM.Client.create_instance_profile
         default: {}
 
   cloudify.datatypes.aws.iam.Policy.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/iam.html#IAM.Client.create_policy
         default: {}
 
   cloudify.datatypes.aws.lambda.Function.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/lambda.html#Lambda.Client.create_function
         default: {}
 
   cloudify.datatypes.aws.lambda.Invoke.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/lambda.html#Lambda.Client.invoke
         default: {}
 
   cloudify.datatypes.aws.lambda.Permission.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/lambda.html#Lambda.Client.add_permission
         default: {}
 
   cloudify.datatypes.aws.rds.Instance.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.create_db_instance
         default: {}
 
   cloudify.datatypes.aws.rds.InstanceReadReplica.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.create_db_instance_read_replica
         default: {}
 
   cloudify.datatypes.aws.rds.SubnetGroup.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.create_db_subnet_group
         default: {}
 
   cloudify.datatypes.aws.rds.OptionGroup.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.create_option_group
         default: {}
 
   cloudify.datatypes.aws.rds.Option.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.modify_option_group
         default: {}
 
   cloudify.datatypes.aws.rds.ParameterGroup.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.create_db_parameter_group
         default: {}
 
   cloudify.datatypes.aws.rds.Parameter.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.modify_db_parameter_group
         default: {}
 
   cloudify.datatypes.aws.route53.HostedZone.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/route53.html#Route53.Client.create_hosted_zone
         default: {}
 
   cloudify.datatypes.aws.route53.RecordSet.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/route53.html#Route53.Client.change_resource_record_sets
         default: {}
 
   cloudify.datatypes.aws.elb.LoadBalancer.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/elbv2.html#ElasticLoadBalancingv2.Client.create_load_balancer
         default: {}
 
   cloudify.datatypes.aws.elb.Classic.LoadBalancer.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/elb.html#ElasticLoadBalancing.Client.create_load_balancer
         default: {}
 
   cloudify.datatypes.aws.elb.Classic.HealthCheck.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/elb.html#ElasticLoadBalancing.Client.configure_health_check
         default: {}
 
   cloudify.datatypes.aws.elb.Classic.Listener.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/elb.html#ElasticLoadBalancing.Client.create_load_balancer_listeners
         default: {}
 
   cloudify.datatypes.aws.elb.Classic.Policy.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/elb.html#ElasticLoadBalancing.Client.create_load_balancer_policy
         default: {}
 
   cloudify.datatypes.aws.elb.Listener.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/elbv2.html#ElasticLoadBalancingv2.Client.create_listener
         default: {}
 
   cloudify.datatypes.aws.elb.Rule.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/elbv2.html#ElasticLoadBalancingv2.Client.create_rule
         default: {}
 
   cloudify.datatypes.aws.elb.TargetGroup.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/elbv2.html#ElasticLoadBalancingv2.Client.create_target_group
         default: {}
 
   cloudify.datatypes.aws.SQS.Queue.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/sqs.html#SQS.Client.create_queue
         default: {}
 
   cloudify.datatypes.aws.SNS.Topic.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/sns.html#SNS.Client.create_topic
         default: {}
 
   cloudify.datatypes.aws.SNS.Subscription.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/sns.html#SNS.Client.get_subscription_attributes
         default: {}
 
   cloudify.datatypes.aws.s3.BucketTagging.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/s3.html#S3.Client.put_bucket_tagging
         default: {}
 
   cloudify.datatypes.aws.s3.BucketLifecycleConfiguration.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/s3.html#S3.Client.put_bucket_lifecycle
         default: {}
 
   cloudify.datatypes.aws.s3.BucketPolicy.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/s3.html#S3.Client.put_bucket_policy
         default: {}
 
   cloudify.datatypes.aws.s3.Bucket.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/s3.html#S3.Client.create_bucket
         default: {}
 
   cloudify.datatypes.aws.ec2.Vpc.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.Client.create_vpc
         default: {}
 
   cloudify.datatypes.aws.ec2.VpcPeering.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.Client.create_vpc_peering_connection
         default: {}
 
   cloudify.datatypes.aws.ec2.VpcPeeringRequest.config:
     properties:
       kwargs:
+        description: >
+          http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.Client.accept_vpc_peering_connection
+          http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.Client.reject_vpc_peering_connection
         default: {}
 
   cloudify.datatypes.aws.ec2.Subnet.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.Client.create_subnet
         default: {}
 
   cloudify.datatypes.aws.ec2.SecurityGroup.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.Client.create_security_group
         default: {}
 
   cloudify.datatypes.aws.ec2.SecurityGroupRules.config:
     properties:
       kwargs:
+        description: >
+          http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.Client.authorize_security_group_ingress
+          http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.Client.authorize_security_group_egress
         default: {}
 
   cloudify.datatypes.aws.ec2.NATGateway.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.Client.create_nat_gateway
         default: {}
 
   cloudify.datatypes.aws.ec2.NetworkACL.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.Client.create_network_acl
         default: {}
 
   cloudify.datatypes.aws.ec2.Interface.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.Client.create_network_interface
         default: {}
 
   cloudify.datatypes.aws.ec2.Instances.LaunchTemplate:
@@ -283,8 +332,7 @@ data_types:
         type: cloudify.datatypes.aws.ec2.Instances.LaunchTemplate
         required: false
       kwargs:
-        description: >
-          See documentation for http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.Client.run_instances.
+        description: http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.Client.run_instances
         default: {}
 
   cloudify.datatypes.aws.ec2.Keypair.config:
@@ -301,174 +349,206 @@ data_types:
           If PublicKeyMaterial is provided, the import_key_pair operation is executed instead of create_key_pair.
           See documentation: http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.Client.import_key_pair.
       kwargs:
-        description: >
-          See documentation for http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.Client.create_key_pair.
+        description: http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.Client.create_key_pair
         default: {}
 
   cloudify.datatypes.aws.ec2.ElasticIP.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.Client.allocate_address
         default: {}
 
   cloudify.datatypes.aws.ec2.NetworkAclEntry.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.Client.create_network_acl_entry
         default: {}
 
   cloudify.datatypes.aws.ec2.DHCPOptions.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.Client.create_dhcp_options
         default: {}
 
   cloudify.datatypes.aws.ec2.VPNGateway.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.Client.create_vpn_gateway
         default: {}
 
   cloudify.datatypes.aws.ec2.VPNConnection.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.Client.create_vpn_connection
         default: {}
 
   cloudify.datatypes.aws.ec2.VPNConnectionRoute.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.Client.create_vpn_connection_route
         default: {}
 
   cloudify.datatypes.aws.ec2.CustomerGateway.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.Client.create_customer_gateway
         default: {}
 
   cloudify.datatypes.aws.ec2.InternetGateway.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.Client.create_internet_gateway
         default: {}
 
   cloudify.datatypes.aws.ec2.RouteTable.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.Client.create_route_table
         default: {}
 
   cloudify.datatypes.aws.ec2.Route.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.Client.create_route
         default: {}
 
   cloudify.datatypes.aws.ec2.Image.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.Client.create_image
         default: {}
 
   cloudify.datatypes.aws.ec2.Tags.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.Client.create_tags
         default: {}
 
   cloudify.datatypes.aws.ec2.EBSVolume.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.Client.create_volume
         default: {}
 
   cloudify.datatypes.aws.ec2.EBSAttachment.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.Client.attach_volume
         default: {}
 
   cloudify.datatypes.aws.autoscaling.Group.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/autoscaling.html#AutoScaling.Client.create_auto_scaling_group
         default: {}
 
   cloudify.datatypes.aws.autoscaling.LaunchConfiguration.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/autoscaling.html#AutoScaling.Client.create_launch_configuration
         default: {}
 
   cloudify.datatypes.aws.autoscaling.Policy.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/autoscaling.html#AutoScaling.Client.put_scaling_policy
         default: {}
 
   cloudify.datatypes.aws.autoscaling.LifecycleHook.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/autoscaling.html#AutoScaling.Client.put_lifecycle_hook
         default: {}
 
   cloudify.datatypes.aws.autoscaling.NotificationConfiguration.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/autoscaling.html#AutoScaling.Client.put_notification_configuration
         default: {}
 
   cloudify.datatypes.aws.cloudwatch.Alarm.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/cloudwatch.html#CloudWatch.Client.put_metric_alarm
         default: {}
 
 
   cloudify.datatypes.aws.cloudwatch.Rule.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/events.html#CloudWatchEvents.Client.put_rule
         default: {}
 
   cloudify.datatypes.aws.cloudwatch.Event.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/events.html#CloudWatchEvents.Client.put_events
         default: {}
 
   cloudify.datatypes.aws.cloudwatch.Target.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/events.html#CloudWatchEvents.Client.put_targets
         default: {}
 
   cloudify.datatypes.aws.efs.FileSystem.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/efs.html#EFS.Client.create_file_system
         default: {}
 
   cloudify.datatypes.aws.efs.FileSystemTags.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/efs.html#EFS.Client.create_tags
         default: {}
 
   cloudify.datatypes.aws.efs.MountTarget.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/efs.html#EFS.Client.create_mount_target
         default: {}
 
   cloudify.datatypes.aws.kms.CustomerMasterKey.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/kms.html#KMS.Client.create_key
         default: {}
 
   cloudify.datatypes.aws.kms.Alias.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/kms.html#KMS.Client.create_alias
         default: {}
 
   cloudify.datatypes.aws.kms.Grant.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/kms.html#KMS.Client.create_grant
         default: {}
 
   cloudify.datatypes.aws.CloudFormation.Stack.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/cloudformation.html#CloudFormation.Client.create_stack
         default: {}
 
   cloudify.datatypes.aws.ECS.Cluster.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/ecs.html#ECS.Client.create_cluster
         default: {}
 
   cloudify.datatypes.aws.ECS.Service.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/ecs.html#ECS.Client.create_service
         default: {}
 
   cloudify.datatypes.aws.ECS.TaskDefinition.config:
     properties:
       kwargs:
+        description: http://boto3.readthedocs.io/en/latest/reference/services/ecs.html#ECS.Client.register_task_definition
         default: {}
 
 dsl_definitions:
@@ -534,7 +614,6 @@ dsl_definitions:
 
 node_types:
 
-  # Reference: https://boto3.readthedocs.io/en/latest/reference/services/dynamodb.html#DynamoDB.Client.create_table
   cloudify.nodes.aws.dynamodb.Table:
     derived_from: cloudify.nodes.Root
     properties:
@@ -556,7 +635,6 @@ node_types:
           implementation: awssdk.cloudify_awssdk.dynamodb.resources.table.delete
           inputs: *operation_inputs
 
-  # Reference: https://boto3.readthedocs.io/en/latest/reference/services/iam.html#IAM.Client.create_group
   cloudify.nodes.aws.iam.Group:
     derived_from: cloudify.nodes.Root
     properties:
@@ -578,7 +656,6 @@ node_types:
           implementation: awssdk.cloudify_awssdk.iam.resources.group.delete
           inputs: *operation_inputs
 
-  # Reference: https://boto3.readthedocs.io/en/latest/reference/services/iam.html#IAM.Client.create_access_key
   cloudify.nodes.aws.iam.AccessKey:
     derived_from: cloudify.nodes.Root
     properties:
@@ -607,7 +684,6 @@ node_types:
               required: false
               default: {}
 
-  # Reference: https://boto3.readthedocs.io/en/latest/reference/services/iam.html#IAM.Client.create_login_profile
   cloudify.nodes.aws.iam.LoginProfile:
     derived_from: cloudify.nodes.Root
     properties:
@@ -636,7 +712,6 @@ node_types:
               required: false
               default: {}
 
-  # Reference: https://boto3.readthedocs.io/en/latest/reference/services/iam.html#IAM.Client.create_user
   cloudify.nodes.aws.iam.User:
     derived_from: cloudify.nodes.Root
     properties:
@@ -658,7 +733,6 @@ node_types:
           implementation: awssdk.cloudify_awssdk.iam.resources.user.delete
           inputs: *operation_inputs
 
-  # Reference: https://boto3.readthedocs.io/en/latest/reference/services/iam.html#IAM.Client.create_role
   cloudify.nodes.aws.iam.Role:
     derived_from: cloudify.nodes.Root
     properties:
@@ -680,7 +754,6 @@ node_types:
           implementation: awssdk.cloudify_awssdk.iam.resources.role.delete
           inputs: *operation_inputs
 
-  # Reference: https://boto3.readthedocs.io/en/latest/reference/services/iam.html#IAM.Client.put_role_policy
   cloudify.nodes.aws.iam.RolePolicy:
     derived_from: cloudify.nodes.Root
     properties:
@@ -702,7 +775,6 @@ node_types:
           implementation: awssdk.cloudify_awssdk.iam.resources.role_policy.delete
           inputs: *operation_inputs
 
-  # Reference: http://boto3.readthedocs.io/en/latest/reference/services/iam.html#IAM.Client.create_instance_profile
   cloudify.nodes.aws.iam.InstanceProfile:
     derived_from: cloudify.nodes.Root
     properties:
@@ -724,7 +796,6 @@ node_types:
           implementation: awssdk.cloudify_awssdk.iam.resources.instance_profile.delete
           inputs: *operation_inputs
 
-  # Reference: https://boto3.readthedocs.io/en/latest/reference/services/iam.html#IAM.Client.create_policy
   cloudify.nodes.aws.iam.Policy:
     derived_from: cloudify.nodes.Root
     properties:
@@ -746,7 +817,6 @@ node_types:
           implementation: awssdk.cloudify_awssdk.iam.resources.policy.delete
           inputs: *operation_inputs
 
-  # Reference: https://boto3.readthedocs.io/en/latest/reference/services/lambda.html#Lambda.Client.create_function
   cloudify.nodes.aws.lambda.Function:
     derived_from: cloudify.nodes.Root
     properties:
@@ -768,8 +838,6 @@ node_types:
           implementation: awssdk.cloudify_awssdk.lambda_serverless.resources.function.delete
           inputs: *operation_inputs
 
-  # Reference: https://boto3.readthedocs.io/en/latest/reference/services/lambda.html#Lambda.Client.invoke
-  # Stores invocation output in runtime property "output".
   cloudify.nodes.aws.lambda.Invoke:
     derived_from: cloudify.nodes.Root
     properties:
@@ -798,8 +866,6 @@ node_types:
               required: false
               default: {}
 
-  # Reference: https://boto3.readthedocs.io/en/latest/reference/services/lambda.html#Lambda.Client.add_permission
-  # Stores method output in runtime property "output".
   cloudify.nodes.aws.lambda.Permission:
     derived_from: cloudify.nodes.Root
     properties:
@@ -824,7 +890,6 @@ node_types:
           implementation: awssdk.cloudify_awssdk.lambda_serverless.resources.permission.delete
           inputs: *operation_inputs
 
-  # Reference: https://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.create_db_instance
   cloudify.nodes.aws.rds.Instance:
     derived_from: cloudify.nodes.Root
     properties:
@@ -852,7 +917,6 @@ node_types:
           implementation: awssdk.cloudify_awssdk.rds.resources.instance.delete
           inputs: *operation_inputs
 
-  # Reference: https://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.create_db_instance_read_replica
   cloudify.nodes.aws.rds.InstanceReadReplica:
     derived_from: cloudify.nodes.Root
     properties:
@@ -877,7 +941,6 @@ node_types:
           implementation: awssdk.cloudify_awssdk.rds.resources.instance_read_replica.delete
           inputs: *operation_inputs
 
-  # Reference: https://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.create_db_subnet_group
   cloudify.nodes.aws.rds.SubnetGroup:
     derived_from: cloudify.nodes.Root
     properties:
@@ -902,7 +965,6 @@ node_types:
           implementation: awssdk.cloudify_awssdk.rds.resources.subnet_group.delete
           inputs: *operation_inputs
 
-  # Reference: https://boto3.readthedocs.io/en/latest/reference/services/rds.html#RDS.Client.create_option_group
   cloudify.nodes.aws.rds.OptionGroup:
     derived_from: cloudify.nodes.Root
     properties:
