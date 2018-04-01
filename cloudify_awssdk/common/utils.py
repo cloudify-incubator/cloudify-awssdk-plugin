@@ -20,6 +20,7 @@
 # Generic
 import re
 import uuid
+
 # Cloudify
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError
