@@ -95,3 +95,5 @@ local-storage/
 
 # IDE settings
 .idea
+
+plugin_docs
