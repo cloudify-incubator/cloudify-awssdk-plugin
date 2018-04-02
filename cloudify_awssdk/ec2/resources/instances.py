@@ -19,7 +19,9 @@
 '''
 
 # Common
+from collections import defaultdict
 import json
+
 # Cloudify
 from cloudify import compute
 from cloudify import ctx
@@ -49,6 +51,8 @@ NETWORK_INTERFACES = 'NetworkInterfaces'
 SUBNET_ID = 'SubnetId'
 INSTANCE_ID = 'InstanceId'
 INSTANCE_IDS = 'InstanceIds'
+DEVICE_INDEX = 'DeviceIndex'
+NIC_ID = 'NetworkInterfaceId'
 
 
 class EC2Instances(EC2Base):
@@ -177,9 +181,6 @@ def create(ctx, iface, resource_config, **_):
         del target, relationship
     params[GROUPIDS] = group_ids
 
-    # Get all nics from the resource_config dict.
-    nics_from_params = params.get(NETWORK_INTERFACES, [])
-
     # Get all nics from relationships.
     nics_from_rels = []
     relationships = utils.find_rels_by_node_type(
@@ -193,23 +194,29 @@ def create(ctx, iface, resource_config, **_):
             rel_device_index = target.target.instance.runtime_properties.get(
                 'device_index')
             rel_nic = {
-                'NetworkInterfaceId': rel_nic_id,
-                'DeviceIndex': rel_device_index
+                NIC_ID: rel_nic_id,
+                DEVICE_INDEX: rel_device_index
             }
             nics_from_rels.append(rel_nic)
         del target, rel_nic_id, rel_device_index, rel_nic
 
+    # Get all nics from the resource_config dict.
+    nics_from_params = params.get(NETWORK_INTERFACES, [])
+
     # Merge the two lists.
-    all_nics = nics_from_params + nics_from_rels
-    # Get all known device indices.
-    all_known_device_indices = [i.get('DeviceIndex') for i in all_nics]
-    for n in range(0, len(all_nics)):
-        if n in all_known_device_indices:
-            continue
-        for nic in all_nics:
-            if nic.get('DeviceIndex') is None:
-                nic['DeviceIndex'] = n
-    params[NETWORK_INTERFACES] = all_nics
+    merged_nics = []
+    nics = defaultdict(dict)
+    for nic in (nics_from_rels, nics_from_params):
+        for i in nic:
+            nics[i[NIC_ID]].update(i)
+            merged_nics = nics.values()
+    del nic, nics
+    for counter, nic in enumerate(
+            sorted(merged_nics,
+                   key=lambda k: k.get(DEVICE_INDEX), reverse=True)):
+        if not nic[DEVICE_INDEX]:
+            nic[DEVICE_INDEX] = counter
+    params[NETWORK_INTERFACES] = merged_nics
 
     try:
         create_response = iface.create(params)

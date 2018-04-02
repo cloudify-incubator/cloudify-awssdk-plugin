@@ -197,6 +197,52 @@ class TestEC2Instances(TestBase):
             instances.create(_ctx, iface, params)
             self.assertEqual(self.instances.resource_id, 'test_name')
 
+    def test_multiple_nics(self):
+
+        _source_ctx1, _target_ctx1, _nic_type1 = \
+            self._create_common_relationships(
+                'test_node',
+                source_type_hierarchy=['cloudify.nodes.Root',
+                                       'cloudify.nodes.Compute',
+                                       'cloudify.nodes.aws.ec2.Instances'],
+                target_type_hierarchy=['cloudify.nodes.Root',
+                                       NETWORK_INTERFACE_TYPE])
+        _target_ctx1.instance.runtime_properties['aws_resource_id'] = 'eni-0'
+
+        _source_ctx2, _target_ctx2, _nic_type2 = \
+            self._create_common_relationships(
+                'test_node',
+                source_type_hierarchy=['cloudify.nodes.Root',
+                                       'cloudify.nodes.Compute',
+                                       'cloudify.nodes.aws.ec2.Instances'],
+                target_type_hierarchy=['cloudify.nodes.Root',
+                                       NETWORK_INTERFACE_TYPE])
+        _target_ctx2.instance.runtime_properties['aws_resource_id'] = 'eni-1'
+
+        _ctx = self.get_mock_ctx(
+            "EC2Instances",
+            test_properties={'os_family': 'linux'},
+            type_hierarchy=['cloudify.nodes.Root',
+                            'cloudify.nodes.Compute',
+                            'cloudify.nodes.aws.ec2.Instances'],
+            test_relationships=[_nic_type1, _nic_type2])
+
+        current_ctx.set(_ctx)
+        params = {
+            'ImageId': 'test image',
+            'InstanceType': 'test type',
+            'NetworkInterfaces': [
+                {
+                    'NetworkInterfaceId': 'eni-2',
+                    'DeviceIndex': 2
+                }
+            ]
+        }
+        iface = MagicMock()
+        value = {INSTANCES: [{INSTANCE_ID: 'test_name'}]}
+        iface.create = self.mock_return(value)
+        instances.create(_ctx, iface, params)
+
     def test_start(self):
         ctx = self.get_mock_ctx(
             "EC2Instances",
