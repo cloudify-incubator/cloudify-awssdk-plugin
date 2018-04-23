@@ -211,9 +211,10 @@ def create(ctx, iface, resource_config, **_):
             nics[i[NIC_ID]].update(i)
             merged_nics = nics.values()
     del nic, nics
+
     for counter, nic in enumerate(
             sorted(merged_nics,
-                   key=lambda k: k.get(DEVICE_INDEX), reverse=True)):
+                   key=lambda k: k.get(DEVICE_INDEX))):
         if not nic[DEVICE_INDEX]:
             nic[DEVICE_INDEX] = counter
     params[NETWORK_INTERFACES] = merged_nics

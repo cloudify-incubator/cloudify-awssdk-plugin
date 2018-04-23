@@ -1,3 +1,6 @@
+2.1.2:
+  - Correct sequence of nics.
+
 2.1.1:
   - Fix support for multiple nics.
   - Improve error handling in Ec2.Image.
