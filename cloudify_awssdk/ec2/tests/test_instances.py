@@ -258,6 +258,22 @@ class TestEC2Instances(TestBase):
             pass
         self.assertTrue(iface.start.called)
 
+    def test_modify_instance_attribute(self):
+        ctx = self.get_mock_ctx(
+            "EC2Instances",
+            test_properties={'os_family': 'linux'},
+            type_hierarchy=['cloudify.nodes.Root', 'cloudify.nodes.Compute'])
+        current_ctx.set(ctx=ctx)
+        iface = MagicMock()
+        iface.status = 0
+        self.instances.resource_id = 'test_name'
+        try:
+            instances.modify_instance_attribute(
+                ctx, iface, {INSTANCE_ID: self.instances.resource_id})
+        except OperationRetry:
+            pass
+        self.assertTrue(iface.modify_instance_attribute.called)
+
     def test_stop(self):
         ctx = self.get_mock_ctx(
             "EC2Instances",

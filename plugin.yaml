@@ -1781,6 +1781,9 @@ node_types:
         delete:
           implementation: awssdk.cloudify_awssdk.ec2.resources.instances.delete
           inputs: *operation_inputs
+        modify_instance_attribute:
+          implementation: awssdk.cloudify_awssdk.ec2.resources.instances.modify_instance_attribute
+          inputs: *operation_inputs
 
   cloudify.nodes.aws.ec2.Keypair:
     derived_from: cloudify.nodes.Root

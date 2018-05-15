@@ -266,6 +266,9 @@ node_templates:
               MinCount: 1
               ImageId: { get_attribute: [ cloudify_manager_ami, aws_resource_id ] }
               InstanceType: m3.large
+            modify_instance_attribute_args:
+              SourceDestCheck:
+                Value: false
 
   ebs_volume:
     type: cloudify.nodes.aws.ec2.EBSVolume
