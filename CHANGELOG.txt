@@ -1,3 +1,6 @@
+2.2.0:
+  - Add Modify Instance Attribute functionality.
+
 2.1.2:
   - Correct sequence of nics.
 
