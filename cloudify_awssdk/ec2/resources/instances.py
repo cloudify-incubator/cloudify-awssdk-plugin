@@ -134,6 +134,17 @@ class EC2Instances(EC2Base):
         self.logger.debug('Response: {0}'.format(res))
         return res
 
+    def modify_instance_attribute(self, params):
+        '''
+            Modify attribute of AWS EC2 Instances.
+        '''
+        self.logger.debug(
+            'Modifying {0} attribute with parameters: {1}'.format(
+                self.type_name, params))
+        res = self.client.modify_instance_attribute(**params)
+        self.logger.debug('Response: {0}'.format(res))
+        return res
+
 
 @decorators.aws_resource(EC2Instances, resource_type=RESOURCE_TYPE)
 def prepare(ctx, iface, resource_config, **_):
@@ -231,6 +242,14 @@ def create(ctx, iface, resource_config, **_):
     iface.update_resource_id(instance_id)
     utils.update_resource_id(ctx.instance, instance_id)
 
+    modify_instance_attribute_args = \
+        _.get('modify_instance_attribute_args')
+    if modify_instance_attribute_args:
+        modify_instance_attribute_args[INSTANCE_ID] = \
+            instance_id
+        iface.modify_instance_attribute(
+            modify_instance_attribute_args)
+
 
 @decorators.aws_resource(EC2Instances, RESOURCE_TYPE)
 def start(ctx, iface, resource_config, **_):
@@ -282,6 +301,17 @@ def delete(iface, resource_config, **_):
     params = \
         dict() if not resource_config else resource_config.copy()
     iface.delete({INSTANCE_IDS: params.get(INSTANCE_IDS, [iface.resource_id])})
+
+
+@decorators.aws_resource(EC2Instances, RESOURCE_TYPE)
+def modify_instance_attribute(ctx, iface, resource_config, **_):
+    params = \
+        dict() if not resource_config else resource_config.copy()
+    instance_id = \
+        ctx.instance.runtime_properties.get(
+            INSTANCE_ID, iface.resource_id)
+    params[INSTANCE_ID] = instance_id
+    iface.modify_instance_attribute(params)
 
 
 def extract_powershell_content(string_with_powershell):
