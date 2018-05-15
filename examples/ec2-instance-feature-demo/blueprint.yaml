@@ -2,7 +2,7 @@ tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
   - http://www.getcloudify.org/spec/cloudify/4.2/types.yaml
-  - plugin.yaml
+  - ../../plugin.yaml
 
 inputs:
 
@@ -215,6 +215,10 @@ node_templates:
         configure:
           inputs:
             resource_config: { get_property: [ SELF, resource_config, kwargs] }
+            modify_network_interface_attribute_args:
+              SourceDestCheck:
+                Value: false
+
 
   ip:
     type: cloudify.nodes.aws.ec2.ElasticIP

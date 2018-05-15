@@ -106,6 +106,16 @@ class EC2NetworkInterface(EC2Base):
         self.logger.debug('Response: %s' % res)
         return res
 
+    def modify_network_interface_attribute(self, params):
+        '''
+            Modify an AWS EC2 NetworkInterface attribute.
+        '''
+        self.logger.debug('Modifying %s with: %s'
+                          % (self.type_name, params))
+        res = self.client.modify_network_interface_attribute(**params)
+        self.logger.debug('Response: %s' % res)
+        return res
+
 
 @decorators.aws_resource(resource_type=RESOURCE_TYPE)
 def prepare(ctx, resource_config, **_):
@@ -148,6 +158,14 @@ def create(ctx, iface, resource_config, **_):
             'Attachment', {}).get(
                 'DeviceIndex',
                 ctx.instance.runtime_properties.get('device_index'))
+
+    modify_network_interface_attribute_args = \
+        _.get('modify_network_interface_attribute_args')
+    if modify_network_interface_attribute_args:
+        modify_network_interface_attribute_args[NETWORKINTERFACE_ID] = \
+            eni_id
+        iface.modify_network_interface_attribute(
+            modify_network_interface_attribute_args)
 
 
 @decorators.aws_resource(EC2NetworkInterface, RESOURCE_TYPE,
@@ -215,3 +233,14 @@ def detach(ctx, iface, resource_config, **_):
 
     params.update({ATTACHMENT_ID: attachment_id})
     iface.detach(params)
+
+
+@decorators.aws_resource(EC2NetworkInterface, RESOURCE_TYPE)
+def modify_network_interface_attribute(ctx, iface, resource_config, **_):
+    params = \
+        dict() if not resource_config else resource_config.copy()
+    eni_id = \
+        ctx.instance.runtime_properties.get(
+            NETWORKINTERFACE_ID, iface.resource_id)
+    params[NETWORKINTERFACE_ID] = eni_id
+    iface.modify_network_interface_attribute(params)
