@@ -131,6 +131,36 @@ class TestEC2NetworkInterface(TestBase):
         self.assertEqual(self.eni.resource_id,
                          'eni')
 
+    def test_create_wth_modify(self):
+        ctx = self.get_mock_ctx("NetworkInterface")
+        config = {NETWORKINTERFACE_ID: 'eni', SUBNET_ID: 'subnet'}
+        self.eni.resource_id = config[NETWORKINTERFACE_ID]
+        iface = MagicMock()
+        modify_args = {'SourceDestCheck': {'Value': True}}
+        iface.create = self.mock_return(config)
+        eni.create(
+            ctx,
+            iface,
+            config,
+            modify_network_interface_attribute_args=modify_args)
+        self.assertEqual(self.eni.resource_id,
+                         'eni')
+
+    def test_modify_network_interface_attribute(self):
+        ctx = self.get_mock_ctx("NetworkInterface")
+        config = \
+            {
+                NETWORKINTERFACE_ID: 'eni',
+                'SourceDestCheck': {'Value': True}
+            }
+        self.eni.resource_id = config[NETWORKINTERFACE_ID]
+        iface = MagicMock()
+        iface.modify_network_interface_attribute = \
+            self.mock_return(config)
+        eni.modify_network_interface_attribute(ctx, iface, config)
+        self.assertEqual(self.eni.resource_id,
+                         'eni')
+
     def test_create_with_relationships(self):
         ctx = self.get_mock_ctx("NetworkInterface",
                                 type_hierarchy=[SUBNET_TYPE])
