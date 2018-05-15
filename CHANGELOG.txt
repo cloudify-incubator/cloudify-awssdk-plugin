@@ -1,3 +1,6 @@
+2.3.0:
+  - Add Modify ENI Attribute functionality.
+
 2.2.0:
   - Add Modify Instance Attribute functionality.
 

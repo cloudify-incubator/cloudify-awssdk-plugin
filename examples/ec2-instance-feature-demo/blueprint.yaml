@@ -215,6 +215,10 @@ node_templates:
         configure:
           inputs:
             resource_config: { get_property: [ SELF, resource_config, kwargs] }
+            modify_network_interface_attribute_args:
+              SourceDestCheck:
+                Value: false
+
 
   ip:
     type: cloudify.nodes.aws.ec2.ElasticIP
