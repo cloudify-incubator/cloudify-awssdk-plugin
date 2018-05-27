@@ -132,8 +132,7 @@ class TestCloudFormationStack(TestBase):
             assert_called_with(StackName='test-cloudformation1')
 
         self.assertEqual(_ctx.instance.runtime_properties,
-                         {'aws_resource_id': 'test-cloudformation1',
-                          'resource_config': {}})
+                         {'__deleted': True})
 
     def test_CloudFormationStackClass_properties(self):
         self.fake_client.describe_stacks = MagicMock(return_value={

@@ -185,14 +185,7 @@ class TestRDSInstanceReadReplica(TestBase):
 
         self.assertEqual(
             _ctx.instance.runtime_properties, {
-                'aws_resource_id': 'devdbinstance',
                 '__deleted': True,
-                'resource_config': {
-                    'AvailabilityZone': 'us-east-1d',
-                    'DBInstanceClass': 'db.t2.small',
-                    'DBInstanceIdentifier': 'devdbinstance-replica'
-                },
-                'aws_resource_arn': 'DBInstanceArn'
             }
         )
 

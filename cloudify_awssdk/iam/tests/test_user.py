@@ -124,10 +124,7 @@ class TestIAMUser(TestBase):
         self.assertEqual(
             _ctx.instance.runtime_properties,
             {
-                'aws_resource_id': 'user_name_id',
                 '__deleted': True,
-                'resource_config': {},
-                'aws_resource_arn': 'arn_id'
             }
         )
 

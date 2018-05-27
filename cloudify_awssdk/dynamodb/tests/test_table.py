@@ -153,10 +153,7 @@ class TestDynamoDBTable(TestBase):
         self.assertEqual(
             _ctx.instance.runtime_properties,
             {
-                'aws_resource_arn': 'aws_table_arn',
                 '__deleted': True,
-                'resource_config': {},
-                'aws_resource_id': 'aws_table_name'
             }
         )
 

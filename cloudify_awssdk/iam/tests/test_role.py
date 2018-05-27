@@ -177,9 +177,6 @@ class TestIAMRole(TestBase):
             _ctx.instance.runtime_properties,
             {
                 '__deleted': True,
-                'aws_resource_arn': 'arn_id',
-                'aws_resource_id': 'role_name_id',
-                'resource_config': {}
             }
         )
 

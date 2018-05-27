@@ -196,21 +196,7 @@ class TestRDSInstance(TestBase):
 
         self.assertEqual(
             _ctx.instance.runtime_properties, {
-                'aws_resource_arn': 'DBInstanceArn',
                 '__deleted': True,
-                'aws_resource_id': 'devdbinstance',
-                'resource_config': {
-                    'Engine': 'mysql',
-                    'AvailabilityZone': 'us-east-1a',
-                    'StorageType': 'gp2',
-                    'MasterUserPassword': 'Password1234',
-                    'MasterUsername': 'root',
-                    'AllocatedStorage': '10',
-                    'EngineVersion': '5.7.16',
-                    'DBInstanceClass': 'db.t2.small',
-                    'DBName': 'devdb',
-                    'DBInstanceIdentifier': 'devdbinstance'
-                }
             }
         )
 

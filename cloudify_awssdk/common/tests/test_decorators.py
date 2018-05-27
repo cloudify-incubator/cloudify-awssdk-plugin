@@ -58,7 +58,6 @@ class TestDecorators(TestBase):
 
         self.assertEqual(_ctx.instance.runtime_properties, {
             '__deleted': True,
-            'resource_config': {}
         })
 
         # pending
