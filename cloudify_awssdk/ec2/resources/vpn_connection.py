@@ -97,7 +97,7 @@ def prepare(ctx, resource_config, **_):
 
 
 @decorators.aws_resource(EC2VPNConnection, RESOURCE_TYPE)
-@decorators.wait_for_status(status_good=['UP'])
+@decorators.wait_for_status(status_good=['UP'], status_pending=['DOWN'])
 def create(ctx, iface, resource_config, **_):
     """Creates an AWS EC2 VPN Connection"""
     params = dict() if not resource_config else resource_config.copy()
@@ -119,7 +119,7 @@ def create(ctx, iface, resource_config, **_):
 
 
 @decorators.aws_resource(EC2VPNConnection, RESOURCE_TYPE)
-@decorators.wait_for_delete(status_deleted=['DOWN'])
+@decorators.wait_for_delete(status_deleted=['DOWN'], status_pending=['UP'])
 def delete(ctx, iface, resource_config, **_):
     """Deletes an AWS EC2 VPN Connection"""
     deleted_params = dict()
