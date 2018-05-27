@@ -157,6 +157,21 @@ def wait_for_status(status_good=None,
             # Run the operation if this is the first pass
             if ctx.operation.retry_number == 0:
                 function(**kwargs)
+                # Fixes https://github.com/cloudify-incubator/cloudify-awssdk-plugin/issues/128
+                # and https://github.com/cloudify-incubator/cloudify-awssdk-plugin/issues/129
+                # by updating iface object with actual details from the AWS response
+                # assuming that actual state is available at ctx.instance.runtime_properties['create_response']
+                # and ctx.instance.runtime_properties['aws_resource_id'] correctly updated after creation
+
+                # At first let's verify was a new AWS resource really created
+                if iface.resource_id != ctx.instance.runtime_properties['aws_resource_id']:
+                    # Assuming new resource was really created, so updating iface object
+                    iface.resource_id = ctx.instance.runtime_properties['aws_resource_id']
+                    # If sequence of install -> uninstall workflows was executed, we should remove '__deleted'
+                    # flag set in the decorator wait_for_delete below
+                    if '__deleted' in ctx.instance.runtime_properties:
+                        del ctx.instance.runtime_properties['__deleted']
+
             # Get a resource interface and query for the status
             status = iface.status
             ctx.logger.debug('%s ID# "%s" reported status: %s'
