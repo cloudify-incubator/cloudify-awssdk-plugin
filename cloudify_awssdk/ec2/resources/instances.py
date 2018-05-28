@@ -292,8 +292,8 @@ def stop(ctx, iface, resource_config, **_):
 
 
 @decorators.aws_resource(EC2Instances, RESOURCE_TYPE)
-@decorators.wait_for_status(
-    status_good=[TERMINATED],
+@decorators.wait_for_delete(
+    status_deleted=[TERMINATED],
     status_pending=[STOPPING, SHUTTING_DOWN, PENDING])
 def delete(iface, resource_config, **_):
     '''Deletes AWS EC2 Instances'''

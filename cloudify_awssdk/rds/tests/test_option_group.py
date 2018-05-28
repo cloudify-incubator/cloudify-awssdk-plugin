@@ -154,10 +154,7 @@ class TestRDSOptionGroup(TestBase):
 
         self.assertEqual(
             _ctx.instance.runtime_properties, {
-                'aws_resource_arn': 'OptionGroupArn',
                 '__deleted': True,
-                'aws_resource_id': 'dev-db-option-group',
-                'resource_config': {}
             }
         )
 

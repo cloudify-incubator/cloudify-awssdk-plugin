@@ -126,10 +126,7 @@ class TestIAMGroup(TestBase):
         self.assertEqual(
             _ctx.instance.runtime_properties,
             {
-                'resource_config': {},
-                'aws_resource_id': 'group_name_id',
                 '__deleted': True,
-                'aws_resource_arn': 'arn_id'
             }
         )
 

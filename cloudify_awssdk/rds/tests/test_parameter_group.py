@@ -215,10 +215,7 @@ class TestRDSParameterGroup(TestBase):
 
         self.assertEqual(
             _ctx.instance.runtime_properties, {
-                'aws_resource_arn': 'DBParameterGroupArn',
                 '__deleted': True,
-                'aws_resource_id': 'dev-db-param-group',
-                'resource_config': {}
             }
         )
 

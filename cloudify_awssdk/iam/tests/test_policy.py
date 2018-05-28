@@ -183,9 +183,6 @@ class TestIAMPolicy(TestBase):
         self.assertEqual(
             _ctx.instance.runtime_properties,
             {
-                'aws_resource_id': 'policy_name_id',
-                'aws_resource_arn': 'arn_id',
-                'resource_config': {},
                 '__deleted': True
             }
         )

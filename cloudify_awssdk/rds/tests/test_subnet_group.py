@@ -167,11 +167,6 @@ class TestRDSSubnetGroup(TestBase):
         self.assertEqual(
             _ctx.instance.runtime_properties, {
                 '__deleted': True,
-                'resource_config': {
-                    'DBSubnetGroupDescription': 'MySQL5.7 Subnet Group',
-                    'DBSubnetGroupName': 'zzzzzz-subnet-group',
-                    'SubnetIds': ['subnet-xxxxxxxx', 'subnet-yyyyyyyy']
-                }
             }
         )
 
