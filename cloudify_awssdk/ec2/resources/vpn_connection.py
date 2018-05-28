@@ -64,9 +64,7 @@ class EC2VPNConnection(EC2Base):
         props = self.properties
         if not props:
             return None
-        elif props and 'VgwTelemetry' not in props:
-            return None
-        return props['VgwTelemetry'][0].get('Status')
+        return props.get('State')
 
     def create(self, params):
         """Create a new AWS EC2 VPN Connection."""
@@ -97,7 +95,9 @@ def prepare(ctx, resource_config, **_):
 
 
 @decorators.aws_resource(EC2VPNConnection, RESOURCE_TYPE)
-@decorators.wait_for_status(status_good=['UP'], status_pending=['DOWN'])
+@decorators.wait_for_status(
+    status_good=['available'],
+    status_pending=['pending'])
 def create(ctx, iface, resource_config, **_):
     """Creates an AWS EC2 VPN Connection"""
     params = dict() if not resource_config else resource_config.copy()
@@ -119,7 +119,9 @@ def create(ctx, iface, resource_config, **_):
 
 
 @decorators.aws_resource(EC2VPNConnection, RESOURCE_TYPE)
-@decorators.wait_for_delete(status_deleted=['DOWN'], status_pending=['UP'])
+@decorators.wait_for_delete(
+    status_deleted=['deleted'],
+    status_pending=['available', 'deleting', 'pending'])
 def delete(ctx, iface, resource_config, **_):
     """Deletes an AWS EC2 VPN Connection"""
     deleted_params = dict()
