@@ -33,6 +33,8 @@ INSTANCE_TYPE_DEPRECATED = 'cloudify.aws.nodes.Instance'
 SUBNET_ID = 'SubnetId'
 SUBNET_TYPE = 'cloudify.nodes.aws.ec2.Subnet'
 SUBNET_TYPE_DEPRECATED = 'cloudify.aws.nodes.Subnet'
+SEC_GROUP_TYPE = 'cloudify.nodes.aws.ec2.SecurityGroup'
+SEC_GROUPS = 'Groups'
 ATTACHMENT_ID = 'AttachmentId'
 
 
@@ -144,6 +146,15 @@ def create(ctx, iface, resource_config, **_):
         params[SUBNET_ID] = \
             subnet_id or \
             targ.target.instance.runtime_properties.get(EXTERNAL_RESOURCE_ID)
+
+    groups = params.get(SEC_GROUPS, [])
+    for targ in utils.find_rels_by_node_type(ctx.instance, SEC_GROUP_TYPE):
+        group_id = \
+            targ.target.instance.runtime_properties.get(
+                EXTERNAL_RESOURCE_ID)
+        if group_id not in groups:
+            groups.append(group_id)
+    params[SEC_GROUPS] = groups
 
     # Actually create the resource
     create_response = iface.create(params)

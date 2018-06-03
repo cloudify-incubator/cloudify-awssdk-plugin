@@ -12,11 +12,13 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
+import copy
 import unittest
 from cloudify_awssdk.common.tests.test_base import TestBase, mock_decorator
 from cloudify_awssdk.ec2.resources.eni import EC2NetworkInterface, \
     NETWORKINTERFACES, NETWORKINTERFACE_ID, SUBNET_ID, \
-    SUBNET_TYPE, INSTANCE_TYPE_DEPRECATED, ATTACHMENT_ID
+    SUBNET_TYPE, INSTANCE_TYPE_DEPRECATED, ATTACHMENT_ID, \
+    SEC_GROUPS, SEC_GROUP_TYPE
 from mock import patch, MagicMock
 from cloudify_awssdk.ec2.resources import eni
 
@@ -130,6 +132,31 @@ class TestEC2NetworkInterface(TestBase):
         eni.create(ctx, iface, config)
         self.assertEqual(self.eni.resource_id,
                          'eni')
+
+    def test_create_with_groups(self):
+        mock_rels = [MagicMock]
+        fake_target = self.get_mock_ctx(
+            "SecurityGroup",
+            test_runtime_properties={'aws_resource_id': 'group3'},
+            type_hierarchy=SEC_GROUP_TYPE)
+        setattr(mock_rels[0], 'target', fake_target)
+        ctx = self.get_mock_ctx(
+            "NetworkInterface", test_relationships=[MagicMock])
+        config = {
+            SUBNET_ID: 'subnet',
+            SEC_GROUPS: ['group1', 'group2']
+        }
+        expected = copy.deepcopy(config[SEC_GROUPS])
+        expected.append('group3')
+        self.eni.resource_id = 'eni'
+        iface = MagicMock()
+        iface.create = self.mock_return(config)
+        eni.create(ctx, iface, config)
+        self.assertEqual(self.eni.resource_id,
+                         'eni')
+        self.assertEqual(
+            ctx.instance.runtime_properties['create_response'][SEC_GROUPS],
+            expected)
 
     def test_create_wth_modify(self):
         ctx = self.get_mock_ctx("NetworkInterface")
