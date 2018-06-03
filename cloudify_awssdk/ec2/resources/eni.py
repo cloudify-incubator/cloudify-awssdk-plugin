@@ -152,7 +152,7 @@ def create(ctx, iface, resource_config, **_):
         group_id = \
             targ.target.instance.runtime_properties.get(
                 EXTERNAL_RESOURCE_ID)
-        if group_id not in groups:
+        if group_id and group_id not in groups:
             groups.append(group_id)
     params[SEC_GROUPS] = groups
 
