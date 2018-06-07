@@ -227,6 +227,11 @@ class TestEC2NetworkInterface(TestBase):
         iface = MagicMock()
         eni.delete(ctx, iface, {})
         self.assertTrue(iface.delete.called)
+        for prop in ['resource_config',
+                     'aws_resource_id',
+                     'device_index',
+                     'create_response']:
+            self.assertTrue(prop not in ctx.instance.runtime_properties)
 
     def test_detach(self):
         ctx = self.get_mock_ctx("NetworkInterface")
