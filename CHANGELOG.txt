@@ -1,3 +1,5 @@
+2.3.3:
+  - Support connecting ENI to Security Group via relationships.
 2.3.2:
   - Improve wait_for_delete decorator to remove properties if resource status is deleted.
 
