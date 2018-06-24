@@ -96,7 +96,14 @@ class TestBase(unittest.TestCase):
                      test_properties={},
                      test_runtime_properties={},
                      test_relationships=None,
-                     type_hierarchy=['cloudify.nodes.Root']):
+                     type_hierarchy=['cloudify.nodes.Root'],
+                     ctx_operation_name=None):
+
+        operation_ctx = {
+            'retry_number': 0
+        } if not ctx_operation_name else {
+            'retry_number': 0, 'name': ctx_operation_name
+        }
 
         ctx = MockCloudifyContext(
             node_id=test_name,
@@ -107,7 +114,7 @@ class TestBase(unittest.TestCase):
                 test_runtime_properties
             ),
             relationships=test_relationships,
-            operation={'retry_number': 0}
+            operation=operation_ctx
         )
 
         ctx.node.type_hierarchy = type_hierarchy

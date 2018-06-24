@@ -53,3 +53,8 @@ class AWSResourceBase(object):
     def delete(self, params=None):
         '''Deletes a resource'''
         raise NotImplementedError()
+
+    def verify_resource_exists(self):
+        if not getattr(self, 'properties', {}):
+            return False
+        return True

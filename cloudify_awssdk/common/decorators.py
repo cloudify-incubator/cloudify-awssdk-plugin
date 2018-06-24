@@ -135,6 +135,14 @@ def aws_resource(class_decl=None,
                     ctx.instance.runtime_properties[
                         'resource_config'] = resource_config
                     ctx.instance.runtime_properties[EXT_RES_ID] = resource_id
+                    _, _, _, operation_name = ctx.operation.name.split('.')
+                    if operation_name not in ['delete', 'create'] and not \
+                            kwargs['iface'].verify_resource_exists():
+                        raise NonRecoverableError(
+                            'Resource type {0} resource_id '
+                            '{1} not found.'.format(
+                                kwargs['resource_type'],
+                                kwargs['iface'].resource_id))
                     return
                 ctx.logger.warn('%s ID# "%s" has force_operation set.'
                                 % (resource_type, resource_id))
