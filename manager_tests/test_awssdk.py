@@ -61,6 +61,13 @@ class TestAWSSDK(TestLocal):
                            exists=True,
                            command=None):
 
+        print 'Checking AWS resource args {0} {0} {0} {0}'.format(
+            resource_id, resource_type, exists, command)
+
+        if not isinstance(resource_id, basestring):
+            print 'Warning resource_id is {0}'.format(resource_id)
+            resource_id = str(resource_id)
+
         if command:
             pass
         elif 'cloudify.nodes.aws.ec2.Vpc' == \
@@ -134,6 +141,13 @@ class TestAWSSDK(TestLocal):
         elif 'cloudify.nodes.aws.autoscaling.Group' == resource_type:
             command = 'aws autoscaling describe-auto-scaling-groups ' \
                       '--auto-scaling-group-names {0}'.format(resource_id)
+        elif 'cloudify.nodes.aws.elb.Classic.LoadBalancer' == \
+                resource_type:
+            command = 'aws elb describe-load-balancers ' \
+                      '--load-balancer-name my-load-balancer {0}'.format(
+                          resource_id)
+        elif resource_id.startswith('ami-'):
+            return
         else:
             raise Exception('Unsupported type {0} for {1}.'.format(
                 resource_type, resource_id))
@@ -156,6 +170,8 @@ class TestAWSSDK(TestLocal):
                     '--lifecycle-hook-names {0}'.format(external_id)
                 self.check_aws_resource(command=lifecycle_hook_command)
             else:
+                if 'Classic.LoadBalancer' in node_type:
+                    external_id = 'myclassicelb'
                 self.check_aws_resource(external_id, node_type)
 
     def check_resources_in_deployment_deleted(self, nodes, node_names):
@@ -176,6 +192,8 @@ class TestAWSSDK(TestLocal):
                 self.check_aws_resource(
                     command=lifecycle_hook_command, exists=False)
             else:
+                if 'Classic.LoadBalancer' in node_type:
+                    external_id = 'myclassicelb'
                 self.check_aws_resource(external_id, node_type, exists=False)
 
     def check_manager_resources(self):
@@ -184,7 +202,7 @@ class TestAWSSDK(TestLocal):
                 NODE_TYPE_PREFIX,
                 self.cfy_local.storage.get_node,
                 id_property='aws_resource_id'):
-            self.check_aws_resource(resource)
+            self.check_aws_resource(resource_id=resource)
 
     def upload_plugins(self):
         utils.update_plugin_yaml(
@@ -196,14 +214,52 @@ class TestAWSSDK(TestLocal):
         for plugin in self.plugins_to_upload:
             utils.upload_plugin(plugin[0], plugin[1])
 
-    def cleanup_network_deployment(self):
+    def cleanup_deployment(self, deployment_id):
         # This is just for cleanup.
         # Because its in the lab, don't care if it passes or fails.
         utils.execute_command(
-            'cfy uninstall -p ignore_failure=true aws-example-network')
+            'cfy uninstall -p ignore_failure=true {0}'.format(
+                deployment_id))
 
-    # def nodecellar_deployment(self):
-    #     pass
+    def check_nodecellar(self):
+        aws_nodes = [
+            'security_group',
+            'haproxy_nic',
+            'nodejs_nic',
+            'mongo_nic',
+            'nodecellar_ip'
+        ]
+        monitored_nodes = [
+            'haproxy_frontend_host',
+            'nodejs_host',
+            'mongod_host'
+        ]
+        failed = utils.install_nodecellar(
+            blueprint_file_name=self.blueprint_file_name)
+        if failed:
+            raise Exception('Nodecellar install failed.')
+        del failed
+        self.addCleanup(self.cleanup_deployment, 'nc')
+        failed = utils.execute_scale(
+            'nc', scalable_entity_name='nodejs_group')
+        if failed:
+            raise Exception('Nodecellar scale failed.')
+        del failed
+        deployment_nodes = \
+            utils.get_deployment_resources_by_node_type_substring(
+                'nc', 'cloudify')
+        self.check_resources_in_deployment_created(
+            deployment_nodes, aws_nodes)
+        self.check_resources_in_deployment_created(
+            deployment_nodes, monitored_nodes)
+        failed = utils.execute_uninstall('nc')
+        if failed:
+            raise Exception('Nodecellar uninstall failed.')
+        del failed
+        self.check_resources_in_deployment_deleted(
+            deployment_nodes, aws_nodes)
+        self.check_resources_in_deployment_deleted(
+            deployment_nodes, monitored_nodes)
 
     def network_deployment(self):
         # Create a list of node templates to verify.
@@ -217,7 +273,7 @@ class TestAWSSDK(TestLocal):
             'internet_gateway',
             'vpc'
         ]
-        self.addCleanup(self.cleanup_network_deployment)
+        self.addCleanup(self.cleanup_deployment, 'aws-example-network')
         # Create Deployment (Blueprint already uploaded.)
         if utils.create_deployment('aws-example-network'):
             raise Exception(
@@ -233,6 +289,7 @@ class TestAWSSDK(TestLocal):
         # Check that the nodes really exist.
         self.check_resources_in_deployment_created(
             deployment_nodes, aws_nodes)
+        self.check_nodecellar()
         # Uninstall this deployment.
         if utils.execute_uninstall('aws-example-network'):
             raise Exception('Uninstall aws-example-network failed.')
@@ -241,39 +298,58 @@ class TestAWSSDK(TestLocal):
             deployment_nodes,
             aws_nodes)
 
-    def check_sqs_sns(self):
-        blueprint_path = 'examples/sns-feature-demo/blueprint.yaml'
-        blueprint_id = 'sqs-{0}'.format(os.environ['TEST_APPLICATION_PREFIX'])
-        sns_nodes = ['queue', 'topic', 'subscription']
-        utils.check_deployment(
-            blueprint_path,
-            blueprint_id,
-            NODE_TYPE_PREFIX,
-            sns_nodes,
-            self.check_resources_in_deployment_created,
-            self.check_resources_in_deployment_deleted
-        )
+    # def check_sqs_sns(self):
+    #     blueprint_path = 'examples/sns-feature-demo/blueprint.yaml'
+    #     blueprint_id = 'sqs-{0}'.format(
+    #     os.environ['TEST_APPLICATION_PREFIX'])
+    #     self.addCleanup(self.cleanup_deployment, blueprint_id)
+    #     sns_nodes = ['queue', 'topic', 'subscription']
+    #     utils.check_deployment(
+    #         blueprint_path,
+    #         blueprint_id,
+    #         NODE_TYPE_PREFIX,
+    #         sns_nodes,
+    #         self.check_resources_in_deployment_created,
+    #         self.check_resources_in_deployment_deleted
+    #     )
 
-    def check_s3(self):
-        blueprint_path = 'examples/s3-feature-demo/blueprint.yaml'
-        blueprint_id = 's3-{0}'.format(os.environ['TEST_APPLICATION_PREFIX'])
-        s3_nodes = [
-            'bucket', 'bucket_policy', 'bucket_lifecycle_configuration'
-        ]
-        utils.check_deployment(
-            blueprint_path,
-            blueprint_id,
-            NODE_TYPE_PREFIX,
-            s3_nodes,
-            self.check_resources_in_deployment_created,
-            self.check_resources_in_deployment_deleted
-        )
+    # def check_s3(self):
+    #     blueprint_path = 'examples/s3-feature-demo/blueprint.yaml'
+    #     blueprint_id = 's3-{0}'.format(os.environ['TEST_APPLICATION_PREFIX'])
+    #     self.addCleanup(self.cleanup_deployment, blueprint_id)
+    #     s3_nodes = [
+    #         'bucket', 'bucket_policy', 'bucket_lifecycle_configuration'
+    #     ]
+    #     utils.check_deployment(
+    #         blueprint_path,
+    #         blueprint_id,
+    #         NODE_TYPE_PREFIX,
+    #         s3_nodes,
+    #         self.check_resources_in_deployment_created,
+    #         self.check_resources_in_deployment_deleted
+    #     )
+
+    # def check_load_balancing(self):
+    #     blueprint_path = 'examples/elb-feature-demo/test.yaml'
+    #     blueprint_id = 'elb-classic-{0}'.format(
+    #         os.environ['TEST_APPLICATION_PREFIX'])
+    #     self.addCleanup(self.cleanup_deployment, blueprint_id)
+    #     load_balancer_nodes = ['classic_elb']
+    #     utils.check_deployment(
+    #         blueprint_path,
+    #         blueprint_id,
+    #         NODE_TYPE_PREFIX,
+    #         load_balancer_nodes,
+    #         self.check_resources_in_deployment_created,
+    #         self.check_resources_in_deployment_deleted
+    #     )
 
     def check_autoscaling(self):
         blueprint_path = 'examples/autoscaling-feature-demo/test.yaml'
         blueprint_id = 'autoscaling-{0}'.format(
             os.environ['TEST_APPLICATION_PREFIX'])
-        autoscaling_nodes = ['autoscaling_group', 'launch_configuration']
+        self.addCleanup(self.cleanup_deployment, blueprint_id)
+        autoscaling_nodes = ['autoscaling_group']
         utils.check_deployment(
             blueprint_path,
             blueprint_id,
