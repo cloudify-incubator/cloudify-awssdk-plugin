@@ -1,6 +1,7 @@
 # Built-in Imports
 import os
 import re
+import tempfile
 
 # Cloudify Imports
 from ecosystem_tests import TestLocal, utils, IP_ADDRESS_REGEX, create_password
@@ -120,24 +121,15 @@ class TestAWSSDK(TestLocal):
                 'aws ec2 describe-nat-gateways ' \
                 '--nat-gateway-ids {0}'.format(resource_id)
         elif 'cloudify.nodes.aws.SQS.Queue' == resource_type:
+            # Change queue url to name to get queue url.
+            resource_id = resource_id.split('/')[-1]
             command = 'aws sqs get-queue-url --queue-name {0}'.format(
                 resource_id)
         elif 'cloudify.nodes.aws.SNS.Topic' == resource_type:
-            command = 'aws sns get-topic-attributes ' \
+            command = 'aws sns list-subscriptions-by-topic ' \
                       '--topic-arn {0}'.format(resource_id)
-        elif 'cloudify.nodes.aws.SNS.Subscription' == resource_type:
-            command = 'aws sns get-subscription-attributes ' \
-                      '--subscription-arn {0}'.format(resource_id)
-        elif 'cloudify.nodes.aws.s3.BucketLifecycleConfiguration' == \
-                resource_type:
-            command = 'aws get-bucket-lifecycle-configuration ' \
-                      '--bucket-name {0}'.format(resource_id)
-        elif 'cloudify.nodes.aws.s3.BucketPolicy' == resource_type:
-            command = 'aws s3 get-bucket-policy ' \
-                      '--bucket-name {0}'.format(resource_id)
         elif 'cloudify.nodes.aws.s3.Bucket' == resource_type:
-            command = 'aws s3 get-bucket-location ' \
-                      '--bucket-name {0}'.format(resource_id)
+            command = 'aws s3 ls {0}'.format(resource_id)
         elif 'cloudify.nodes.aws.autoscaling.Group' == resource_type:
             command = 'aws autoscaling describe-auto-scaling-groups ' \
                       '--auto-scaling-group-names {0}'.format(resource_id)
@@ -160,9 +152,11 @@ class TestAWSSDK(TestLocal):
                 else node['node_type']
             if node['id'] not in node_names:
                 break
-            external_id = \
+            external_id = node['instances'][0]['runtime_properties'].get(
+                'aws_resource_id') if \
+                'Classic.LoadBalancer' not in node_type else \
                 node['instances'][0]['runtime_properties'].get(
-                    'aws_resource_id')
+                    'LoadBalancerName')
             if 'LifecycleHook' in node_type:
                 lifecycle_hook_command = \
                     'aws autoscaling describe-lifecycle-hooks ' \
@@ -170,8 +164,6 @@ class TestAWSSDK(TestLocal):
                     '--lifecycle-hook-names {0}'.format(external_id)
                 self.check_aws_resource(command=lifecycle_hook_command)
             else:
-                if 'Classic.LoadBalancer' in node_type:
-                    external_id = 'myclassicelb'
                 self.check_aws_resource(external_id, node_type)
 
     def check_resources_in_deployment_deleted(self, nodes, node_names):
@@ -181,9 +173,11 @@ class TestAWSSDK(TestLocal):
             node_type = 'cloudify.nodes.aws.ec2.Instances' \
                 if node['node_type'] == 'nodecellar.nodes.MonitoredServer' \
                 else node['node_type']
-            external_id = \
+            external_id = node['instances'][0]['runtime_properties'].get(
+                'aws_resource_id') if \
+                'Classic.LoadBalancer' not in node_type else \
                 node['instances'][0]['runtime_properties'].get(
-                    'aws_resource_id')
+                    'LoadBalancerName')
             if 'LifecycleHook' in node_type:
                 lifecycle_hook_command = \
                     'aws autoscaling describe-lifecycle-hooks ' \
@@ -192,8 +186,6 @@ class TestAWSSDK(TestLocal):
                 self.check_aws_resource(
                     command=lifecycle_hook_command, exists=False)
             else:
-                if 'Classic.LoadBalancer' in node_type:
-                    external_id = 'myclassicelb'
                 self.check_aws_resource(external_id, node_type, exists=False)
 
     def check_manager_resources(self):
@@ -252,6 +244,33 @@ class TestAWSSDK(TestLocal):
             deployment_nodes, aws_nodes)
         self.check_resources_in_deployment_created(
             deployment_nodes, monitored_nodes)
+        blueprint_dir = tempfile.mkdtemp()
+        blueprint_zip = os.path.join(blueprint_dir, 'blueprint.zip')
+        blueprint_archive = 'nodecellar-auto-scale-auto-heal-blueprint-master'
+        download_path = \
+            os.path.join(blueprint_dir, blueprint_archive, 'aws.yaml')
+        blueprint_path = utils.create_blueprint(
+            utils.NODECELLAR, blueprint_zip, blueprint_dir, download_path)
+        skip_transform = [
+            'aws',
+            'vpc',
+            'public_subnet',
+            'private_subnet', 
+            'ubuntu_trusty_ami'
+        ]
+        new_blueprint_path = utils.create_external_resource_blueprint(
+            blueprint_path,
+            aws_nodes,
+            deployment_nodes,
+            resource_id_attr='aws_resource_id',
+            nodes_to_keep_without_transform=skip_transform)
+        failed = utils.execute_command(
+            'cfy install {0} -b nc-external'.format(new_blueprint_path))
+        if failed:
+            raise Exception('Nodecellar external install failed.')
+        failed = utils.execute_uninstall('nc-external')
+        if failed:
+            raise Exception('Nodecellar external uninstall failed.')
         failed = utils.execute_uninstall('nc')
         if failed:
             raise Exception('Nodecellar uninstall failed.')
@@ -298,52 +317,6 @@ class TestAWSSDK(TestLocal):
             deployment_nodes,
             aws_nodes)
 
-    # def check_sqs_sns(self):
-    #     blueprint_path = 'examples/sns-feature-demo/blueprint.yaml'
-    #     blueprint_id = 'sqs-{0}'.format(
-    #     os.environ['TEST_APPLICATION_PREFIX'])
-    #     self.addCleanup(self.cleanup_deployment, blueprint_id)
-    #     sns_nodes = ['queue', 'topic', 'subscription']
-    #     utils.check_deployment(
-    #         blueprint_path,
-    #         blueprint_id,
-    #         NODE_TYPE_PREFIX,
-    #         sns_nodes,
-    #         self.check_resources_in_deployment_created,
-    #         self.check_resources_in_deployment_deleted
-    #     )
-
-    # def check_s3(self):
-    #     blueprint_path = 'examples/s3-feature-demo/blueprint.yaml'
-    #     blueprint_id = 's3-{0}'.format(os.environ['TEST_APPLICATION_PREFIX'])
-    #     self.addCleanup(self.cleanup_deployment, blueprint_id)
-    #     s3_nodes = [
-    #         'bucket', 'bucket_policy', 'bucket_lifecycle_configuration'
-    #     ]
-    #     utils.check_deployment(
-    #         blueprint_path,
-    #         blueprint_id,
-    #         NODE_TYPE_PREFIX,
-    #         s3_nodes,
-    #         self.check_resources_in_deployment_created,
-    #         self.check_resources_in_deployment_deleted
-    #     )
-
-    # def check_load_balancing(self):
-    #     blueprint_path = 'examples/elb-feature-demo/test.yaml'
-    #     blueprint_id = 'elb-classic-{0}'.format(
-    #         os.environ['TEST_APPLICATION_PREFIX'])
-    #     self.addCleanup(self.cleanup_deployment, blueprint_id)
-    #     load_balancer_nodes = ['classic_elb']
-    #     utils.check_deployment(
-    #         blueprint_path,
-    #         blueprint_id,
-    #         NODE_TYPE_PREFIX,
-    #         load_balancer_nodes,
-    #         self.check_resources_in_deployment_created,
-    #         self.check_resources_in_deployment_deleted
-    #     )
-
     def check_autoscaling(self):
         blueprint_path = 'examples/autoscaling-feature-demo/test.yaml'
         blueprint_id = 'autoscaling-{0}'.format(
@@ -359,11 +332,58 @@ class TestAWSSDK(TestLocal):
             self.check_resources_in_deployment_deleted
         )
 
+    def check_s3(self):
+        blueprint_path = 'examples/s3-feature-demo/blueprint.yaml'
+        blueprint_id = 's3-{0}'.format(os.environ['TEST_APPLICATION_PREFIX'])
+        self.addCleanup(self.cleanup_deployment, blueprint_id)
+        s3_nodes = ['bucket']
+        utils.check_deployment(
+            blueprint_path,
+            blueprint_id,
+            NODE_TYPE_PREFIX,
+            s3_nodes,
+            self.check_resources_in_deployment_created,
+            self.check_resources_in_deployment_deleted
+        )
+
+    def check_sqs_sns(self):
+        blueprint_path = 'examples/sns-feature-demo/blueprint.yaml'
+        blueprint_id = 'sqs-{0}'.format(
+            os.environ['TEST_APPLICATION_PREFIX'])
+        self.addCleanup(self.cleanup_deployment, blueprint_id)
+        sns_nodes = ['queue', 'topic']
+        utils.check_deployment(
+            blueprint_path,
+            blueprint_id,
+            NODE_TYPE_PREFIX,
+            sns_nodes,
+            self.check_resources_in_deployment_created,
+            self.check_resources_in_deployment_deleted
+        )
+
+    def check_load_balancing(self):
+        blueprint_path = 'examples/elb-feature-demo/blueprint.yaml'
+        blueprint_id = 'elb-classic-{0}'.format(
+            os.environ['TEST_APPLICATION_PREFIX'])
+        self.addCleanup(self.cleanup_deployment, blueprint_id)
+        load_balancer_nodes = ['classic_elb']
+        utils.check_deployment(
+            blueprint_path,
+            blueprint_id,
+            NODE_TYPE_PREFIX,
+            load_balancer_nodes,
+            self.check_resources_in_deployment_created,
+            self.check_resources_in_deployment_deleted
+        )
+
     def deployments(self):
-        # self.check_sqs_sns()
-        # self.check_s3()
         self.network_deployment()
         self.check_autoscaling()
+        self.check_s3()
+        self.check_sqs_sns()
+        # TODO: Fix too few zones in eu-central-1 issue.
+        # self.check_load_balancing()
+        # TODO: Add other blueprint examples for tests.
 
     def test_run_tests(self):
         self.deployments()

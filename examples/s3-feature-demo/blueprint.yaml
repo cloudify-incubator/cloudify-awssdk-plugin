@@ -92,4 +92,6 @@ node_templates:
         kwargs:
           ACL: public-read-write
           Bucket: awssdk-test-bucket
+          CreateBucketConfiguration:
+            LocationConstraint: { get_input: aws_region_name }
       client_config: *client_config

@@ -27,7 +27,7 @@ jobs:
           command: pip install --user virtualenv
       - run:
           name: Init virtualenv
-          command: virtualenv env
+          command: virtualenv env && source env/bin/activate
       - run:
           name: install tox
           command: pip install --user tox
@@ -107,7 +107,7 @@ jobs:
           command: pip install -e .
       - run:
           name: install test requirements
-          command: pip install awscli nose testtools https://github.com/cloudify-cosmo/cloudify-fabric-plugin/archive/1.5.1.zip https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.7.1.zip https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/d96ea4b06ef2745b8fe225abdc15e8a6e26c1ae1.zip
+          command: pip install awscli nose testtools https://github.com/cloudify-cosmo/cloudify-fabric-plugin/archive/1.5.1.zip https://github.com/cloudify-incubator/cloudify-utilities-plugin/archive/1.7.1.zip https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/0b9efed13549f9643cbf88e2667f02ae14ca0fa6.zip
       - run:
           name: execute test
           command: nosetests -s manager_tests/test_awssdk.py
@@ -117,14 +117,14 @@ workflows:
   tests:
     jobs:
       - unittests
-      - wagon
-          # filters:
-          #   branches:
-          #     only: /([0-9\.]*\-build|master|dev)/
+      - wagon:
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev)/
       - cloudify-manager:
           context: ecosystem
           requires:
             - wagon
-          # filters:
-          #   branches:
-          #     only: /([0-9\.]*\-build|master|dev)/
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev)/
