@@ -134,8 +134,10 @@ def aws_resource(class_decl=None,
                     # Set ``resource_config`` and ``EXT_RES_ID``
                     ctx.instance.runtime_properties[
                         'resource_config'] = resource_config
+                    _, _, _, operation_name = ctx.operation.name.split('.')
                     ctx.instance.runtime_properties[EXT_RES_ID] = resource_id
-                    if not kwargs['iface'].verify_resource_exists():
+                    if operation_name not in ['delete', 'create'] and \
+                            not kwargs['iface'].verify_resource_exists():
                         raise NonRecoverableError(
                             'Resource type {0} resource_id '
                             '{1} not found.'.format(

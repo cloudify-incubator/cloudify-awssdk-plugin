@@ -88,7 +88,7 @@ class TestAWSSDK(TestLocal):
                 'aws ec2 describe-route-tables --route-table-ids {0}'.format(
                     resource_id)
         elif 'cloudify.nodes.aws.ec2.NATGateway' == \
-                resource_type or resource_id.startswith('vpc-'):
+                resource_type or resource_id.startswith('nat-'):
             command = \
                 'aws ec2 describe-nat-gateways --nat-gateway-ids {0}'.format(
                     resource_id)

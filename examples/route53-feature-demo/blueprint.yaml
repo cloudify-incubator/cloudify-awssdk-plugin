@@ -42,7 +42,7 @@ node_templates:
     properties:
       client_config: *client_config
       resource_config:
-        kwargs:
+        kwargs: {}
     relationships:
     - type: cloudify.relationships.aws.route53.record_set.connected_to
       target: dns_hosted_zone
