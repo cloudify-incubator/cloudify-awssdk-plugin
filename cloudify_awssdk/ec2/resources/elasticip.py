@@ -18,7 +18,7 @@
     AWS EC2 ElasticIP interface
 """
 # Cloudify
-from cloudify.exceptions import OperationRetry
+from cloudify.exceptions import OperationRetry, NonRecoverableError
 from cloudify_awssdk.common import decorators, utils
 from cloudify_awssdk.ec2 import EC2Base
 from cloudify_awssdk.common.constants import EXTERNAL_RESOURCE_ID
@@ -63,7 +63,15 @@ class EC2ElasticIP(EC2Base):
         """
         self.logger.debug('Creating %s with parameters: %s'
                           % (self.type_name, params))
-        res = self.client.allocate_address(**params)
+        try:
+            res = self.client.allocate_address(**params)
+        except ClientError as e:
+            if 'AddressLimitExceeded' in str(e):
+                raise OperationRetry(
+                    'ElasticIp quota reached: {0}'.format(str(e)))
+            else:
+                raise NonRecoverableError(
+                    'Create ElasticIP see error: {0}'.format(str(e)))
         self.logger.debug('Response: %s' % res)
         return res
 
@@ -116,7 +124,11 @@ def create(ctx, iface, resource_config, **_):
         dict() if not resource_config else resource_config.copy()
 
     # Actually create the resource
-    create_response = iface.create(params)
+    try:
+        create_response = iface.create(params)
+    except ClientError as e:
+        raise NonRecoverableError(
+            'Failed to allocate address: {0}'.format(str(e)))
     ctx.instance.runtime_properties['create_response'] = \
         utils.JsonCleanuper(create_response).to_dict()
     elasticip_id = create_response.get(ELASTICIP_ID, '')

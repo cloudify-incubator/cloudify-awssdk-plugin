@@ -158,6 +158,11 @@ class TestEC2Instances(TestBase):
         iface = MagicMock()
         instances.delete(iface, {})
         self.assertTrue(iface.delete.called)
+        for prop in ['ip',
+                     'private_ip_address',
+                     'public_ip_address',
+                     'create_response']:
+            self.assertTrue(prop not in ctx.instance.runtime_properties)
 
     def test_create_relatonships(self):
         _source_ctx, _target_ctx, _group_rel = \

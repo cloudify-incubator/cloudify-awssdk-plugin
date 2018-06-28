@@ -1,27 +1,14 @@
-2.3.3:
-  - Support connecting ENI to Security Group via relationships.
-2.3.2:
-  - Improve wait_for_delete decorator to remove properties if resource status is deleted.
-
-2.3.1:
-  - Improve object status check in decorator for new-recreating resources.
-
-2.3.0:
-  - Add Modify ENI Attribute functionality.
-
-2.2.0:
-  - Add Modify Instance Attribute functionality.
-
-2.1.2:
-  - Correct sequence of nics.
-
+2.3.4: Verify resource ID exists on existing resources.
+2.3.3: Support connecting ENI to Security Group via relationships.
+2.3.2: Improve wait_for_delete decorator to remove properties if resource status is deleted.
+2.3.1: Improve object status check in decorator for new-recreating resources.
+2.3.0: Add Modify ENI Attribute functionality.
+2.2.0: Add Modify Instance Attribute functionality.
+2.1.2: Correct sequence of nics.
 2.1.1:
   - Fix support for multiple nics.
   - Improve error handling in Ec2.Image.
-
-2.1.0:
- - Add support ebs volume
-
+2.1.0: Add support ebs volume
 2.0.0:
 - Update Cloudify SDK base to 4.2.
 - Add Instances Support
@@ -29,24 +16,13 @@
 - Shorten the Plugin YAML.
 - Store create response for all ec2 types.
 - Updated Botocore/Boto3 versions.
-
-1.2.0.3:
-- Update the Botocore/Boto3 version.
-
-1.2.0.2:
-- Fix bug where interfaces.cloudify.interfaces.lifecycle.stop maps to create operation.
-
-1.2.0.1:
-- Fix bug with empty runtime properties for node when ``use_external_resource``
- is set True
-
-1.2.0:
-- VPC Peering.
-
+1.2.0.3: Update the Botocore/Boto3 version.
+1.2.0.2: Fix bug where interfaces.cloudify.interfaces.lifecycle.stop maps to create operation.
+1.2.0.1: Fix bug with empty runtime properties for node when `use_external_resource` is set True.
+1.2.0: VPC Peering.
 1.0.1:
 - Add ECS support (Cluster, Service, Task Definition) + Blueprint Example.
 - Fix several bugs with ELBv2.
-
 1.0.0:
 - autoscaling_group
 - autoscaling launch_configuration

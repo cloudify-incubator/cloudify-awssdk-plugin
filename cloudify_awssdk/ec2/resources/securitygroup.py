@@ -171,7 +171,7 @@ def create(ctx, iface, resource_config, **_):
 
 
 @decorators.aws_resource(EC2SecurityGroup, RESOURCE_TYPE)
-def delete(iface, resource_config, **_):
+def delete(ctx, iface, resource_config, **_):
     '''Deletes an AWS EC2 Security Group'''
 
     params = \
@@ -182,6 +182,13 @@ def delete(iface, resource_config, **_):
         group_id = iface.resource_id
 
     iface.delete({GROUPID: group_id})
+    for prop in ['resource_config',
+                 'aws_resource_id',
+                 'create_response']:
+        try:
+            del ctx.instance.runtime_properties[prop]
+        except KeyError:
+            pass
 
 
 @decorators.aws_resource(EC2SecurityGroup, RESOURCE_TYPE)

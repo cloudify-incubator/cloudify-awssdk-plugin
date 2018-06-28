@@ -1,9 +1,9 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
-- https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/4.1/resources/rest-service/cloudify/types/types.yaml
-- http://getcloudify.org.s3.amazonaws.com/spec/aws-plugin/1.4.13/plugin.yaml
-- plugin.yaml
+  - http://www.getcloudify.org/spec/cloudify/4.3.2/types.yaml
+  - plugin.yaml
+  # - plugin:cloudify-awssdk-plugin
 
 inputs:
 
@@ -24,11 +24,6 @@ dsl_definitions:
     aws_access_key_id: { get_input: aws_access_key_id }
     aws_secret_access_key: { get_input: aws_secret_access_key }
     region_name: { get_input: aws_region_name }
-
-  aws_config: &aws_config
-    aws_access_key_id: { get_input: aws_access_key_id }
-    aws_secret_access_key: { get_input: aws_secret_access_key }
-    ec2_region_name: { get_input: aws_region_name }
 
 node_templates:
 
@@ -57,21 +52,15 @@ node_templates:
     properties:
       resource_config:
         kwargs:
-          Policy: |
-            {
-              "Version": "2012-10-17",
-              "Statement": [
-                {
-                  "Sid": "EveryoneGetPlugin",
-                  "Effect": "Allow",
-                  "Principal": "*",
-                  "Action": [
-                    "s3:GetObject"
-                  ],
-                  "Resource": "arn:aws:s3:::cfypm_example_s3/*"
-                }
-              ]
-            }
+          Policy:
+            Version: '2012-10-17'
+            Statement:
+            - Sid: EveryoneGetPlugin
+              Effect: Allow
+              Principal: "*"
+              Action:
+              - "s3:GetObject"
+              Resource: { concat: [ 'arn:aws:s3:::', { get_property: [ bucket, resource_config, kwargs, Bucket ] } , '/*' ] }
       client_config: *client_config
     relationships:
     - type: cloudify.relationships.depends_on
@@ -85,7 +74,7 @@ node_templates:
           Tagging:
             TagSet:
             - Key: Name
-              Value: cfypm_example_s3-bucket_tagging
+              Value: awssdk-test-bucket-tagging
       client_config: *client_config
     relationships:
     - type: cloudify.relationships.depends_on
@@ -97,5 +86,7 @@ node_templates:
       resource_config:
         kwargs:
           ACL: public-read-write
-          Bucket: cfypm_example_s3
+          Bucket: awssdk-test-bucket
+          CreateBucketConfiguration:
+            LocationConstraint: { get_input: aws_region_name }
       client_config: *client_config

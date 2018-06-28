@@ -2,7 +2,7 @@ tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
   - http://www.getcloudify.org/spec/cloudify/4.3.2/types.yaml
-  - plugin.yaml
+  - plugin:cloudify-awssdk-plugin
 
 inputs:
 
@@ -18,9 +18,15 @@ inputs:
     type: string
     default: { get_secret: ec2_region_name }
 
-  image_id:
-    description: This AMI is matched to us-east-1.
-    default: ami-c58c1dd3
+  availability_zone:
+    type: string
+    default: { concat: [ { get_input: aws_region_name}, 'b' ] }
+
+  public_subnet_cidr:
+    default: '10.0.0.0/24'
+
+  vpc_cidr:
+    default: '10.0.0.0/16'
 
 dsl_definitions:
 
@@ -29,42 +35,37 @@ dsl_definitions:
     aws_secret_access_key: { get_input: aws_secret_access_key }
     region_name: { get_input: aws_region_name }
 
-  aws_config: &aws_config
-    aws_access_key_id: { get_input: aws_access_key_id }
-    aws_secret_access_key: { get_input: aws_secret_access_key }
-    ec2_region_name: { get_input: aws_region_name }
-
 node_templates:
 
-  autoscaling_lifecycle_hook3:
+  autoscaling_lifecycle_hook:
     type: cloudify.nodes.aws.autoscaling.LifecycleHook
     properties:
       resource_config:
         kwargs:
-          LifecycleHookName: test-autoscaling3
+          LifecycleHookName: test-autoscaling
           LifecycleTransition: autoscaling:EC2_INSTANCE_LAUNCHING
       client_config: *client_config
     relationships:
     - type: cloudify.relationships.depends_on
-      target: autoscaling_group3
+      target: autoscaling_group
 
-  autoscaling_group3:
+  autoscaling_group:
     type: cloudify.nodes.aws.autoscaling.Group
     properties:
       resource_config:
         kwargs:
-          AutoScalingGroupName: test-autoscaling3
+          AutoScalingGroupName: test-autoscaling
           MinSize: 1
           MaxSize: 1
           DefaultCooldown: 300
       client_config: *client_config
     relationships:
     - type: cloudify.relationships.depends_on
-      target: launch_configuration3
+      target: launch_configuration
     - type: cloudify.relationships.depends_on
       target: subnet
 
-  launch_configuration3:
+  launch_configuration:
     type: cloudify.nodes.aws.autoscaling.LaunchConfiguration
     properties:
       resource_config:
@@ -73,21 +74,26 @@ node_templates:
       client_config: *client_config
     relationships:
     - type: cloudify.relationships.depends_on
-      target: instance3
+      target: instance
 
-  instance3:
-    type: cloudify.aws.nodes.Instance
+  instance:
+    type: cloudify.nodes.aws.ec2.Instances
     properties:
       agent_config:
         install_method: none
-      image_id: { get_input: image_id }
-      instance_type: t2.micro
-      aws_config: *aws_config
+      resource_config:
+        MaxCount: 1
+        MinCount: 1
+        ImageId: { get_attribute: [ ubuntu_trusty_ami, aws_resource_id ] }
+        InstanceType: m3.large
+      client_config: *client_config
     relationships:
-      - type: cloudify.aws.relationships.instance_connected_to_subnet
-        target: subnet
+    - type: cloudify.relationships.depends_on
+      target: subnet
+    - type: cloudify.relationships.depends_on
+      target: ubuntu_trusty_ami
 
-  centos_core_ami:
+  ubuntu_trusty_ami:
     type: cloudify.nodes.aws.ec2.Image
     properties:
       resource_config:
@@ -95,24 +101,28 @@ node_templates:
           Filters:
           - Name: name
             Values:
-            - 'CentOS 7.3.1611 x86_64 with cloud-init (HVM)'
+            - 'ubuntu/images/hvm-ssd/ubuntu-trusty-14.04-amd64-server-20170727'
           - Name: owner-id
             Values:
-            - '057448758665'
+            - '099720109477'
       client_config: *client_config
 
   subnet:
-    type: cloudify.aws.nodes.Subnet
+    type: cloudify.nodes.aws.ec2.Subnet
     properties:
-      aws_config: *aws_config
-      cidr_block:  172.30.0.0/24
-      availability_zone: { concat: [ { get_input: aws_region_name } , 'b' ] }
+      resource_config:
+        kwargs:
+          CidrBlock: { get_input: public_subnet_cidr }
+          AvailabilityZone: { get_input: availability_zone }
+      client_config: *client_config
     relationships:
-    - type: cloudify.aws.relationships.subnet_contained_in_vpc
+    - type: cloudify.relationships.depends_on
       target: vpc
 
   vpc:
-    type: cloudify.aws.nodes.VPC
+    type: cloudify.nodes.aws.ec2.Vpc
     properties:
-      aws_config: *aws_config
-      cidr_block:  172.30.0.0/16
+      resource_config:
+        kwargs:
+          CidrBlock: { get_input: vpc_cidr }
+      client_config: *client_config

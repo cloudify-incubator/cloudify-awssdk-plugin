@@ -25,7 +25,7 @@ from cloudify_awssdk.common import decorators
 class TestDecorators(TestBase):
 
     def _gen_decorators_context(self, _test_name, runtime_prop=None,
-                                prop=None):
+                                prop=None, op_name=None):
 
         _test_node_properties = prop if prop else {
             'use_external_resource': False
@@ -37,7 +37,8 @@ class TestDecorators(TestBase):
             _test_name,
             test_properties=_test_node_properties,
             test_runtime_properties=_test_runtime_properties,
-            type_hierarchy=['cloudify.nodes.Root']
+            type_hierarchy=['cloudify.nodes.Root'],
+            ctx_operation_name=None if not op_name else op_name
         )
         current_ctx.set(_ctx)
         return _ctx
@@ -264,7 +265,8 @@ class TestDecorators(TestBase):
             },
             'e': 'f',
             'use_external_resource': True
-        })
+        }, op_name='cloudify.interfaces.lifecycle.create')
+        current_ctx.set(_ctx)
 
         mock_func = MagicMock()
 
