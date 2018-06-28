@@ -117,7 +117,7 @@ workflows:
   tests:
     jobs:
       - unittests
-      - wagon
+      - wagon:
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
