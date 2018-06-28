@@ -37,66 +37,44 @@ dsl_definitions:
 
 node_templates:
 
-  dns_record_set_2:
-    type: cloudify.nodes.aws.route53.RecordSet
+  autoscaling_lifecycle_hook:
+    type: cloudify.nodes.aws.autoscaling.LifecycleHook
     properties:
-      client_config: *client_config
       resource_config:
         kwargs:
+          LifecycleHookName: test-autoscaling
+          LifecycleTransition: autoscaling:EC2_INSTANCE_LAUNCHING
+      client_config: *client_config
     relationships:
-    - type: cloudify.relationships.aws.route53.record_set.connected_to
-      target: dns_hosted_zone
+    - type: cloudify.relationships.depends_on
+      target: autoscaling_group
+
+  autoscaling_group:
+    type: cloudify.nodes.aws.autoscaling.Group
+    properties:
+      resource_config:
+        kwargs:
+          AutoScalingGroupName: test-autoscaling
+          MinSize: 1
+          MaxSize: 1
+          DefaultCooldown: 300
+      client_config: *client_config
+    relationships:
+    - type: cloudify.relationships.depends_on
+      target: launch_configuration
+    - type: cloudify.relationships.depends_on
+      target: subnet
+
+  launch_configuration:
+    type: cloudify.nodes.aws.autoscaling.LaunchConfiguration
+    properties:
+      resource_config:
+        kwargs:
+          LaunchConfigurationName: test-lauchconfig3
+      client_config: *client_config
+    relationships:
     - type: cloudify.relationships.depends_on
       target: instance
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        create:
-          implementation: awssdk.cloudify_awssdk.route53.resources.record_set.prepare
-          inputs:
-            resource_config:
-              Action: CREATE
-              ResourceRecordSet:
-                Name: { concat: ["dev.", { get_property: [dns_hosted_zone, resource_id] }] }
-                Type: !!str TXT
-                TTL: !!int 60
-                ResourceRecords:
-                - Value: { concat: [ '"', { get_attribute: [ instance, ip ] } , '"' ] }
-
-  dns_record_set_1:
-    type: cloudify.nodes.aws.route53.RecordSet
-    properties:
-      client_config: *client_config
-      resource_config:
-        kwargs:
-          Action: UPSERT
-          ResourceRecordSet:
-            Name: { concat: ["staging.", { get_property: [dns_hosted_zone, resource_id] }] }
-            Type: !!str TXT
-            TTL: !!int 60
-            ResourceRecords:
-            - Value: '"Created using Cloudify"'
-    relationships:
-    - type: cloudify.relationships.aws.route53.record_set.connected_to
-      target: dns_hosted_zone
-
-  dns_hosted_zone:
-    type: cloudify.nodes.aws.route53.HostedZone
-    properties:
-      resource_id: !!str getcloudify.org
-      client_config: *client_config
-      resource_config:
-        kwargs:
-          HostedZoneConfig:
-            Comment: !!str Cloudify-generated DNS Hosted Zone
-            PrivateZone: !!bool true
-    #interfaces:
-    #  cloudify.interfaces.lifecycle:
-    #    delete:
-    #      inputs:
-    #        force_delete: true
-    relationships:
-    - type: cloudify.relationships.aws.route53.hosted_zone.connected_to
-      target: dns_vpc
 
   instance:
     type: cloudify.nodes.aws.ec2.Instances
@@ -111,7 +89,7 @@ node_templates:
       client_config: *client_config
     relationships:
     - type: cloudify.relationships.depends_on
-      target: dns_subnet
+      target: subnet
     - type: cloudify.relationships.depends_on
       target: ubuntu_trusty_ami
 
@@ -129,7 +107,7 @@ node_templates:
             - '099720109477'
       client_config: *client_config
 
-  dns_subnet:
+  subnet:
     type: cloudify.nodes.aws.ec2.Subnet
     properties:
       resource_config:
@@ -139,9 +117,9 @@ node_templates:
       client_config: *client_config
     relationships:
     - type: cloudify.relationships.depends_on
-      target: dns_vpc
+      target: vpc
 
-  dns_vpc:
+  vpc:
     type: cloudify.nodes.aws.ec2.Vpc
     properties:
       resource_config:

@@ -31,6 +31,7 @@ LC_ARN = 'LaunchConfigurationARN'
 IMAGEID = 'ImageId'
 INSTANCEID = 'InstanceId'
 INSTANCE_TYPE = 'cloudify.aws.nodes.Instance'
+INSTANCE_TYPE_NEW = 'cloudify.nodes.aws.ec2.Instances'
 INSTANCE_TYPE_PROPERTY = 'InstanceType'
 INSTANCE_TYPE_PROPERTY_DEPRECATED = 'instance_type'
 SECGROUPS = 'SecurityGroups'
@@ -128,14 +129,23 @@ def create(ctx, iface, resource_config, **_):
     if not image_id and not instance_id:
         instance_id = utils.find_resource_id_by_type(
             ctx.instance,
-            INSTANCE_TYPE)
+            INSTANCE_TYPE_NEW) or \
+            utils.find_resource_id_by_type(
+                ctx.instance,
+                INSTANCE_TYPE)
         params.update({INSTANCEID: instance_id})
     if instance_id and not instance_type:
         targ = utils.find_rel_by_node_type(
             ctx.instance,
-            INSTANCE_TYPE)
+            INSTANCE_TYPE_NEW) or \
+            utils.find_rel_by_node_type(
+                ctx.instance,
+                INSTANCE_TYPE)
         if targ:
             instance_type = \
+                targ.target.instance.runtime_properties.get(
+                    'resource_config', {}).get(
+                        INSTANCE_TYPE_PROPERTY) or \
                 targ.target.node.properties.get(
                     INSTANCE_TYPE_PROPERTY_DEPRECATED)
         params.update({INSTANCE_TYPE_PROPERTY: instance_type})

@@ -63,7 +63,15 @@ class EC2ElasticIP(EC2Base):
         """
         self.logger.debug('Creating %s with parameters: %s'
                           % (self.type_name, params))
-        res = self.client.allocate_address(**params)
+        try:
+            res = self.client.allocate_address(**params)
+        except ClientError as e:
+            if 'AddressLimitExceeded' in str(e):
+                raise OperationRetry(
+                    'ElasticIp quota reached: {0}'.format(str(e)))
+            else:
+                raise NonRecoverableError(
+                    'Create ElasticIP see error: {0}'.format(str(e)))
         self.logger.debug('Response: %s' % res)
         return res
 

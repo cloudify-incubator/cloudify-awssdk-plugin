@@ -88,6 +88,23 @@ node_templates:
       - type: cloudify.aws.relationships.instance_connected_to_subnet
         target: subnet
 
+  centos_core_ami:
+    type: cloudify.nodes.aws.ec2.Image
+    properties:
+      resource_config:
+        kwargs:
+          Filters:
+          - Name: name
+            Values:
+            - 'CentOS 7.3.1611 x86_64 with cloud-init (HVM)'
+          - Name: owner-id
+            Values:
+            - '057448758665'
+      client_config: *client_config
+    relationships:
+    - type: cloudify.relationships.contained_in
+      target: aws
+
   subnet:
     type: cloudify.aws.nodes.Subnet
     properties:
