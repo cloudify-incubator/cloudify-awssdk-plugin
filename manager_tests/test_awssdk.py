@@ -10,6 +10,18 @@ from ecosystem_tests import EcosystemTestBase, utils, IP_ADDRESS_REGEX
 
 class TestAWSSDK(EcosystemTestBase):
 
+    # @classmethod
+    # def setUpClass(cls):
+    #     super(TestAWSSDK, cls).setUpClass()
+
+    # @classmethod
+    # def tearDownClass(cls):
+    #     super(TestAWSSDK, cls).tearDownClass()
+
+    def setUp(self):
+        os.environ['AWS_DEFAULT_REGION'] = self.inputs.get('ec2_region_name')
+        super(TestAWSSDK, self).setUp()
+
     @property
     def node_type_prefix(self):
         return 'cloudify.nodes.aws'
@@ -51,10 +63,6 @@ class TestAWSSDK(EcosystemTestBase):
         except KeyError:
             raise
 
-    def setUp(self):
-        os.environ['AWS_DEFAULT_REGION'] = self.inputs.get('ec2_region_name')
-        super(TestAWSSDK, self).setUp()
-
     def check_resource_method(self,
                               resource_id=None,
                               resource_type=None,
@@ -67,7 +75,7 @@ class TestAWSSDK(EcosystemTestBase):
         if not isinstance(resource_id, basestring):
             print 'Warning resource_id is {0}'.format(resource_id)
             resource_id = str(resource_id)
-
+        sleep(.1)
         if command:
             pass
         elif 'cloudify.nodes.aws.ec2.Vpc' == \
@@ -299,7 +307,7 @@ class TestAWSSDK(EcosystemTestBase):
     def test_autoscaling(self):
         blueprint_path = 'examples/autoscaling-feature-demo/test.yaml'
         blueprint_id = 'autoscaling-{0}'.format(
-            os.environ['TEST_APPLICATION_PREFIX'])
+            self.application_prefix)
         self.addCleanup(self.cleanup_deployment, blueprint_id)
         autoscaling_nodes = ['autoscaling_group']
         utils.check_deployment(
@@ -313,7 +321,7 @@ class TestAWSSDK(EcosystemTestBase):
 
     def test_s3(self):
         blueprint_path = 'examples/s3-feature-demo/blueprint.yaml'
-        blueprint_id = 's3-{0}'.format(os.environ['TEST_APPLICATION_PREFIX'])
+        blueprint_id = 's3-{0}'.format(self.application_prefix)
         self.addCleanup(self.cleanup_deployment, blueprint_id)
         s3_nodes = ['bucket']
         utils.check_deployment(
@@ -328,7 +336,7 @@ class TestAWSSDK(EcosystemTestBase):
     def test_sqs_sns(self):
         blueprint_path = 'examples/sns-feature-demo/blueprint.yaml'
         blueprint_id = 'sqs-{0}'.format(
-            os.environ['TEST_APPLICATION_PREFIX'])
+            self.application_prefix)
         self.addCleanup(self.cleanup_deployment, blueprint_id)
         sns_nodes = ['queue', 'topic']
         utils.check_deployment(
@@ -344,7 +352,7 @@ class TestAWSSDK(EcosystemTestBase):
         blueprint_path = \
             'examples/cloudformation-feature-demo/blueprint.yaml'
         blueprint_id = 'cfn-{0}'.format(
-            os.environ['TEST_APPLICATION_PREFIX'])
+            self.application_prefix)
         self.addCleanup(self.cleanup_deployment, blueprint_id)
         cfn_nodes = ['wordpress_example', 'HelloBucket']
         utils.check_deployment(
