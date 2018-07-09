@@ -1,9 +1,8 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
-- https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/4.1/resources/rest-service/cloudify/types/types.yaml
-- http://getcloudify.org.s3.amazonaws.com/spec/aws-plugin/1.4.13/plugin.yaml
-- plugin.yaml
+  - http://www.getcloudify.org/spec/cloudify/4.3.2/types.yaml
+  - plugin:cloudify-awssdk-plugin
 
 inputs:
 
@@ -33,91 +32,39 @@ dsl_definitions:
 
 node_templates:
 
-#  cloudformation_stack:
-#    type: cloudify.nodes.aws.CloudFormation.Stack
-#    properties:
-#      resource_config:
-#        kwargs:
-#          StackName: test-cloudformation1
-#          TemplateBody:
-#            {
-#              "AWSTemplateFormatVersion": "2010-09-09",
-#              "Description": "A sample template",
-#              "Resources": {
-#                "MyEC2Instance": {
-#                  "Type": "AWS::EC2::Instance",
-#                  "Properties": {
-#                    "ImageId": "ami-876facc3",
-#                    "InstanceType": "t1.micro",
-#                    "KeyName": "testkey",
-#                    "BlockDeviceMappings": [{
-#                        "DeviceName": "/dev/sdm",
-#                        "Ebs": {
-#                          "VolumeType": "io1",
-#                          "Iops": "200",
-#                          "DeleteOnTermination": "false",
-#                          "VolumeSize": "20"
-#                        }
-#                    }]
-#                  }
-#                }
-#              }
-#            }
-#      client_config:
-#        aws_access_key_id: { get_input: aws_access_key_id }
-#        aws_secret_access_key: { get_input: aws_secret_access_key }
-#        region_name: us-west-1 # to match template
-#
-#  cloudformation_stack2:
-#    type: cloudify.nodes.aws.CloudFormation.Stack
-#    properties:
-#      resource_config:
-#        kwargs:
-#          StackName: test-cloudformation2
-#          TemplateURL: https://s3-us-west-1.amazonaws.com/cf-templates-1599a9xjo0snl-us-west-1/2017177zh7-test-new.templateuwj91r7rjrb
-#      client_config:
-#        aws_access_key_id: { get_input: aws_access_key_id }
-#        aws_secret_access_key: { get_input: aws_secret_access_key }
-#        region_name: us-west-1 # to match template
-
-  cloudformation_stack3:
+  wordpress_example:
     type: cloudify.nodes.aws.CloudFormation.Stack
     properties:
-      resource_id: { concat: [ { get_input: aws_region_name }, cfntest ] }
       resource_config:
         kwargs:
-          StackName: cfntest
+          StackName: WordpressExample
+          Parameters:
+          - ParameterKey: KeyName
+            ParameterValue: example
+          - ParameterKey: DBPassword
+            ParameterValue: zadkckdoekd
+          - ParameterKey: DBUser
+            ParameterValue: example
+          - ParameterKey: DBRootPassword
+            ParameterValue: zadkckdoekd
+          TemplateURL: https://s3.eu-central-1.amazonaws.com/cloudformation-templates-eu-central-1/WordPress_Single_Instance.template
+      client_config: *client_config
+
+  HelloBucket:
+    type: cloudify.nodes.aws.CloudFormation.Stack
+    properties:
+      resource_config:
+        kwargs:
+          StackName: HelloBucket
           TemplateBody:
             AWSTemplateFormatVersion: "2010-09-09"
-            Description: A sample template
+            Description: S3 HelloBucket
             Resources:
-              AdmLaunchConfiguration:
-                Type: "AWS::AutoScaling::LaunchConfiguration"
+              HelloBucket:
+                Type: AWS::S3::Bucket
                 Properties:
-                  ImageId: ami-c58c1dd3
-                  InstanceType: t2.micro
-                Metadata:
-                  AWS::CloudFormation::Init:
-                    configSets:
-                      ascending:
-                        - "config1"
-                        - "config2"
-                      descending:
-                        - "config2"
-                        - "config1"
-                    config1:
-                      commands:
-                        test:
-                          command: "echo \"$CFNTEST\" > test.txt"
-                          env:
-                            CFNTEST: "I come from config1."
-                          cwd: "~"
-                    config2:
-                      commands:
-                        test:
-                          command: "echo \"$CFNTEST\" > test.txt"
-                          env:
-                            CFNTEST: "I come from config2"
-                          cwd: "~"
-
+                  AccessControl: PublicRead
+                  WebsiteConfiguration:
+                    IndexDocument: index.html
+                    ErrorDocument: error.html
       client_config: *client_config

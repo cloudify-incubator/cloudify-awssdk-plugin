@@ -1,48 +1,55 @@
 # Built-in Imports
 import os
 import re
+from time import sleep
 import tempfile
 
 # Cloudify Imports
-from ecosystem_tests import TestLocal, utils, IP_ADDRESS_REGEX, create_password
+from ecosystem_tests import EcosystemTestBase, utils, IP_ADDRESS_REGEX
 
 
-NODE_TYPE_PREFIX = 'cloudify.nodes.aws'
+class TestAWSSDK(EcosystemTestBase):
 
+    # @classmethod
+    # def setUpClass(cls):
+    #     super(TestAWSSDK, cls).setUpClass()
 
-class TestAWSSDK(TestLocal):
+    # @classmethod
+    # def tearDownClass(cls):
+    #     super(TestAWSSDK, cls).tearDownClass()
 
     def setUp(self):
+        os.environ['AWS_DEFAULT_REGION'] = self.inputs.get('ec2_region_name')
+        super(TestAWSSDK, self).setUp()
 
-        if 'ECOSYSTEM_SESSION_PASSWORD' not in os.environ:
-            os.environ['ECOSYSTEM_SESSION_PASSWORD'] = create_password()
-        self.password = os.environ['ECOSYSTEM_SESSION_PASSWORD']
-        sensitive_data = [
+    @property
+    def node_type_prefix(self):
+        return 'cloudify.nodes.aws'
+
+    @property
+    def plugin_mapping(self):
+        return 'awssdk'
+
+    @property
+    def blueprint_file_name(self):
+        return 'aws.yaml'
+
+    @property
+    def external_id_key(self):
+        return 'aws_resource_id'
+
+    @property
+    def server_ip_property(self):
+        return 'ip'
+
+    @property
+    def sensitive_data(self):
+        return [
             os.environ['AWS_SECRET_ACCESS_KEY'],
-            os.environ['AWS_ACCESS_KEY_ID'],
-            self.password
+            os.environ['AWS_ACCESS_KEY_ID']
         ]
-        os.environ['AWS_DEFAULT_REGION'] = \
-            self.inputs().get('ec2_region_name')
-        os.environ['TEST_APPLICATION_PREFIX'] = \
-            os.environ['CIRCLE_BUILD_NUM']
-        super(TestAWSSDK, self).setUp(
-            'aws.yaml', sensitive_data=sensitive_data)
 
-        if 'ECOSYSTEM_SESSION_MANAGER_IP' not in os.environ:
-            self.install_manager()
-            self.manager_ip = utils.get_manager_ip(
-                self.node_instances,
-                manager_vm_node_id='ip',
-                manager_ip_prop_key='aws_resource_id')
-            self.check_manager_resources()
-            os.environ['ECOSYSTEM_SESSION_MANAGER_IP'] = \
-                self.manager_ip
-        utils.initialize_cfy_profile(
-            '{0} -u admin -p {1} -t default_tenant'.format(
-                self.manager_ip, self.password))
-        self.upload_plugins()
-
+    @property
     def inputs(self):
         try:
             return {
@@ -56,11 +63,11 @@ class TestAWSSDK(TestLocal):
         except KeyError:
             raise
 
-    def check_aws_resource(self,
-                           resource_id=None,
-                           resource_type=None,
-                           exists=True,
-                           command=None):
+    def check_resource_method(self,
+                              resource_id=None,
+                              resource_type=None,
+                              exists=True,
+                              command=None):
 
         print 'Checking AWS resource args {0} {0} {0} {0}'.format(
             resource_id, resource_type, exists, command)
@@ -68,7 +75,7 @@ class TestAWSSDK(TestLocal):
         if not isinstance(resource_id, basestring):
             print 'Warning resource_id is {0}'.format(resource_id)
             resource_id = str(resource_id)
-
+        sleep(.1)
         if command:
             pass
         elif 'cloudify.nodes.aws.ec2.Vpc' == \
@@ -133,6 +140,10 @@ class TestAWSSDK(TestLocal):
         elif 'cloudify.nodes.aws.autoscaling.Group' == resource_type:
             command = 'aws autoscaling describe-auto-scaling-groups ' \
                       '--auto-scaling-group-names {0}'.format(resource_id)
+        elif 'cloudify.nodes.aws.CloudFormation.Stack' == resource_type:
+            sleep(1)
+            command = 'aws cloudformation describe-stacks ' \
+                      '--stack-name {0}'.format(resource_id)
         elif 'cloudify.nodes.aws.elb.Classic.LoadBalancer' == \
                 resource_type:
             command = 'aws elb describe-load-balancers ' \
@@ -162,9 +173,9 @@ class TestAWSSDK(TestLocal):
                     'aws autoscaling describe-lifecycle-hooks ' \
                     '--auto-scaling-group-name test-autoscaling ' \
                     '--lifecycle-hook-names {0}'.format(external_id)
-                self.check_aws_resource(command=lifecycle_hook_command)
+                self.check_resource_method(command=lifecycle_hook_command)
             else:
-                self.check_aws_resource(external_id, node_type)
+                self.check_resource_method(external_id, node_type)
 
     def check_resources_in_deployment_deleted(self, nodes, node_names):
         for node in nodes:
@@ -183,35 +194,11 @@ class TestAWSSDK(TestLocal):
                     'aws autoscaling describe-lifecycle-hooks ' \
                     '--auto-scaling-group-name test-autoscaling ' \
                     '--lifecycle-hook-names {0}'.format(external_id)
-                self.check_aws_resource(
+                self.check_resource_method(
                     command=lifecycle_hook_command, exists=False)
             else:
-                self.check_aws_resource(external_id, node_type, exists=False)
-
-    def check_manager_resources(self):
-        for resource in utils.get_resource_ids_by_type(
-                self.node_instances,
-                NODE_TYPE_PREFIX,
-                self.cfy_local.storage.get_node,
-                id_property='aws_resource_id'):
-            self.check_aws_resource(resource_id=resource)
-
-    def upload_plugins(self):
-        utils.update_plugin_yaml(
-            os.environ['CIRCLE_SHA1'], 'awssdk')
-        workspace_path = os.path.join(
-            os.path.abspath('workspace'),
-            'build')
-        utils.upload_plugin(utils.get_wagon_path(workspace_path))
-        for plugin in self.plugins_to_upload:
-            utils.upload_plugin(plugin[0], plugin[1])
-
-    def cleanup_deployment(self, deployment_id):
-        # This is just for cleanup.
-        # Because its in the lab, don't care if it passes or fails.
-        utils.execute_command(
-            'cfy uninstall -p ignore_failure=true {0}'.format(
-                deployment_id))
+                self.check_resource_method(
+                    external_id, node_type, exists=False)
 
     def check_nodecellar(self):
         aws_nodes = [
@@ -255,7 +242,7 @@ class TestAWSSDK(TestLocal):
             'aws',
             'vpc',
             'public_subnet',
-            'private_subnet', 
+            'private_subnet',
             'ubuntu_trusty_ami'
         ]
         new_blueprint_path = utils.create_external_resource_blueprint(
@@ -280,7 +267,7 @@ class TestAWSSDK(TestLocal):
         self.check_resources_in_deployment_deleted(
             deployment_nodes, monitored_nodes)
 
-    def network_deployment(self):
+    def test_network_deployment(self):
         # Create a list of node templates to verify.
         aws_nodes = [
             'nat_gateway',
@@ -304,7 +291,7 @@ class TestAWSSDK(TestLocal):
         # Get list of nodes in the deployment.
         deployment_nodes = \
             utils.get_deployment_resources_by_node_type_substring(
-                'aws', NODE_TYPE_PREFIX)
+                'aws', self.node_type_prefix)
         # Check that the nodes really exist.
         self.check_resources_in_deployment_created(
             deployment_nodes, aws_nodes)
@@ -317,73 +304,62 @@ class TestAWSSDK(TestLocal):
             deployment_nodes,
             aws_nodes)
 
-    def check_autoscaling(self):
+    def test_autoscaling(self):
         blueprint_path = 'examples/autoscaling-feature-demo/test.yaml'
         blueprint_id = 'autoscaling-{0}'.format(
-            os.environ['TEST_APPLICATION_PREFIX'])
+            self.application_prefix)
         self.addCleanup(self.cleanup_deployment, blueprint_id)
         autoscaling_nodes = ['autoscaling_group']
         utils.check_deployment(
             blueprint_path,
             blueprint_id,
-            NODE_TYPE_PREFIX,
+            self.node_type_prefix,
             autoscaling_nodes,
             self.check_resources_in_deployment_created,
             self.check_resources_in_deployment_deleted
         )
 
-    def check_s3(self):
+    def test_s3(self):
         blueprint_path = 'examples/s3-feature-demo/blueprint.yaml'
-        blueprint_id = 's3-{0}'.format(os.environ['TEST_APPLICATION_PREFIX'])
+        blueprint_id = 's3-{0}'.format(self.application_prefix)
         self.addCleanup(self.cleanup_deployment, blueprint_id)
         s3_nodes = ['bucket']
         utils.check_deployment(
             blueprint_path,
             blueprint_id,
-            NODE_TYPE_PREFIX,
+            self.node_type_prefix,
             s3_nodes,
             self.check_resources_in_deployment_created,
             self.check_resources_in_deployment_deleted
         )
 
-    def check_sqs_sns(self):
+    def test_sqs_sns(self):
         blueprint_path = 'examples/sns-feature-demo/blueprint.yaml'
         blueprint_id = 'sqs-{0}'.format(
-            os.environ['TEST_APPLICATION_PREFIX'])
+            self.application_prefix)
         self.addCleanup(self.cleanup_deployment, blueprint_id)
         sns_nodes = ['queue', 'topic']
         utils.check_deployment(
             blueprint_path,
             blueprint_id,
-            NODE_TYPE_PREFIX,
+            self.node_type_prefix,
             sns_nodes,
             self.check_resources_in_deployment_created,
             self.check_resources_in_deployment_deleted
         )
 
-    def check_load_balancing(self):
-        blueprint_path = 'examples/elb-feature-demo/blueprint.yaml'
-        blueprint_id = 'elb-classic-{0}'.format(
-            os.environ['TEST_APPLICATION_PREFIX'])
+    def test_cfn_stack(self):
+        blueprint_path = \
+            'examples/cloudformation-feature-demo/blueprint.yaml'
+        blueprint_id = 'cfn-{0}'.format(
+            self.application_prefix)
         self.addCleanup(self.cleanup_deployment, blueprint_id)
-        load_balancer_nodes = ['classic_elb']
+        cfn_nodes = ['wordpress_example', 'HelloBucket']
         utils.check_deployment(
             blueprint_path,
             blueprint_id,
-            NODE_TYPE_PREFIX,
-            load_balancer_nodes,
+            self.node_type_prefix,
+            cfn_nodes,
             self.check_resources_in_deployment_created,
             self.check_resources_in_deployment_deleted
         )
-
-    def deployments(self):
-        self.network_deployment()
-        self.check_autoscaling()
-        self.check_s3()
-        self.check_sqs_sns()
-        # TODO: Fix too few zones in eu-central-1 issue.
-        # self.check_load_balancing()
-        # TODO: Add other blueprint examples for tests.
-
-    def test_run_tests(self):
-        self.deployments()
