@@ -10,14 +10,6 @@ from ecosystem_tests import EcosystemTestBase, utils, IP_ADDRESS_REGEX
 
 class TestAWSSDK(EcosystemTestBase):
 
-    # @classmethod
-    # def setUpClass(cls):
-    #     super(TestAWSSDK, cls).setUpClass()
-
-    # @classmethod
-    # def tearDownClass(cls):
-    #     super(TestAWSSDK, cls).tearDownClass()
-
     def setUp(self):
         os.environ['AWS_DEFAULT_REGION'] = self.inputs.get('ec2_region_name')
         super(TestAWSSDK, self).setUp()
@@ -75,7 +67,7 @@ class TestAWSSDK(EcosystemTestBase):
         if not isinstance(resource_id, basestring):
             print 'Warning resource_id is {0}'.format(resource_id)
             resource_id = str(resource_id)
-        sleep(.1)
+        sleep(1)
         if command:
             pass
         elif 'cloudify.nodes.aws.ec2.Vpc' == \
@@ -128,6 +120,8 @@ class TestAWSSDK(EcosystemTestBase):
                 'aws ec2 describe-nat-gateways ' \
                 '--nat-gateway-ids {0}'.format(resource_id)
         elif 'cloudify.nodes.aws.SQS.Queue' == resource_type:
+            if not exists:
+                return
             # Change queue url to name to get queue url.
             resource_id = resource_id.split('/')[-1]
             command = 'aws sqs get-queue-url --queue-name {0}'.format(
