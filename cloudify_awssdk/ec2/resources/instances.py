@@ -19,8 +19,10 @@
 '''
 
 # Common
+from Crypto.PublicKey import RSA
 from collections import defaultdict
 import json
+import os
 
 # Cloudify
 from cloudify import compute
@@ -29,6 +31,8 @@ from cloudify.exceptions import NonRecoverableError, OperationRetry
 from cloudify_awssdk.common import decorators, utils
 from cloudify_awssdk.common.constants import EXTERNAL_RESOURCE_ID
 from cloudify_awssdk.ec2 import EC2Base
+from cloudify_awssdk.ec2.decrypt import decrypt_password
+
 # Boto
 from botocore.exceptions import ClientError, ParamValidationError
 
@@ -46,6 +50,7 @@ PS_CLOSE = '</powershell>'
 GROUP_TYPE = 'cloudify.nodes.aws.ec2.SecurityGroup'
 NETWORK_INTERFACE_TYPE = 'cloudify.nodes.aws.ec2.Interface'
 SUBNET_TYPE = 'cloudify.nodes.aws.ec2.Subnet'
+KEY_TYPE = 'cloudify.nodes.aws.ec2.Keypair'
 GROUPIDS = 'SecurityGroupIds'
 NETWORK_INTERFACES = 'NetworkInterfaces'
 SUBNET_ID = 'SubnetId'
@@ -142,6 +147,17 @@ class EC2Instances(EC2Base):
             'Modifying {0} attribute with parameters: {1}'.format(
                 self.type_name, params))
         res = self.client.modify_instance_attribute(**params)
+        self.logger.debug('Response: {0}'.format(res))
+        return res
+
+    def get_password(self, params):
+        '''
+            Modify attribute of AWS EC2 Instances.
+        '''
+        self.logger.debug(
+            'Getting {0} password with parameters: {1}'.format(
+                self.type_name, params))
+        res = self.client.get_password_data(**params)
         self.logger.debug('Response: {0}'.format(res))
         return res
 
@@ -265,6 +281,10 @@ def start(ctx, iface, resource_config, **_):
             ctx.instance.runtime_properties['ip'] = ip
         ctx.instance.runtime_properties['public_ip_address'] = pip
         ctx.instance.runtime_properties['private_ip_address'] = ip
+        if not _handle_password(iface):
+            raise OperationRetry(
+                '{0} ID# {1} password is empty.'.format(
+                    iface.type_name, iface.resource_id))
         return
 
     elif ctx.operation.retry_number == 0:
@@ -412,3 +432,37 @@ def _handle_userdata(existing_userdata):
             [existing_userdata, install_agent_userdata])
 
     return final_userdata
+
+
+def _handle_password(iface):
+    if not ctx.node.properties['use_password']:
+        return True
+    key_data = ctx.node.properties['agent_config'].get('key')
+    if not key_data:
+        rel = utils.find_rel_by_node_type(ctx.instance, KEY_TYPE)
+        if rel:
+            key_data = \
+                rel.target.instance.runtime_properties.get(
+                    'create_response', {}).get('KeyMaterial')
+    if not key_data:
+        raise NonRecoverableError(
+            'No key_data was provided in agent config property or rel.')
+    if os.path.exists(key_data):
+        with open(key_data, 'r') as outfile:
+            key_data = outfile.readlines()
+    password_data = iface.get_password(
+        {
+            'InstanceId': ctx.instance.runtime_properties[EXTERNAL_RESOURCE_ID]
+        }
+    )
+    if not isinstance(password_data, dict):
+        return False
+    encrypted_password = password_data.get('PasswordData')
+    if not encrypted_password:
+        ctx.logger.error('password_data is {0}'.format(password_data))
+        return False
+    key = RSA.importKey(key_data)
+    password = decrypt_password(key, encrypted_password)
+    ctx.instance.runtime_properties['password'] = \
+        password
+    return True
