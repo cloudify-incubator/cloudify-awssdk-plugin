@@ -29,6 +29,7 @@ from cloudify.exceptions import NonRecoverableError, OperationRetry
 from cloudify_awssdk.common import decorators, utils
 from cloudify_awssdk.common.constants import EXTERNAL_RESOURCE_ID
 from cloudify_awssdk.ec2 import EC2Base
+
 # Boto
 from botocore.exceptions import ClientError, ParamValidationError
 
@@ -142,6 +143,17 @@ class EC2Instances(EC2Base):
             'Modifying {0} attribute with parameters: {1}'.format(
                 self.type_name, params))
         res = self.client.modify_instance_attribute(**params)
+        self.logger.debug('Response: {0}'.format(res))
+        return res
+
+    def get_password(self, params):
+        '''
+            Modify attribute of AWS EC2 Instances.
+        '''
+        self.logger.debug(
+            'Getting {0} password with parameters: {1}'.format(
+                self.type_name, params))
+        res = self.client.get_password_data(**params)
         self.logger.debug('Response: {0}'.format(res))
         return res
 
@@ -265,6 +277,10 @@ def start(ctx, iface, resource_config, **_):
             ctx.instance.runtime_properties['ip'] = ip
         ctx.instance.runtime_properties['public_ip_address'] = pip
         ctx.instance.runtime_properties['private_ip_address'] = ip
+        if not _handle_password(iface):
+            raise OperationRetry(
+                '{0} ID# {1} password is empty.'.format(
+                    iface.type_name, iface.resource_id))
         return
 
     elif ctx.operation.retry_number == 0:
@@ -412,3 +428,22 @@ def _handle_userdata(existing_userdata):
             [existing_userdata, install_agent_userdata])
 
     return final_userdata
+
+
+def _handle_password(iface):
+    if not ctx.node.properties['use_password']:
+        return True
+    password_data = iface.get_password(
+        {
+            'InstanceId': ctx.instance.runtime_properties[EXTERNAL_RESOURCE_ID]
+        }
+    )
+    if not isinstance(password_data, dict):
+        return False
+    password = password_data.get('PasswordData')
+    if not password:
+        ctx.logger.error('password_data is {0}'.format(password_data))
+        return False
+    ctx.instance.runtime_properties['password'] = \
+        password_data['PasswordData']
+    return True
