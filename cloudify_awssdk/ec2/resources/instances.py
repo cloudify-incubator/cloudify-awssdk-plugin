@@ -21,6 +21,7 @@
 # Common
 from collections import defaultdict
 import json
+import os
 
 # Cloudify
 from cloudify import compute
@@ -28,7 +29,8 @@ from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError, OperationRetry
 from cloudify_awssdk.common import decorators, utils
 from cloudify_awssdk.common.constants import EXTERNAL_RESOURCE_ID
-from cloudify_awssdk.ec2 import EC2Base
+from cloudify_awssdk.ec2 import EC2Base, passwd
+
 # Boto
 from botocore.exceptions import ClientError, ParamValidationError
 
@@ -142,6 +144,17 @@ class EC2Instances(EC2Base):
             'Modifying {0} attribute with parameters: {1}'.format(
                 self.type_name, params))
         res = self.client.modify_instance_attribute(**params)
+        self.logger.debug('Response: {0}'.format(res))
+        return res
+
+    def get_password(self, params):
+        '''
+            Modify attribute of AWS EC2 Instances.
+        '''
+        self.logger.debug(
+            'Getting {0} password with parameters: {1}'.format(
+                self.type_name, params))
+        res = self.client.get_password_data(**params)
         self.logger.debug('Response: {0}'.format(res))
         return res
 
@@ -265,6 +278,7 @@ def start(ctx, iface, resource_config, **_):
             ctx.instance.runtime_properties['ip'] = ip
         ctx.instance.runtime_properties['public_ip_address'] = pip
         ctx.instance.runtime_properties['private_ip_address'] = ip
+        _handle_password(iface)
         return
 
     elif ctx.operation.retry_number == 0:
@@ -412,3 +426,24 @@ def _handle_userdata(existing_userdata):
             [existing_userdata, install_agent_userdata])
 
     return final_userdata
+
+
+def _handle_password(iface):
+    password_data = iface.get_password(
+        {
+            'InstanceId': ctx.instance.runtime_properties[EXTERNAL_RESOURCE_ID]
+        }
+    )
+    if not password_data:
+        return
+    key_data = ctx.node.properties['agent_config'].get('key')
+    if os.path.exists(key_data):
+        ctx.logger.error(
+            'Agent key data provided is a file path. '
+            'Agent keys should be secrets.')
+        with open(key_data) as infile:
+            key_data = infile.readlines()
+    password = passwd.get_windows_passwd(
+        key_data, password_data['PasswordData'])
+    if password and ctx.node.properties['use_password']:
+        ctx.instance.runtime_properties['password'] = password
