@@ -155,6 +155,8 @@ def create(ctx, iface, resource_config, **_):
                 VPC_TYPE) or utils.find_rel_by_node_type(
                 ctx.instance,
                 VPC_TYPE_DEPRECATED)
+
+    if vpc_id or vpc:
         params[VPC_ID] = \
             vpc_id or \
             vpc.target.instance.runtime_properties.get(
