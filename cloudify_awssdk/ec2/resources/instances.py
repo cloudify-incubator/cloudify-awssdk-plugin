@@ -435,7 +435,7 @@ def _handle_userdata(existing_userdata):
 
 
 def _handle_password(iface):
-    if not ctx.node.properties['use_password']:
+    if not ctx.node.properties.get('use_password'):
         return True
     # Get agent key data.
     key_data = ctx.node.properties['agent_config'].get('key')
