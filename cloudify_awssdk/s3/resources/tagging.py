@@ -35,8 +35,10 @@ class S3BucketTagging(S3Base):
     """
         AWS S3 Bucket Tagging interface
     """
-    def __init__(self, ctx_node, resource_id=None, client=None, logger=None):
-        S3Base.__init__(self, ctx_node, resource_id, client, logger)
+    def __init__(self, ctx_node, aws_config=None,
+                 resource_id=None, client=None, logger=None):
+        S3Base.__init__(self, ctx_node, aws_config,
+                        resource_id, client, logger)
         self.type_name = RESOURCE_TYPE
 
     @property

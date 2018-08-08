@@ -12,19 +12,28 @@
 #    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
-'''
+
+"""
     Common.Decorators
     ~~~~~~~~~~~~~~~~~
     AWS decorators
-'''
-# Cloudify imports
+"""
+
+# Standard Imports
+import sys
+
+# Third party imports
 from cloudify.exceptions import (OperationRetry, NonRecoverableError)
+from cloudify.utils import exception_to_error_cause
+from botocore.exceptions import ClientError
 
 # Local imports
 from cloudify_awssdk.common import utils
 from cloudify_awssdk.common.constants import (
     EXTERNAL_RESOURCE_ARN as EXT_RES_ARN,
-    EXTERNAL_RESOURCE_ID as EXT_RES_ID)
+    EXTERNAL_RESOURCE_ID as EXT_RES_ID,
+    SWIFT_NODE_PREFIX,
+    SWIFT_ERROR_TOKEN_CODE)
 
 
 def aws_relationship(class_decl=None,
@@ -79,6 +88,7 @@ def aws_resource(class_decl=None,
             ctx = kwargs['ctx']
             props = ctx.node.properties
             runtime_instance_properties = ctx.instance.runtime_properties
+
             # Override the resource ID if needed
             resource_id = kwargs.get(EXT_RES_ID)
             if resource_id and not \
@@ -93,11 +103,48 @@ def aws_resource(class_decl=None,
                 ctx.instance.runtime_properties[key] = val
             # Add new operation arguments
             kwargs['resource_type'] = resource_type
-            kwargs['iface'] = class_decl(
-                ctx.node, logger=ctx.logger,
-                resource_id=utils.get_resource_id(
-                    node=ctx.node,
-                    instance=ctx.instance)) if class_decl else None
+
+            # Check if "aws_config" is provided
+            # if "client_config" is empty, then the current node is a swift
+            # node and the "aws_config" will be taken as "aws_config" for
+            # boto3 config in order to use the S3 API
+            aws_config = ctx.instance.runtime_properties.get('aws_config')
+            aws_config_kwargs = kwargs.get('aws_config')
+
+            # Attribute needed for AWS resource class
+            class_decl_attr = {
+                'ctx_node': ctx.node,
+                'logger': ctx.logger,
+                'resource_id': utils.get_resource_id(node=ctx.node,
+                                                     instance=ctx.instance),
+            }
+
+            # Check if "aws_config" is set and has a valid "dict" type because
+            #  the expected data type for "aws_config" must be "dict"
+            if aws_config:
+                if type(aws_config) is dict:
+                    class_decl_attr.update({'aws_config': aws_config})
+                else:
+                    # Raise an error if the provided "aws_config" is not a
+                    # valid dict data type
+                    raise NonRecoverableError(
+                        'aws_config is invalid type: {0}, it must be '
+                        'valid dict type'.format(type(aws_config)))
+
+            # Check the value of "aws_config" which could be part of "kwargs"
+            # and it has to be the same validation for the above "aws_config"
+            elif aws_config_kwargs:
+                if type(aws_config_kwargs) is dict:
+                    class_decl_attr.update({'aws_config': aws_config_kwargs})
+                else:
+                    # Raise an error if the provided "aws_config_kwargs"
+                    # is not a valid dict data type
+                    raise NonRecoverableError(
+                        'aws_config is invalid type: {0}, it must be '
+                        'valid dict type'.format(type(aws_config)))
+
+            kwargs['iface'] =\
+                class_decl(**class_decl_attr) if class_decl else None
 
             resource_config = None
             if not ignore_properties:
@@ -128,10 +175,10 @@ def aws_resource(class_decl=None,
                 ctx.logger.info('%s ID# "%s" is user-provided.'
                                 % (resource_type, resource_id))
                 if not kwargs.get('force_operation', False):
-                    # If ``force_operation`` is not set then we need to make
-                    #  sure that runtime properties for node instance are
+                    # If "force_operation" is not set then we need to make
+                    # sure that runtime properties for node instance are
                     # setting correctly
-                    # Set ``resource_config`` and ``EXT_RES_ID``
+                    # Set "resource_config" and "EXT_RES_ID"
                     ctx.instance.runtime_properties[
                         'resource_config'] = resource_config
                     _, _, _, operation_name = ctx.operation.name.split('.')
@@ -237,3 +284,69 @@ def wait_for_delete(status_deleted=None, status_pending=None):
                 % (resource_type, iface.resource_id, status))
         return wrapper_inner
     return wrapper_outer
+
+
+def check_swift_resource(func):
+    def wrapper(**kwargs):
+        ctx = kwargs['ctx']
+        node_type = ctx.node.type
+        if node_type and node_type.startswith(SWIFT_NODE_PREFIX):
+            response = None
+            swift_config = ctx.node.properties.get('swift_config')
+
+            username = swift_config.get('swift_username')
+            password = swift_config.get('swift_password')
+            auth_url = swift_config.get('swift_auth_url')
+            region_name = swift_config.get('swift_region_name')
+
+            aws_config = {}
+            # Only Generate the token if it is not generated before
+            if not ctx.instance.runtime_properties.get('aws_config'):
+                endpoint_url, token = \
+                    utils.generate_swift_access_config(auth_url,
+                                                       username,
+                                                       password)
+
+                aws_config['aws_access_key_id'] = username
+                aws_config['aws_secret_access_key'] = token
+                aws_config['region_name'] = region_name
+                aws_config['endpoint_url'] = endpoint_url
+                ctx.instance.runtime_properties['aws_config'] = aws_config
+
+            try:
+                kwargs['aws_config'] = aws_config
+                kwargs['ctx'] = ctx
+                response = func(**kwargs)
+            except ClientError as err:
+                _, _, tb = sys.exc_info()
+                error = err.response.get('Error')
+                error_code = error.get('Code', 'Unknown')
+                if error_code == SWIFT_ERROR_TOKEN_CODE:
+                    endpoint_url, token = \
+                        utils.generate_swift_access_config(auth_url,
+                                                           username,
+                                                           password)
+                    # Reset the old "aws_config" and generate new one
+                    del ctx.instance.runtime_properties['aws_config']
+
+                    aws_config = {}
+                    aws_config['aws_access_key_id'] = username
+                    aws_config['aws_secret_access_key'] = token
+                    aws_config['region_name'] = region_name
+                    aws_config['endpoint_url'] = endpoint_url
+                    ctx.instance.runtime_properties['aws_config'] =\
+                        aws_config
+
+                    raise OperationRetry(
+                        'Re-try the operation and generate new token'
+                        ' and endpoint url for swift connection',
+                        retry_after=10,
+                        causes=[exception_to_error_cause(error, tb)])
+            except Exception as error:
+                error_traceback = utils.get_traceback_exception()
+                raise NonRecoverableError('{0}'.format(str(error)),
+                                          causes=[error_traceback])
+            return response
+
+        return func(**kwargs)
+    return wrapper

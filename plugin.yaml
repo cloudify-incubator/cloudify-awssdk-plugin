@@ -2,11 +2,36 @@ plugins:
 
   awssdk:
     executor: central_deployment_agent
-    source: https://github.com/cloudify-incubator/cloudify-awssdk-plugin/archive/2.4.0.zip
+    source: https://github.com/cloudify-incubator/cloudify-awssdk-plugin/archive/2.4.1.zip
     package_name: cloudify-awssdk-plugin
-    package_version: '2.4.0'
+    package_version: '2.4.1'
 
 data_types:
+
+  cloudify.datatypes.swift.Connection:
+    properties:
+      swift_username:
+        description: >
+          The USERNAME of your Swift.
+        type: string
+        required: true
+      swift_password:
+        description: >
+          The PASSWORD of your Swift.
+        type: string
+        required: true
+      swift_auth_url:
+        description: >
+          The auth url in order to authenticate against and generate token
+        type: string
+        required: true
+      swift_region_name:
+        description: >
+          The server region name, such as us-east-1.
+          (Not us-east-1b, which is an availability zone, or
+          US East, which is a Region.)
+        type: string
+        required: true
 
   cloudify.datatypes.aws.ConnectionConfig:
     properties:
@@ -25,6 +50,16 @@ data_types:
           The server region name, such as us-east-1.
           (Not us-east-1b, which is an availability zone, or
           US East, which is a Region.)
+        type: string
+        required: false
+      endpoint_url:
+        description: >
+            The complete URL to use for the constructed
+            client. Normally, botocore will automatically construct the
+            appropriate URL to use when communicating with a service.  You
+            can specify a complete URL (including the "http/https" scheme)
+            to override this behavior.  If this value is provided,
+            then ``use_ssl`` is ignored.
         type: string
         required: false
 
@@ -242,6 +277,12 @@ data_types:
     properties:
       kwargs:
         description: http://boto3.readthedocs.io/en/latest/reference/services/s3.html#S3.Client.create_bucket
+        default: {}
+
+  cloudify.datatypes.aws.s3.BucketObject.config:
+    properties:
+      kwargs:
+        description: https://boto3.readthedocs.io/en/latest/reference/services/s3.html#S3.Client.put_object
         default: {}
 
   cloudify.datatypes.aws.ec2.Vpc.config:
@@ -611,6 +652,14 @@ dsl_definitions:
       description: *resource_id_desc
       type: string
       default: ''
+
+  # Every resource uses this property to create swift resources.
+  swift_config: &swift_config
+    swift_config:
+      description: >
+        A dictionary of values to pass to authenticate with the SWIFT API.
+      type: cloudify.datatypes.swift.Connection
+      required: true
 
 node_types:
 
@@ -1420,11 +1469,10 @@ node_types:
           implementation: awssdk.cloudify_awssdk.elb.resources.classic.policy.start_sticky
           inputs: *operation_inputs
 
-  cloudify.nodes.aws.s3.Bucket:
+  cloudify.nodes.aws.s3.BaseBucket:
     derived_from: cloudify.nodes.Root
     properties:
       <<: *external_resource
-      <<: *client_config
       <<: *resource_id
       resource_config:
         description: >
@@ -1443,6 +1491,50 @@ node_types:
         delete:
           implementation: awssdk.cloudify_awssdk.s3.resources.bucket.delete
           inputs: *operation_inputs
+
+  cloudify.nodes.aws.s3.BaseBucketObject:
+    derived_from: cloudify.nodes.Root
+    properties:
+      <<: *external_resource
+      <<: *resource_id
+      resource_config:
+        description: >
+          Configuration key-value data to be passed as-is to the corresponding
+          Boto3 method. Key names must match the case that Boto3 requires.
+        type: cloudify.datatypes.aws.s3.BucketObject.config
+        required: false
+      source_type:
+        description: >
+          This property represents the source type of the object that need to be upload to the S3. the following options supported:
+          - remote: Read data from remote url
+          - local: Read data from local url exists with blueprint
+          - bytes: Read data as sequence of bytes.These bytes should be
+          specified inside "Body" param inside "resource_config"
+        type: string
+        default: local
+      path:
+        description: >
+          This property represents the path to read file that need to be
+          uploaded to the S3 and this param should only provided when the
+          source_type is "local" or "remote"
+        type: string
+        default: ''
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: awssdk.cloudify_awssdk.s3.resources.bucket_object.prepare
+          inputs: *operation_inputs
+        configure:
+          implementation: awssdk.cloudify_awssdk.s3.resources.bucket_object.create
+          inputs: *operation_inputs
+        delete:
+          implementation: awssdk.cloudify_awssdk.s3.resources.bucket_object.delete
+          inputs: *operation_inputs
+
+  cloudify.nodes.aws.s3.Bucket:
+    derived_from: cloudify.nodes.aws.s3.BaseBucket
+    properties:
+      <<: *client_config
 
   cloudify.nodes.aws.s3.BucketPolicy:
     derived_from: cloudify.nodes.Root
@@ -1515,6 +1607,11 @@ node_types:
         delete:
           implementation: awssdk.cloudify_awssdk.s3.resources.tagging.delete
           inputs: *operation_inputs
+
+  cloudify.nodes.aws.s3.BucketObject:
+    derived_from: cloudify.nodes.aws.s3.BaseBucketObject
+    properties:
+      <<: *client_config
 
   cloudify.nodes.aws.ec2.Vpc:
     derived_from: cloudify.nodes.Root
@@ -2691,6 +2788,20 @@ node_types:
           implementation: awssdk.cloudify_awssdk.ecs.resources.task_definition.delete
           inputs: *operation_inputs
 
+
+  ####
+   # Swift Nodes
+  ###
+  cloudify.nodes.swift.s3.Bucket:
+    derived_from: cloudify.nodes.aws.s3.BaseBucket
+    properties:
+      <<: *swift_config
+
+  cloudify.nodes.swift.s3.BucketObject:
+    derived_from: cloudify.nodes.aws.s3.BaseBucketObject
+    properties:
+      <<: *swift_config
+
 relationships:
 
   cloudify.relationships.aws.connected_to:
@@ -2997,4 +3108,3 @@ relationships:
       cloudify.interfaces.relationship_lifecycle:
         establish: { implementation: awssdk.cloudify_awssdk.elb.resources.classic.load_balancer.assoc }
         unlink: { implementation: awssdk.cloudify_awssdk.elb.resources.classic.load_balancer.disassoc }
- 

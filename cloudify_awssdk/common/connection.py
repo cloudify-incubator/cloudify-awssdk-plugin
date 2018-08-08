@@ -12,13 +12,15 @@
 #    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
-'''
+"""
     Connection
     ~~~~~~~~~~
     AWS connection
-'''
+"""
+
 # Boto
 import boto3
+
 # Cloudify
 from cloudify_awssdk.common.constants import AWS_CONFIG_PROPERTY
 
@@ -37,9 +39,16 @@ class Boto3Connection(object):
             'aws_access_key_id', 'aws_secret_access_key', 'region_name']
         self.aws_config = node.properties.get(AWS_CONFIG_PROPERTY, dict())
         # Merge user-provided AWS config with generated config
-        self.aws_config.update(aws_config or dict())
+        if aws_config:
+            self.aws_config.update(aws_config)
+
         # Prepare region name for Boto
         self.aws_config['region_name'] = self.aws_config.get('region_name')
+
+        # This it check if "aws_config" contains "endpoint_url" or not
+        if self.aws_config.get('endpoint_url'):
+            aws_config_whitelist.append('endpoint_url')
+
         # Delete all non-whitelisted keys
         self.aws_config = {k: v for k, v in self.aws_config.iteritems()
                            if k in aws_config_whitelist}
@@ -52,4 +61,5 @@ class Boto3Connection(object):
         :returns: An AWS service Boto3 client
         :raises: :exc:`cloudify.exceptions.NonRecoverableError`
         '''
-        return boto3.client(service_name, **self.aws_config)
+        resource = boto3.client(service_name, **self.aws_config)
+        return resource

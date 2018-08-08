@@ -28,9 +28,10 @@ class S3Base(AWSResourceBase):
     """
         AWS IAM base interface
     """
-    def __init__(self, ctx_node, resource_id=None, client=None, logger=None):
+    def __init__(self, ctx_node, aws_config=None, resource_id=None,
+                 client=None, logger=None):
         AWSResourceBase.__init__(
-            self, client or Boto3Connection(ctx_node).client('s3'),
+            self, client or Boto3Connection(ctx_node, aws_config).client('s3'),
             resource_id=resource_id, logger=logger)
 
     @property

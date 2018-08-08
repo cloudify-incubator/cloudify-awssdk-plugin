@@ -24,5 +24,8 @@ EXTERNAL_RESOURCE_ARN = 'aws_resource_arn'
 REL_CONTAINED_IN = 'cloudify.relationships.contained_in'
 ARN_REGEX = '^arn\:aws\:'
 
+SWIFT_NODE_PREFIX = 'cloudify.nodes.swift'
+SWIFT_ERROR_TOKEN_CODE = 'SignatureDoesNotMatch'
+
 
 MAX_AWS_NAME = 255

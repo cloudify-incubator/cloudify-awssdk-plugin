@@ -17,14 +17,35 @@
     ~~~~~~~~~~~~
     AWS helper utilities
 '''
-# Generic
+
+# Local imports
+import sys
+from six.moves import urllib
 import re
 import uuid
 
-# Cloudify
+# Third party imports
+import requests
+from requests import exceptions
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError
+from cloudify.utils import exception_to_error_cause
 from cloudify_awssdk.common import constants
+
+
+def generate_traceback_exception():
+    _, exc_value, exc_traceback = sys.exc_info()
+    response = exception_to_error_cause(exc_value, exc_traceback)
+    return response
+
+
+def get_traceback_exception():
+    error_traceback = generate_traceback_exception()
+    error_message = 'Error traceback {0} with message' \
+                    ' {1}'.format(error_traceback['traceback'],
+                                  error_traceback['message'])
+    ctx.logger.error(error_message)
+    return error_traceback
 
 
 def get_resource_string(
@@ -398,3 +419,28 @@ class JsonCleanuper(object):
 
     def to_dict(self):
         return self.value
+
+
+def generate_swift_access_config(auth_url, username, password):
+
+    payload = dict()
+    payload['X-Auth-User'] = username
+    payload['X-Auth-Key'] = password
+
+    # Try to generate the token and endpoint url to be used later on
+    try:
+        resp = requests.get(auth_url, headers=payload)
+        resp.raise_for_status()
+    except exceptions.HTTPError as error:
+        _, _, tb = sys.exc_info()
+        raise NonRecoverableError(
+            "Failed generating swift endpoint and token",
+            causes=[exception_to_error_cause(error, tb)])
+
+    # Get the url which represent "endpoint_url"
+    endpoint_url = urllib.parse.urljoin(resp.headers.get('X-Storage-Url'), '/')
+
+    # This represent "aws_secret_access_key" which should be used with boto3
+    # client
+    token = resp.headers['X-Auth-Token']
+    return endpoint_url, token

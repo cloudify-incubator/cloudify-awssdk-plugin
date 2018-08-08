@@ -32,8 +32,10 @@ class S3Bucket(S3Base):
     """
         AWS S3 Bucket interface
     """
-    def __init__(self, ctx_node, resource_id=None, client=None, logger=None):
-        S3Base.__init__(self, ctx_node, resource_id, client, logger)
+    def __init__(self, ctx_node, aws_config=None, resource_id=None,
+                 client=None, logger=None):
+        S3Base.__init__(self, ctx_node, aws_config,
+                        resource_id, client, logger)
         self.type_name = RESOURCE_TYPE
 
     @property
@@ -97,6 +99,7 @@ def prepare(ctx, resource_config, **_):
     ctx.instance.runtime_properties['resource_config'] = resource_config
 
 
+@decorators.check_swift_resource
 @decorators.aws_resource(S3Bucket, RESOURCE_TYPE)
 def create(ctx, iface, resource_config, **_):
     """Creates an AWS S3 Bucket"""
@@ -120,9 +123,9 @@ def create(ctx, iface, resource_config, **_):
         bucket.get(LOCATION)
 
 
-@decorators.aws_resource(S3Bucket, RESOURCE_TYPE,
-                         ignore_properties=True)
-def delete(iface, resource_config, **_):
+@decorators.check_swift_resource
+@decorators.aws_resource(S3Bucket, RESOURCE_TYPE, ignore_properties=True)
+def delete(ctx, iface, resource_config, **_):
     """Deletes an AWS S3 Bucket"""
 
     # Create a copy of the resource config for clean manipulation.

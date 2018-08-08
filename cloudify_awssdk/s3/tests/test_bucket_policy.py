@@ -12,23 +12,72 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
+# Standard imports
 import unittest
-from cloudify_awssdk.common.tests.test_base import TestBase, mock_decorator
-from cloudify_awssdk.s3.resources.bucket_policy import (S3BucketPolicy, BUCKET,
-                                                        POLICY)
+
+# Third part imports
 from mock import patch, MagicMock
+from cloudify.state import current_ctx
+from cloudify.mocks import MockCloudifyContext
+
+
+# Local imports
+from cloudify_awssdk.common.tests.test_base import TestBase, mock_decorator
+from cloudify_awssdk.s3.resources.bucket_policy\
+    import (S3BucketPolicy, BUCKET, POLICY)
 from cloudify_awssdk.common.constants import EXTERNAL_RESOURCE_ID
 from cloudify_awssdk.s3.resources import bucket_policy
 
 PATCH_PREFIX = 'cloudify_awssdk.s3.resources.bucket_policy.'
 
 
-class TestS3BacketPolicy(TestBase):
+class TestS3BucketPolicy(TestBase):
 
     def setUp(self):
-        super(TestS3BacketPolicy, self).setUp()
-        self.policy = S3BucketPolicy("ctx_node", resource_id=True,
+        super(TestS3BucketPolicy, self).setUp()
+        self.resource_config = {
+            'kwargs': {
+                'Policy': {
+                    'Version': '2012-10-17',
+                    'Statement':
+                        [
+                            {
+                                'Sid': 'EveryoneGetPlugin',
+                                'Effect': 'Allow',
+                                'Principal': '*',
+                                'Action': ['s3:GetObject'],
+                                'Resource': 'arn:aws:s3:::test-bucket',
+                            }
+                        ]
+                }
+            }
+        }
+        self.client_config = {
+            'aws_access_key_id': 'test_access_key_id',
+            'aws_secret_access_key': 'test_secret_access_key',
+            'region_name': 'test_region_name',
+        }
+
+        properties = {
+            'resource_config': self.resource_config,
+            'client_config': self.client_config
+        }
+
+        _ctx = MockCloudifyContext(
+            node_id="s3_bucket_policy_node_id",
+            node_name="s3_bucket_policy_node_name",
+            deployment_id="s3_bucket_policy_node_name",
+            properties=properties,
+            runtime_properties={},
+            relationships=[],
+            operation={'retry_number': 0}
+        )
+
+        current_ctx.set(_ctx)
+        self.ctx = _ctx
+        self.policy = S3BucketPolicy(self.ctx._node, resource_id=True,
                                      client=True, logger=None)
+
         mock1 = patch('cloudify_awssdk.common.decorators.aws_resource',
                       mock_decorator)
         mock1.start()
@@ -78,26 +127,24 @@ class TestS3BacketPolicy(TestBase):
         self.assertTrue(self.policy.client.delete_bucket_policy.called)
 
     def test_prepare(self):
-        ctx = self.get_mock_ctx("Backet")
+        ctx = self.ctx
         bucket_policy.prepare(ctx, 'config')
         self.assertEqual(ctx.instance.runtime_properties['resource_config'],
                          'config')
 
     def test_create(self):
-        ctx = self.get_mock_ctx("Backet")
+        ctx = self.ctx
         config = {BUCKET: 'bucket', POLICY: 'policy'}
         iface = MagicMock()
         iface.create = self.mock_return('location')
         bucket_policy.create(ctx, iface, config)
-        self.assertEqual(ctx.instance.runtime_properties[POLICY],
-                         'policy')
+        self.assertEqual(ctx.instance.runtime_properties[POLICY], 'policy')
 
         config = {BUCKET: 'bucket', POLICY: ['policy']}
         iface = MagicMock()
         iface.create = self.mock_return('location')
         bucket_policy.create(ctx, iface, config)
-        self.assertEqual(ctx.instance.runtime_properties[POLICY],
-                         '["policy"]')
+        self.assertEqual(ctx.instance.runtime_properties[POLICY], '["policy"]')
 
         config = {POLICY: 'policy'}
         ctx_target = self.get_mock_relationship_ctx(

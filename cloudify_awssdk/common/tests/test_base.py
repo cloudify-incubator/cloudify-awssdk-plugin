@@ -364,7 +364,7 @@ class TestBase(unittest.TestCase):
         fun = getattr(fake_client, fun_name)
         if side_effect is not None:
             fun.side_effect = side_effect
-        elif return_value is not None:
+        else:
             fun.return_value = return_value
         return fake_client
 

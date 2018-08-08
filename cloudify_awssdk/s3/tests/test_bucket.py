@@ -21,12 +21,11 @@ from mock import patch, MagicMock
 from cloudify_awssdk.s3.resources import bucket
 
 
-class TestS3Backet(TestBase):
+class TestS3Bucket(TestBase):
 
     def setUp(self):
-        super(TestS3Backet, self).setUp()
-
-        self.bucket = S3Bucket("ctx_node", resource_id=True,
+        super(TestS3Bucket, self).setUp()
+        self.bucket = S3Bucket('', resource_id=True,
                                client=True, logger=None)
         self.mock_resource = patch(
             'cloudify_awssdk.common.decorators.aws_resource', mock_decorator
@@ -37,7 +36,7 @@ class TestS3Backet(TestBase):
     def tearDown(self):
         self.mock_resource.stop()
 
-        super(TestS3Backet, self).tearDown()
+        super(TestS3Bucket, self).tearDown()
 
     def test_class_properties(self):
         effect = self.get_client_error_exception(name='S3 Bucket')
@@ -105,13 +104,14 @@ class TestS3Backet(TestBase):
         config = {RESOURCE_NAME: 'bucket'}
         iface = MagicMock()
         iface.create = self.mock_return({LOCATION: 'location'})
-        bucket.create(ctx, iface, config)
+        bucket.create(ctx=ctx, iface=iface, resource_config=config)
         self.assertEqual(ctx.instance.runtime_properties[LOCATION],
                          'location')
 
     def test_delete(self):
+        ctx = self.get_mock_ctx("Backet")
         iface = MagicMock()
-        bucket.delete(iface, {})
+        bucket.delete(ctx=ctx, iface=iface, resource_config={})
         self.assertTrue(iface.delete.called)
 
 
