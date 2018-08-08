@@ -46,9 +46,9 @@ class TestAWSSDK(EcosystemTestBase):
         try:
             return {
                 'password': os.environ['ECOSYSTEM_SESSION_PASSWORD'],
-                'ec2_region_name': 'eu-central-1',
-                'ec2_region_endpoint': 'ec2.eu-central-1.amazonaws.com',
-                'availability_zone': 'eu-central-1b',
+                'ec2_region_name': 'ap-northeast-2',
+                'ec2_region_endpoint': 'ap-northeast-2.amazonaws.com',
+                'availability_zone': 'ap-northeast-2c',
                 'aws_secret_access_key': os.environ['AWS_SECRET_ACCESS_KEY'],
                 'aws_access_key_id': os.environ['AWS_ACCESS_KEY_ID']
             }
