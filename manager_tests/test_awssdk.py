@@ -46,9 +46,9 @@ class TestAWSSDK(EcosystemTestBase):
         try:
             return {
                 'password': os.environ['ECOSYSTEM_SESSION_PASSWORD'],
-                'ec2_region_name': 'ap-northeast-2',
-                'ec2_region_endpoint': 'ap-northeast-2.amazonaws.com',
-                'availability_zone': 'ap-northeast-2c',
+                'ec2_region_name': 'eu-central-1',
+                'ec2_region_endpoint': 'ec2.eu-central-1.amazonaws.com',
+                'availability_zone': 'eu-central-1b',
                 'aws_secret_access_key': os.environ['AWS_SECRET_ACCESS_KEY'],
                 'aws_access_key_id': os.environ['AWS_ACCESS_KEY_ID']
             }
@@ -185,9 +185,9 @@ class TestAWSSDK(EcosystemTestBase):
                     'LoadBalancerName')
             if 'LifecycleHook' in node_type:
                 lifecycle_hook_command = \
-                    'aws autoscaling describe-lifecycle-hooks ' \
-                    '--auto-scaling-group-name test-autoscaling ' \
-                    '--lifecycle-hook-names {0}'.format(external_id)
+                    'aws autoscaling describe-lifecycle-hooks' \
+                    ' --auto-scaling-group-name test-autoscaling' \
+                    ' --lifecycle-hook-names {0}'.format(external_id)
                 self.check_resource_method(
                     command=lifecycle_hook_command, exists=False)
             else:
