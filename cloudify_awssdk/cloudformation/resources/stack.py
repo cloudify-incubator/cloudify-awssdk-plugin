@@ -67,13 +67,7 @@ class CloudFormationStack(AWSCloudFormationBase):
         """
             Create a new AWS CloudFormation Stack.
         """
-        if not self.resource_id:
-            setattr(self, 'resource_id', params.get(RESOURCE_NAME))
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.create_stack(**params)
-        self.logger.debug('Response: %s' % res)
-        return res
+        return self.make_client_call('create_stack', params)
 
     def delete(self, params=None):
         """
@@ -116,7 +110,8 @@ def create(ctx, iface, resource_config, **_):
     if template_body and \
             not isinstance(template_body, basestring):
         params[TEMPLATEBODY] = json.dumps(template_body)
-
+    if not iface.resource_id:
+        setattr(iface, 'resource_id', params.get(RESOURCE_NAME))
     # Actually create the resource
     iface.create(params)
 

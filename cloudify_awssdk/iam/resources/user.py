@@ -17,12 +17,13 @@
     ~~~~~~~~
     AWS IAM User interface
 '''
+# Boto
+from botocore.exceptions import ClientError
+
 # Cloudify
 from cloudify_awssdk.common import decorators, utils
 from cloudify_awssdk.iam import IAMBase
 from cloudify_awssdk.iam.resources.group import IAMGroup
-# Boto
-from botocore.exceptions import ClientError
 
 RESOURCE_TYPE = 'IAM User'
 RESOURCE_NAME = 'UserName'
@@ -59,12 +60,7 @@ class IAMUser(IAMBase):
         '''
             Create a new AWS IAM User.
         '''
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.create_user(**params)
-        self.logger.debug('Response: %s' % res)
-        self.update_resource_id(res['User']['UserName'])
-        return self.resource_id, res['User']['Arn']
+        return self.make_client_call('create_user', params)
 
     def delete(self, params=None):
         '''
@@ -172,9 +168,12 @@ def create(ctx, iface, resource_config, **_):
     utils.update_resource_id(ctx.instance, resource_id)
 
     # Actually create the resource
-    res_id, res_arn = iface.create(params)
-    utils.update_resource_id(ctx.instance, res_id)
-    utils.update_resource_arn(ctx.instance, res_arn)
+    create_response = iface.create(params)
+    resource_id = create_response['User']['UserName']
+    iface.update_resource_id(resource_id)
+    utils.update_resource_id(ctx.instance, resource_id)
+    utils.update_resource_arn(
+        ctx.instance, create_response['User']['Arn'])
 
 
 @decorators.aws_resource(IAMUser, RESOURCE_TYPE,

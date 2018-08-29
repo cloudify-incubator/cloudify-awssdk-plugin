@@ -210,8 +210,7 @@ class TestEC2VPNConnection(TestBase):
         self.vpn_connection.client = self.make_client_function(
             'create_vpn_connection', return_value=response)
 
-        self.assertEqual(self.vpn_connection.create(params),
-                         response.get(vpn_connection.VPN_CONNECTION))
+        self.assertEqual(self.vpn_connection.create(params), response)
 
     def test_class_delete(self):
         params = \
@@ -298,8 +297,7 @@ class TestEC2VPNConnection(TestBase):
                     }
             }
 
-        iface.create = self.mock_return(
-            response.get(vpn_connection.VPN_CONNECTION))
+        iface.create = self.mock_return(response)
         vpn_connection.create(ctx, iface, config)
         self.assertEqual(
             ctx.instance.runtime_properties[constants.EXTERNAL_RESOURCE_ID],

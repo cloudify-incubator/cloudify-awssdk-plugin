@@ -106,8 +106,9 @@ class TestHostedZone(TestBase):
                                            return_value=params)
         route = hosted_zone.Route53HostedZone(None, res_id, client,
                                               MagicMock())
-        res, _ = route.create(params)
-        self.assertEqual(res, "test_id")
+
+        self.assertEqual(
+            route.create(params)['HostedZone']['Id'], "test_id")
 
     def test_class_delete(self):
         res_id = "test_resource"
@@ -148,11 +149,11 @@ class TestHostedZone(TestBase):
         ctx = self._get_ctx()
         resource_config = {'config': None}
         iface = MagicMock()
-        iface.create = self.mock_return(('res_id', 'res_arn'))
+        iface.create = self.mock_return({'HostedZone': {'Id': 'id'}})
         hosted_zone.create(ctx, iface, resource_config)
         rprop = ctx.instance.runtime_properties
-        self.assertEqual(rprop[constants.EXTERNAL_RESOURCE_ID], 'res_id')
-        self.assertEqual(rprop[constants.EXTERNAL_RESOURCE_ARN], 'res_arn')
+        self.assertEqual(rprop[constants.EXTERNAL_RESOURCE_ID], 'id')
+        self.assertEqual(rprop[constants.EXTERNAL_RESOURCE_ARN], 'id')
 
     def test_delete(self):
         ctx = self._get_ctx()

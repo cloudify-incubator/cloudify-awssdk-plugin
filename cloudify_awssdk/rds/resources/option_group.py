@@ -77,12 +77,7 @@ class OptionGroup(RDSBase):
         .. note:
             See http://bit.ly/2ownCxX for config details.
         '''
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.create_option_group(**params)
-        self.logger.debug('Response: %s' % res)
-        self.update_resource_id(res['OptionGroup']['OptionGroupName'])
-        return self.resource_id, res['OptionGroup']['OptionGroupArn']
+        return self.make_client_call('create_option_group', params)
 
     def delete(self, params=None):
         '''
@@ -101,11 +96,17 @@ class OptionGroup(RDSBase):
 def create(ctx, iface, resource_config, **_):
     '''Creates an AWS RDS Option Group'''
     # Build API params
-    resource_config.update(dict(OptionGroupName=iface.resource_id))
+    params = \
+        dict() if not resource_config else resource_config.copy()
     # Actually create the resource
-    res_id, res_arn = iface.create(resource_config)
-    utils.update_resource_id(ctx.instance, res_id)
-    utils.update_resource_arn(ctx.instance, res_arn)
+    if iface.resource_id:
+        params.update({'OptionGroupName': iface.resource_id})
+    create_response = iface.create(params)
+    resource_id = create_response['OptionGroup']['OptionGroupName']
+    iface.update_resource_id(resource_id)
+    utils.update_resource_id(ctx.instance, resource_id)
+    utils.update_resource_arn(
+        ctx.instance, create_response['OptionGroup']['OptionGroupArn'])
 
 
 @decorators.aws_resource(OptionGroup, RESOURCE_TYPE,

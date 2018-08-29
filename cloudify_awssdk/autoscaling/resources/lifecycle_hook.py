@@ -63,13 +63,7 @@ class AutoscalingLifecycleHook(AutoscalingBase):
         """
             Create a new AWS Autoscaling Lifecycle Hook.
         """
-        if not self.resource_id:
-            setattr(self, 'resource_id', params.get(RESOURCE_NAME))
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.put_lifecycle_hook(**params)
-        self.logger.debug('Response: %s' % res)
-        return res
+        return self.make_client_call('put_lifecycle_hook', params)
 
     def delete(self, params=None):
         """
@@ -113,6 +107,8 @@ def create(ctx, iface, resource_config, **_):
         params[GROUP_NAME] = autoscaling_group
     ctx.instance.runtime_properties[GROUP_NAME] = \
         autoscaling_group
+    if not iface.resource_id:
+        setattr(iface, 'resource_id', params.get(RESOURCE_NAME))
 
     # Actually create the resource
     iface.create(params)

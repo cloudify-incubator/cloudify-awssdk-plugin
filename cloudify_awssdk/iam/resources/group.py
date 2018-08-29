@@ -17,11 +17,12 @@
     ~~~~~~~~~
     AWS IAM Group interface
 '''
+# Boto
+from botocore.exceptions import ClientError
+
 # Cloudify
 from cloudify_awssdk.common import decorators, utils
 from cloudify_awssdk.iam import IAMBase
-# Boto
-from botocore.exceptions import ClientError
 
 RESOURCE_TYPE = 'IAM Group'
 RESOURCE_NAME = 'GroupName'

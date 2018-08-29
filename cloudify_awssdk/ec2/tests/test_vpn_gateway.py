@@ -82,7 +82,7 @@ class TestEC2VPNGateway(TestBase):
             self.make_client_function('create_vpn_gateway',
                                       return_value=value)
         res = self.vpn_gateway.create(value)
-        self.assertEqual(res, value['VpnGateway'])
+        self.assertEqual(res['VpnGateway'], value['VpnGateway'])
 
     def test_class_delete(self):
         params = {}
@@ -130,7 +130,7 @@ class TestEC2VPNGateway(TestBase):
         config = {VPNGATEWAY_ID: 'vpn gateway'}
         self.vpn_gateway.resource_id = config[VPNGATEWAY_ID]
         iface = MagicMock()
-        iface.create = self.mock_return(config)
+        iface.create = self.mock_return({'VpnGateway': config})
         vpn_gateway.create(ctx, iface, config)
         self.assertEqual(self.vpn_gateway.resource_id,
                          'vpn gateway')

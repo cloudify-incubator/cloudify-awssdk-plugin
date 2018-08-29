@@ -75,11 +75,7 @@ class ELBClassicLoadBalancer(ELBBase):
         .. note:
             See http://bit.ly/2qtaai1 for config details.
         """
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.create_load_balancer(**params)
-        self.logger.debug('Response: %s' % res)
-        return res['DNSName']
+        return self.make_client_call('create_load_balancer', params)
 
     def delete(self, params=None):
         """
@@ -176,7 +172,9 @@ def create(ctx, iface, resource_config, **_):
             secgroups_list)
 
     # Actually create the resource
-    dns_name = iface.create(params)
+    dns_name = iface.create(params)['DNSName']
+    iface.update_resource_id(dns_name)
+    utils.update_resource_id(ctx.instance, dns_name)
     ctx.instance.runtime_properties['DNSName'] = dns_name
 
 

@@ -21,7 +21,6 @@
 from cloudify_awssdk.common import decorators, utils
 from cloudify_awssdk.ec2 import EC2Base
 from cloudify_awssdk.common.constants import EXTERNAL_RESOURCE_ID
-# Boto
 
 RESOURCE_TYPE = 'EC2 Route'
 ROUTETABLE_ID = 'RouteTableId'
@@ -49,11 +48,7 @@ class EC2Route(EC2Base):
         '''
             Create a new AWS EC2 Route.
         '''
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.create_route(**params)
-        self.logger.debug('Response: %s' % res)
-        return res
+        return self.make_client_call('create_route', params)
 
     def delete(self, params=None):
         '''

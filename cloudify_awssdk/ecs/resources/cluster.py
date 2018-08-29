@@ -69,13 +69,7 @@ class ECSCluster(ECSBase):
         """
             Create a new AWS ECS cluster.
         """
-        self.logger.debug(
-            'Creating {} with parameters: '
-            '{}'.format(self.type_name, params)
-        )
-        res = self.client.create_cluster(**params)
-        self.logger.debug('Response: {}'.format(res))
-        return res.get(CLUSTER)
+        return self.make_client_call('create_cluster', params)
 
     def delete(self, params=None):
         """
@@ -116,7 +110,7 @@ def create(ctx, iface, resource_config, **_):
 
     utils.update_resource_id(ctx.instance, resource_id)
     iface = prepare_describe_cluster_filter(resource_config.copy(), iface)
-    iface.create(params)
+    iface.create(params)[CLUSTER]
 
 
 @decorators.aws_resource(ECSCluster, RESOURCE_TYPE)

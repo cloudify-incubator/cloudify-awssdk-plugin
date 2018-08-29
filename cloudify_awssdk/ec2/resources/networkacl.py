@@ -17,12 +17,13 @@
     ~~~~~~~~~~~~~~
     AWS EC2 NetworkAcl interface
 """
+# Boto
+from botocore.exceptions import ClientError
+
 # Cloudify
 from cloudify_awssdk.common import decorators, utils
 from cloudify_awssdk.ec2 import EC2Base
 from cloudify_awssdk.common.constants import EXTERNAL_RESOURCE_ID
-# Boto
-from botocore.exceptions import ClientError
 
 RESOURCE_TYPE = 'EC2 Network Acl'
 NETWORKACLS = 'NetworkAcls'
@@ -75,11 +76,7 @@ class EC2NetworkAcl(EC2Base):
         """
             Create a new AWS EC2 NetworkAcl.
         """
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.create_network_acl(**params)
-        self.logger.debug('Response: %s' % res)
-        return res['NetworkAcl']
+        return self.make_client_call('create_network_acl', params)
 
     def delete(self, params=None):
         """
@@ -142,7 +139,7 @@ def create(ctx, iface, resource_config, **_):
             targ.target.instance.runtime_properties.get(EXTERNAL_RESOURCE_ID)
 
     # Actually create the resource
-    create_response = iface.create(params)
+    create_response = iface.create(params)['NetworkAcl']
     ctx.instance.runtime_properties['create_response'] = \
         utils.JsonCleanuper(create_response).to_dict()
     network_acl_id = create_response.get(NETWORKACL_ID, '')

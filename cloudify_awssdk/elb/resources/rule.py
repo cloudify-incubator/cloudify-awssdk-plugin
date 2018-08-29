@@ -76,12 +76,7 @@ class ELBRule(ELBBase):
         .. note:
             See http://bit.ly/2pE0hez for config details.
         '''
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.create_rule(**params)
-        self.logger.debug('Response: %s' % res)
-        self.update_resource_id(res['Rules'][0][RULE_ARN])
-        return self.resource_id
+        return self.make_client_call('create_rule', params)
 
     def delete(self, params=None):
         '''
@@ -135,9 +130,13 @@ def create(ctx, iface, resource_config, **_):
                     action.update({TARGET_ARN: target_group_arn})
 
     # Actually create the resource
-    res_id = iface.create(params)
-    utils.update_resource_id(ctx.instance, res_id)
-    utils.update_resource_arn(ctx.instance, res_id)
+    create_response = iface.create(params)
+    iface.update_resource_id(
+        create_response['Rules'][0][RULE_ARN])
+    utils.update_resource_id(
+        ctx.instance, create_response['Rules'][0][RULE_ARN])
+    utils.update_resource_arn(
+        ctx.instance, create_response['Rules'][0][RULE_ARN])
 
 
 @decorators.aws_resource(ELBRule, RESOURCE_TYPE,

@@ -70,13 +70,7 @@ class ParameterGroup(RDSBase):
         '''
             Create a new AWS RDS parameter group.
         '''
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.create_db_parameter_group(**params)
-        self.logger.debug('Response: %s' % res)
-        self.update_resource_id(
-            res['DBParameterGroup']['DBParameterGroupName'])
-        return self.resource_id, res['DBParameterGroup']['DBParameterGroupArn']
+        return self.make_client_call('create_db_parameter_group', params)
 
     def delete(self, params=None):
         '''
@@ -93,11 +87,17 @@ class ParameterGroup(RDSBase):
 def create(ctx, iface, resource_config, **_):
     '''Creates an AWS RDS Parameter Group'''
     # Build API params
-    resource_config.update(dict(DBParameterGroupName=iface.resource_id))
-    # Actually create the resource
-    res_id, res_arn = iface.create(resource_config)
-    utils.update_resource_id(ctx.instance, res_id)
-    utils.update_resource_arn(ctx.instance, res_arn)
+    params = \
+        dict() if not resource_config else resource_config.copy()
+    if iface.resource_id:
+        params.update({'DBParameterGroupName': iface.resource_id})
+    create_response = iface.create(params)
+    resource_id = create_response['DBParameterGroup']['DBParameterGroupName']
+    iface.update_resource_id(resource_id)
+    utils.update_resource_id(ctx.instance, resource_id)
+    utils.update_resource_arn(
+        ctx.instance,
+        create_response['DBParameterGroup']['DBParameterGroupArn'])
 
 
 @decorators.aws_resource(ParameterGroup, RESOURCE_TYPE,

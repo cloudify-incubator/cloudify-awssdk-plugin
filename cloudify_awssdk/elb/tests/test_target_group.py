@@ -83,8 +83,9 @@ class TestELBTargetGroup(TestBase):
         value = {'TargetGroups': [{TARGETGROUP_ARN: 'arn'}]}
         self.target_group.client = self.make_client_function(
             'create_target_group',
-            return_value=value)
-        arn = self.target_group.create(value)
+            return_value={'TargetGroups': [{TARGETGROUP_ARN: 'arn'}]})
+        arn = self.target_group.create(
+            value)['TargetGroups'][0][TARGETGROUP_ARN]
         self.assertEqual(arn, 'arn')
 
     def test_class_delete(self):

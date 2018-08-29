@@ -59,12 +59,7 @@ class LambdaFunction(LambdaBase):
         '''
             Create a new AWS Lambda Function.
         '''
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.create_function(**params)
-        self.logger.debug('Response: %s' % res)
-        self.update_resource_id(res['FunctionName'])
-        return self.resource_id, res['FunctionArn']
+        return self.make_client_call('create_function', params)
 
     def delete(self, params=None):
         '''
@@ -141,9 +136,11 @@ def create(ctx, iface, resource_config, **_):
             with open(codezip, mode='rb') as _file:
                 params['Code']['ZipFile'] = _file.read()
     # Actually create the resource
-    res_id, res_arn = iface.create(params)
-    utils.update_resource_id(ctx.instance, res_id)
-    utils.update_resource_arn(ctx.instance, res_arn)
+    create_response = iface.create(params)
+    resource_id = create_response['FunctionName']
+    utils.update_resource_id(ctx.instance, resource_id)
+    utils.update_resource_arn(
+        ctx.instance, create_response['FunctionArn'])
 
 
 @decorators.aws_resource(LambdaFunction, RESOURCE_TYPE,

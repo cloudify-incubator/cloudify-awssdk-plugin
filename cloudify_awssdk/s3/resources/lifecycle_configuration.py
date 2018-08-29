@@ -67,11 +67,7 @@ class S3BucketLifecycleConfiguration(S3Base):
         """
             Create a new AWS Bucket Lifecycle Configuration Policy.
         """
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.put_bucket_lifecycle(**params)
-        self.logger.debug('Response: %s' % res)
-        return res
+        return self.make_client_call('put_bucket_lifecycle', params)
 
     def delete(self, params=None):
         """

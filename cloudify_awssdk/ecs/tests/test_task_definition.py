@@ -181,8 +181,10 @@ class TestECSTaskDefinition(TestBase):
         self.task_definition.client = self.make_client_function(
             'register_task_definition', return_value=response)
 
-        self.assertEqual(self.task_definition.create(params),
-                         response.get(task_definition.TASK_DEFINITION))
+        self.assertEqual(
+            self.task_definition.create(
+                params)[task_definition.TASK_DEFINITION],
+            response.get(task_definition.TASK_DEFINITION))
 
     def test_class_delete(self):
         params = {

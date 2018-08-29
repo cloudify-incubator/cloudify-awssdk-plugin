@@ -17,12 +17,13 @@
     ~~~~~~~~~~~~~~
     AWS EC2 Route Table interface
 '''
+# Boto
+from botocore.exceptions import ClientError
+
 # Cloudify
 from cloudify_awssdk.common import decorators, utils
 from cloudify_awssdk.ec2 import EC2Base
 from cloudify_awssdk.common.constants import EXTERNAL_RESOURCE_ID
-# Boto
-from botocore.exceptions import ClientError
 
 RESOURCE_TYPE = 'EC2 Route Table'
 ROUTETABLE = 'RouteTable'
@@ -63,11 +64,7 @@ class EC2RouteTable(EC2Base):
         '''
             Create a new AWS EC2 Route Table.
         '''
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.create_route_table(**params)
-        self.logger.debug('Response: %s' % res)
-        return res[ROUTETABLE]
+        return self.make_client_call('create_route_table', params)
 
     def delete(self, params=None):
         '''
@@ -127,7 +124,7 @@ def create(ctx, iface, resource_config, **_):
             .instance.runtime_properties.get(EXTERNAL_RESOURCE_ID)
 
     # Actually create the resource
-    create_response = iface.create(params)
+    create_response = iface.create(params)[ROUTETABLE]
     ctx.instance.runtime_properties['create_response'] = \
         utils.JsonCleanuper(create_response).to_dict()
     route_table_id = create_response.get(ROUTETABLE_ID)

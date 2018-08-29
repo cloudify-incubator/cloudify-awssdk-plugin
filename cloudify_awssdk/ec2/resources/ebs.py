@@ -19,9 +19,9 @@
 """
 # Boto
 from botocore.exceptions import ClientError
-from cloudify.exceptions import NonRecoverableError
 
 # Cloudify
+from cloudify.exceptions import NonRecoverableError
 from cloudify_awssdk.common import decorators
 from cloudify_awssdk.common import constants
 from cloudify_awssdk.common import utils
@@ -95,12 +95,7 @@ class EC2Volume(EC2VolumeMixin, EC2Base):
         :param params:
         :return: dict of created volume
         """
-        self.logger.debug('Creating {0} with parameters: {1}'
-                          .format(self.type_name, params))
-
-        response = self.client.create_volume(**params)
-        self.logger.debug('Response: {0}'.format(response))
-        return response
+        return self.make_client_call('create_volume', params)
 
     def delete(self, params=None):
         """
@@ -110,9 +105,9 @@ class EC2Volume(EC2VolumeMixin, EC2Base):
         """
         self.logger.debug('Deleting {0} with parameters: {1}'
                           .format(self.type_name, params))
-        response = self.client.delete_volume(**params)
-        self.logger.debug('Response: {0}'.format(response))
-        return response
+        res = self.client.delete_volume(**params)
+        self.logger.debug('Response: {0}'.format(res))
+        return res
 
 
 class EC2VolumeAttachment(EC2VolumeMixin, EC2Base):
@@ -126,12 +121,7 @@ class EC2VolumeAttachment(EC2VolumeMixin, EC2Base):
         :param params:
         :return:
         """
-        self.logger.debug('Attaching {0} with: {1}'
-                          .format(self.type_name, params.get(VOLUME_ID, None)))
-
-        response = self.client.attach_volume(**params)
-        self.logger.debug('Response: {0}'.format(response))
-        return response
+        return self.make_client_call('attach_volume', params)
 
     def delete(self, params=None):
         """
@@ -142,9 +132,9 @@ class EC2VolumeAttachment(EC2VolumeMixin, EC2Base):
         self.logger.debug('Detaching {0} with: {1}'
                           .format(self.type_name, params.get(VOLUME_ID, None)))
 
-        response = self.client.detach_volume(**params)
-        self.logger.debug('Response: {0}'.format(response))
-        return response
+        res = self.client.detach_volume(**params)
+        self.logger.debug('Response: {0}'.format(res))
+        return res
 
 
 @decorators.aws_resource(resource_type=RESOURCE_TYPE_VOLUME)
@@ -175,15 +165,14 @@ def create(ctx, iface, resource_config, **_):
         dict() if not resource_config else resource_config.copy()
 
     # Create ebs resource
-    response = iface.create(params)
-
+    create_response = iface.create(params)
     # Check if the resource created
-    if response:
+    if create_response:
         ctx.instance.runtime_properties['eps_create'] =\
-            utils.JsonCleanuper(response).to_dict()
+            utils.JsonCleanuper(create_response).to_dict()
 
         # Update the esp_id (volume_id)
-        esp_id = response.get(VOLUME_ID, '')
+        esp_id = create_response.get(VOLUME_ID, '')
         utils.update_resource_id(ctx.instance, esp_id)
         iface.update_resource_id(esp_id)
 
@@ -230,15 +219,15 @@ def attach(ctx, iface, resource_config, **_):
         dict() if not resource_config else resource_config.copy()
 
     # Attach ebs volume to ec2 instance resource
-    response = iface.create(params)
+    create_response = iface.create(params)
 
     # Check if the resource attaching done
-    if response:
+    if create_response:
         ctx.instance.runtime_properties['eps_attach'] =\
-            utils.JsonCleanuper(response).to_dict()
+            utils.JsonCleanuper(create_response).to_dict()
 
         # Update the esp_id (volume_id)
-        esp_id = response.get(VOLUME_ID, '')
+        esp_id = create_response.get(VOLUME_ID, '')
         utils.update_resource_id(ctx.instance, esp_id)
         iface.update_resource_id(esp_id)
 

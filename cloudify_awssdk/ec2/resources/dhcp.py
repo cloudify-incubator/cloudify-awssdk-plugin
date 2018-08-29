@@ -17,12 +17,13 @@
     ~~~~~~~~~~~~~~
     AWS EC2 DhcpOptions interface
 """
+# Boto
+from botocore.exceptions import ClientError
+
 # Cloudify
 from cloudify_awssdk.common import decorators, utils
 from cloudify_awssdk.ec2 import EC2Base
 from cloudify_awssdk.common.constants import EXTERNAL_RESOURCE_ID
-# Boto
-from botocore.exceptions import ClientError
 
 RESOURCE_TYPE = 'EC2 Dhcp Options'
 DHCPOPTIONS = 'DhcpOptions'
@@ -57,11 +58,7 @@ class EC2DHCPOptions(EC2Base):
         """
             Create a new AWS EC2 DhcpOptions.
         """
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.create_dhcp_options(**params)
-        self.logger.debug('Response: %s' % res)
-        return res[DHCPOPTIONS]
+        return self.make_client_call('create_dhcp_options', params)
 
     def delete(self, params=None):
         """
@@ -112,7 +109,7 @@ def create(ctx, iface, resource_config, **_):
         dict() if not resource_config else resource_config.copy()
 
     # Actually create the resource
-    create_response = iface.create(params)
+    create_response = iface.create(params)[DHCPOPTIONS]
     ctx.instance.runtime_properties['create_response'] = \
         utils.JsonCleanuper(create_response).to_dict()
     dhcp_options_id = create_response.get(DHCPOPTIONS_ID, '')

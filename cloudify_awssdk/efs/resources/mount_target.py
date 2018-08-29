@@ -67,11 +67,7 @@ class EFSMountTarget(EFSBase):
         """
             Create a new AWS EFS Mount Target.
         """
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.create_mount_target(**params)
-        self.logger.debug('Response: %s' % res)
-        return res
+        return self.make_client_call('create_mount_target', params)
 
     def delete(self, params=None):
         """

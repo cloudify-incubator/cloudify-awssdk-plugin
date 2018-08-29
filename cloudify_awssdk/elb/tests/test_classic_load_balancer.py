@@ -82,7 +82,7 @@ class TestELBClassicLoadBalancer(TestBase):
             'create_load_balancer',
             return_value=value)
         res = self.load_balancer.create(value)
-        self.assertEqual(res, 'dns')
+        self.assertEqual(res['DNSName'], 'dns')
 
     def test_class_delete(self):
         params = {}

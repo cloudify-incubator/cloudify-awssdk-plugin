@@ -108,9 +108,11 @@ class TestLambdaFunction(TestBase):
                 return_value={'FunctionArn': 'test_function_arn',
                               'FunctionName': 'test_function'})
             fun.client = fake_client
-            res_id, farn = fun.create({'param': 'params'})
-            self.assertEqual(res_id, fun.resource_id)
-            self.assertEqual(farn, 'test_function_arn')
+            create_response = fun.create({'param': 'params'})
+            self.assertEqual(
+                create_response['FunctionName'], fun.resource_id)
+            self.assertEqual(
+                create_response['FunctionArn'], 'test_function_arn')
 
     def test_class_delete(self):
         ctx = self._get_ctx()

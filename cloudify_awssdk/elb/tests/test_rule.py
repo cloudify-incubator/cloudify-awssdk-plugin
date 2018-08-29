@@ -71,7 +71,7 @@ class TestELBRule(TestBase):
         value = {'Rules': [{RULE_ARN: 'id'}]}
         self.rule.client = self.make_client_function('create_rule',
                                                      return_value=value)
-        res = self.rule.create(value)
+        res = self.rule.create(value)['Rules'][0][RULE_ARN]
         self.assertEqual(res, 'id')
 
     def test_class_delete(self):

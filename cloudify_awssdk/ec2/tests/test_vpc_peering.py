@@ -209,8 +209,7 @@ class TestEC2VpcPeering(TestBase):
         self.vpc_peering.client = self.make_client_function(
             'create_vpc_peering_connection', return_value=response)
 
-        self.assertEqual(self.vpc_peering.create(params),
-                         response.get(vpc_peering.VPC_PEERING_CONNECTION))
+        self.assertEqual(self.vpc_peering.create(params), response)
 
     def test_class_delete(self):
         params = \
@@ -346,8 +345,7 @@ class TestEC2VpcPeering(TestBase):
             }
 
         ctx.instance.runtime_properties['resource_config'] = config
-        iface.create = self.mock_return(
-            response.get(vpc_peering.VPC_PEERING_CONNECTION))
+        iface.create = self.mock_return(response)
         vpc_peering.create(ctx, iface, config)
         self.assertEqual(
             ctx.instance.runtime_properties[constants.EXTERNAL_RESOURCE_ID],

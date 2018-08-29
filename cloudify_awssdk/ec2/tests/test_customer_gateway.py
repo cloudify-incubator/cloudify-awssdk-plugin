@@ -85,7 +85,7 @@ class TestEC2VPNGateway(TestBase):
             self.make_client_function('create_customer_gateway',
                                       return_value=value)
         res = self.customer_gateway.create(value)
-        self.assertEqual(res, value['CustomerGateway'])
+        self.assertEqual(res['CustomerGateway'], value['CustomerGateway'])
 
     def test_class_delete(self):
         params = {}
@@ -111,7 +111,7 @@ class TestEC2VPNGateway(TestBase):
         config = {CUSTOMERGATEWAY_ID: 'customer gateway'}
         self.customer_gateway.resource_id = config[CUSTOMERGATEWAY_ID]
         iface = MagicMock()
-        iface.create = self.mock_return(config)
+        iface.create = self.mock_return({'CustomerGateway': config})
         customer_gateway.create(ctx, iface, config)
         self.assertEqual(self.customer_gateway.resource_id,
                          'customer gateway')
@@ -122,7 +122,7 @@ class TestEC2VPNGateway(TestBase):
         config = {'Type': 'type'}
         self.customer_gateway.resource_id = config['Type']
         iface = MagicMock()
-        iface.create = self.mock_return(config)
+        iface.create = self.mock_return({'CustomerGateway': config})
         with patch('cloudify_awssdk.common.utils.find_rel_by_node_type'):
             customer_gateway.create(ctx, iface, config)
             self.assertEqual(self.customer_gateway.resource_id,

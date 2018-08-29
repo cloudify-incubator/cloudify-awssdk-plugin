@@ -71,14 +71,7 @@ class ECSTaskDefinition(ECSBase):
         """
             Create a new AWS ECS Task Definition.
         """
-        self.logger.debug(
-            'Creating {} with parameters: {}'
-            ''.format(self.type_name, params)
-        )
-
-        res = self.client.register_task_definition(**params)
-        self.logger.debug('Response: {}'.format(res))
-        return res.get(TASK_DEFINITION)
+        return self.make_client_call('register_task_definition', params)
 
     def delete(self, params=None):
         """
@@ -122,7 +115,7 @@ def create(ctx, iface, resource_config, **_):
     iface = prepare_describe_task_definition_filter(
         resource_config.copy(), iface
     )
-    iface.create(params)
+    iface.create(params)[TASK_DEFINITION]
 
 
 @decorators.aws_resource(ECSTaskDefinition, RESOURCE_TYPE)

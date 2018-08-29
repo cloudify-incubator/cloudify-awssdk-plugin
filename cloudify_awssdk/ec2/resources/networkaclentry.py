@@ -17,12 +17,13 @@
     ~~~~~~~~~~~~~~
     AWS EC2 NetworkAcl Entry interface
 """
+# Boto
+from botocore.exceptions import ClientError
+
 # Cloudify
 from cloudify_awssdk.common import decorators, utils
 from cloudify_awssdk.ec2 import EC2Base
 from cloudify_awssdk.common.constants import EXTERNAL_RESOURCE_ID
-# Boto
-from botocore.exceptions import ClientError
 
 RESOURCE_TYPE = 'EC2 Network Acl Entry'
 NETWORKACLS = 'NetworkAcls'
@@ -55,11 +56,8 @@ class EC2NetworkAclEntry(EC2Base):
         """
             Create a new AWS EC2 NetworkAcl Entry.
         """
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.create_network_acl_entry(**params)
-        self.logger.debug('Response: %s' % res)
-        return res
+        return self.make_client_call(
+            'create_network_acl_entry', params)
 
     def replace(self, params):
         """

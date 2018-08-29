@@ -72,16 +72,7 @@ class AutoscalingGroup(AutoscalingBase):
         """
             Create a new AWS Autoscaling Group.
         """
-        if not self.resource_id:
-            setattr(self, 'resource_id', params.get(RESOURCE_NAME))
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.create_auto_scaling_group(**params)
-        self.logger.debug('Response: %s' % res)
-        autoscaling_group = self.properties
-        res_id = autoscaling_group.get(RESOURCE_NAME)
-        res_arn = autoscaling_group.get(GROUP_ARN)
-        return res_id, res_arn
+        return self.make_client_call('create_auto_scaling_group', params)
 
     def delete(self, params=None):
         """
@@ -181,12 +172,14 @@ def create(ctx, iface, resource_config, **_):
         params[SUBNET_LIST] = ', '.join(subnet_list)
 
     # Actually create the resource
-    resource_id, resource_arn = iface.create(params)
-    iface.update_resource_id(resource_id)
+    if not iface.resource_id:
+        setattr(iface, 'resource_id', params.get(RESOURCE_NAME))
+    iface.create(params)
+    iface.update_resource_id(iface.properties.get(RESOURCE_NAME))
     utils.update_resource_id(
-        ctx.instance, resource_id)
+        ctx.instance, iface.properties.get(RESOURCE_NAME))
     utils.update_resource_arn(
-        ctx.instance, resource_arn)
+        ctx.instance, iface.properties.get(GROUP_ARN))
 
 
 @decorators.aws_resource(AutoscalingGroup, RESOURCE_TYPE)

@@ -70,7 +70,7 @@ class TestEC2Vpc(TestBase):
         self.vpc.client = self.make_client_function('create_vpc',
                                                     return_value=value)
         res = self.vpc.create(value)
-        self.assertEqual(res, value[VPC])
+        self.assertEqual(res[VPC], value[VPC])
 
     def test_class_delete(self):
         params = {}
@@ -96,7 +96,7 @@ class TestEC2Vpc(TestBase):
         config = {VPC_ID: 'vpc', CIDR_BLOCK: 'cidr_block'}
         self.vpc.resource_id = config[VPC_ID]
         iface = MagicMock()
-        iface.create = self.mock_return(config)
+        iface.create = self.mock_return({VPC: config})
         vpc.create(ctx, iface, config)
         self.assertEqual(self.vpc.resource_id,
                          'vpc')

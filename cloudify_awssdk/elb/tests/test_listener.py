@@ -71,7 +71,7 @@ class TestELBListener(TestBase):
         value = {'Listeners': [{LISTENER_ARN: 'id'}]}
         self.listener.client = self.make_client_function('create_listener',
                                                          return_value=value)
-        res = self.listener.create(value)
+        res = self.listener.create(value)['Listeners'][0][LISTENER_ARN]
         self.assertEqual(res, 'id')
 
     def test_class_delete(self):

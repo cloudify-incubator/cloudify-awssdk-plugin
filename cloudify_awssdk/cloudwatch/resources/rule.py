@@ -66,13 +66,7 @@ class CloudwatchEventsRule(AWSCloudwatchBase):
         """
             Create a new AWS Cloudwatch Events Rule.
         """
-        if not self.resource_id:
-            setattr(self, 'resource_id', params.get(RESOURCE_NAME))
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.put_rule(**params)
-        self.logger.debug('Response: %s' % res)
-        return res[ARN]
+        return self.make_client_call('put_rule', params)
 
     def delete(self, params=None):
         """
@@ -107,7 +101,7 @@ def create(ctx, iface, resource_config, **_):
     params[RESOURCE_NAME] = resource_id
     utils.update_resource_id(ctx.instance, resource_id)
     # Actually create the resource
-    rule_arn = iface.create(params)
+    rule_arn = iface.create(params)[ARN]
     utils.update_resource_arn(ctx.instance, rule_arn)
 
 

@@ -54,7 +54,6 @@ RUNTIME_PROPERTIES_AFTER_CREATE = {
     'resource_config': {
         'DBInstanceClass': 'db.t2.small',
         'AvailabilityZone': 'us-east-1d',
-        'DBInstanceIdentifier': 'devdbinstance-replica'
     }
 }
 
@@ -141,10 +140,18 @@ class TestRDSInstanceReadReplica(TestBase):
         self.fake_client.describe_db_instances.assert_called_with(
             DBInstanceIdentifier='devdbinstance'
         )
+        self.assertEqual(
+            _ctx.instance.runtime_properties['aws_resource_id'],
+            RUNTIME_PROPERTIES_AFTER_CREATE['aws_resource_id']
+        )
+        self.assertEqual(
+            _ctx.instance.runtime_properties['aws_resource_arn'],
+            RUNTIME_PROPERTIES_AFTER_CREATE['aws_resource_arn']
+        )
 
         self.assertEqual(
-            _ctx.instance.runtime_properties,
-            RUNTIME_PROPERTIES_AFTER_CREATE
+            _ctx.instance.runtime_properties['resource_config'],
+            RUNTIME_PROPERTIES_AFTER_CREATE['resource_config']
         )
 
     def test_prepare(self):

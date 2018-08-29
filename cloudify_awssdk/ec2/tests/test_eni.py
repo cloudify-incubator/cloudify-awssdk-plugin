@@ -80,7 +80,8 @@ class TestEC2NetworkInterface(TestBase):
             self.make_client_function('create_network_interface',
                                       return_value=value)
         res = self.eni.create(value)
-        self.assertEqual(res, value['NetworkInterface'])
+        self.assertEqual(
+            res['NetworkInterface'], value['NetworkInterface'])
 
     def test_class_delete(self):
         params = {}
@@ -128,7 +129,7 @@ class TestEC2NetworkInterface(TestBase):
         config = {NETWORKINTERFACE_ID: 'eni', SUBNET_ID: 'subnet'}
         self.eni.resource_id = config[NETWORKINTERFACE_ID]
         iface = MagicMock()
-        iface.create = self.mock_return(config)
+        iface.create = self.mock_return({'NetworkInterface': config})
         eni.create(ctx, iface, config)
         self.assertEqual(self.eni.resource_id,
                          'eni')
@@ -150,7 +151,7 @@ class TestEC2NetworkInterface(TestBase):
         expected.append('group3')
         self.eni.resource_id = 'eni'
         iface = MagicMock()
-        iface.create = self.mock_return(config)
+        iface.create = self.mock_return({'NetworkInterface': config})
         eni.create(ctx, iface, config)
         self.assertEqual(self.eni.resource_id,
                          'eni')
@@ -164,7 +165,7 @@ class TestEC2NetworkInterface(TestBase):
         self.eni.resource_id = config[NETWORKINTERFACE_ID]
         iface = MagicMock()
         modify_args = {'SourceDestCheck': {'Value': True}}
-        iface.create = self.mock_return(config)
+        iface.create = self.mock_return({'NetworkInterface': config})
         eni.create(
             ctx,
             iface,
@@ -194,7 +195,7 @@ class TestEC2NetworkInterface(TestBase):
         config = {NETWORKINTERFACE_ID: 'eni'}
         self.eni.resource_id = config[NETWORKINTERFACE_ID]
         iface = MagicMock()
-        iface.create = self.mock_return(config)
+        iface.create = self.mock_return({'NetworkInterface': config})
         with patch('cloudify_awssdk.common.utils.find_rel_by_node_type'):
             eni.create(ctx, iface, config)
             self.assertEqual(self.eni.resource_id,

@@ -47,12 +47,7 @@ class LambdaPermission(LambdaBase):
         '''
             Create a new AWS Lambda Permission.
         '''
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.add_permission(**params)
-        self.logger.debug('Response: %s' % res)
-        self.update_resource_id(params.get('StatementId'))
-        return self.resource_id, self.resource_id
+        return self.make_client_call('add_permission', params)
 
     def delete(self, params=None):
         '''
@@ -82,14 +77,14 @@ def prepare(ctx, resource_config, **_):
 def create(ctx, iface, resource_config, **_):
     '''Creates an AWS Lambda Permission'''
     # Build API params
-    params = ctx.instance.runtime_properties['resource_config'] or dict()
-    if not iface.resource_id and params.get('StatementId'):
-        utils.update_resource_id(ctx.instance, params['StatementId'])
-    params.update(dict(StatementId=iface.resource_id))
-    # Actually create the resource
-    res_id, res_arn = iface.create(params)
-    utils.update_resource_id(ctx.instance, res_id)
-    utils.update_resource_arn(ctx.instance, res_arn)
+    params = \
+        dict() if not resource_config else resource_config.copy()
+    if iface.resource_id:
+        params.update({'StatementId': iface.resource_id})
+    create_response = iface.create(params)
+    iface.update_resource_id(create_response['StatementId'])
+    utils.update_resource_id(ctx.instance, create_response['StatementId'])
+    utils.update_resource_arn(ctx.instance, create_response['StatementId'])
 
 
 @decorators.aws_resource(LambdaPermission, RESOURCE_TYPE,

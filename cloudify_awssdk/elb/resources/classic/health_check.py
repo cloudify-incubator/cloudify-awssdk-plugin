@@ -62,11 +62,7 @@ class ELBClassicHealthCheck(ELBBase):
         .. note:
             See http://bit.ly/2p741nK for config details.
         """
-        self.logger.debug('Configuring %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.configure_health_check(**params)
-        self.logger.debug('Response: %s' % res)
-        return res
+        return self.make_client_call('configure_health_check', params)
 
     def delete(self, params=None):
         return None

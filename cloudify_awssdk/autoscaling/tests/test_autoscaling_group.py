@@ -42,7 +42,7 @@ NODE_PROPERTIES = {
 RUNTIME_PROPERTIES_AFTER_CREATE = {
     'resource_config': {},
     'aws_resource_arn': 'scaling_arn',
-    'aws_resource_id': 'scaling_name'
+    'aws_resource_id': 'test-autoscaling1'
 }
 
 
@@ -117,7 +117,7 @@ class TestAutoscalingGroup(TestBase):
         self.fake_client.describe_auto_scaling_groups = MagicMock(
             return_value={
                 'AutoScalingGroups': [{
-                    'AutoScalingGroupName': 'scaling_name',
+                    'AutoScalingGroupName': 'test-autoscaling1',
                     'AutoScalingGroupARN': 'scaling_arn'
                 }]
             }
@@ -125,13 +125,15 @@ class TestAutoscalingGroup(TestBase):
 
         self.fake_client.create_auto_scaling_group = MagicMock(
             return_value={
-                'AutoScalingGroupName': 'scaling_name',
+                'AutoScalingGroupName': 'test-autoscaling1',
                 'AutoScalingGroupARN': 'scaling_arn'
             }
         )
 
-        autoscaling_group.create(ctx=_ctx, resource_config=None,
-                                 iface=None)
+        autoscaling_group.create(
+            ctx=_ctx,
+            resource_config=None,
+            iface=None)
 
         self.fake_boto.assert_called_with('autoscaling', **CLIENT_CONFIG)
 
@@ -143,10 +145,6 @@ class TestAutoscalingGroup(TestBase):
             MaxSize='1',
             MinSize='1',
             VPCZoneIdentifier='aws_net_id'
-        )
-
-        self.fake_client.describe_auto_scaling_groups.assert_called_with(
-            AutoScalingGroupNames=['test-autoscaling1']
         )
 
         self.assertEqual(
@@ -168,7 +166,7 @@ class TestAutoscalingGroup(TestBase):
         self.fake_client.describe_auto_scaling_groups = MagicMock(
             return_value={
                 'AutoScalingGroups': [{
-                    'AutoScalingGroupName': 'scaling_name',
+                    'AutoScalingGroupName': 'test-autoscaling1',
                     'AutoScalingGroupARN': 'scaling_arn',
                     'Instances': [{
                         'InstanceId': 'inst_one'
@@ -183,13 +181,13 @@ class TestAutoscalingGroup(TestBase):
         self.fake_boto.assert_called_with('autoscaling', **CLIENT_CONFIG)
 
         self.fake_client.delete_auto_scaling_group.assert_called_with(
-            AutoScalingGroupName='scaling_name'
+            AutoScalingGroupName='test-autoscaling1'
         )
         self.fake_client.describe_auto_scaling_groups.assert_called_with(
-            AutoScalingGroupNames=['scaling_name']
+            AutoScalingGroupNames=['test-autoscaling1']
         )
         self.fake_client.detach_instances.assert_called_with(
-            AutoScalingGroupName='scaling_name',
+            AutoScalingGroupName='test-autoscaling1',
             InstanceIds=['inst_one'],
             ShouldDecrementDesiredCapacity=False
         )
@@ -198,7 +196,7 @@ class TestAutoscalingGroup(TestBase):
             _ctx.instance.runtime_properties, {
                 'resource_config': {},
                 'aws_resource_arn': 'scaling_arn',
-                'aws_resource_id': 'scaling_name'
+                'aws_resource_id': 'test-autoscaling1'
             }
         )
 
@@ -219,14 +217,14 @@ class TestAutoscalingGroup(TestBase):
         self.fake_client.describe_auto_scaling_groups = MagicMock(
             return_value={
                 'AutoScalingGroups': [{
-                    'AutoScalingGroupName': 'scaling_name',
+                    'AutoScalingGroupName': 'test-autoscaling1',
                     'AutoScalingGroupARN': 'scaling_arn'
                 }]
             }
         )
 
         self.assertEqual(test_instance.properties, {
-            'AutoScalingGroupName': 'scaling_name',
+            'AutoScalingGroupName': 'test-autoscaling1',
             'AutoScalingGroupARN': 'scaling_arn'
         })
 

@@ -21,6 +21,7 @@
 from cloudify_awssdk.common import decorators, utils
 from cloudify_awssdk.ec2 import EC2Base
 from cloudify_awssdk.common.constants import EXTERNAL_RESOURCE_ID
+
 # Boto
 from botocore.exceptions import ClientError
 
@@ -65,11 +66,7 @@ class EC2VPNGateway(EC2Base):
         """
             Create a new AWS EC2 VPN Gateway.
         """
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.create_vpn_gateway(**params)
-        self.logger.debug('Response: %s' % res)
-        return res['VpnGateway']
+        return self.make_client_call('create_vpn_gateway', params)
 
     def delete(self, params=None):
         """
@@ -121,7 +118,7 @@ def create(ctx, iface, resource_config, **_):
 
     # Actually create the resource
     # Actually create the resource
-    create_response = iface.create(params)
+    create_response = iface.create(params)['VpnGateway']
     ctx.instance.runtime_properties['create_response'] = \
         utils.JsonCleanuper(create_response).to_dict()
     utils.update_resource_id(ctx.instance, create_response.get(VPNGATEWAY_ID))

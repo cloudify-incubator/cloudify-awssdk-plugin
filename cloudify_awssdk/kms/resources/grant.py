@@ -52,11 +52,7 @@ class KMSKeyGrant(KMSBase):
         """
             Create a new AWS KMS Key Grant.
         """
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.create_grant(**params)
-        self.logger.debug('Response: %s' % res)
-        return res
+        return self.make_client_call('create_grant', params)
 
     def delete(self, params=None):
         """

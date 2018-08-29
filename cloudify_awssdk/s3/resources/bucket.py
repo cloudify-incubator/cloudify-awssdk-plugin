@@ -63,11 +63,7 @@ class S3Bucket(S3Base):
         """
             Create a new AWS S3 Bucket.
         """
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.create_bucket(**params)
-        self.logger.debug('Response: %s' % res)
-        return res
+        return self.make_client_call('create_bucket', params)
 
     def delete(self, params=None):
         """

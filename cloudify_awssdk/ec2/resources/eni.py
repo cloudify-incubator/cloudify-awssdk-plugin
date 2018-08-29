@@ -17,12 +17,13 @@
     ~~~~~~~~~~~~~~
     AWS EC2 NetworkInterface interface
 """
+# Boto
+from botocore.exceptions import ClientError
+
 # Cloudify
 from cloudify_awssdk.common import decorators, utils
 from cloudify_awssdk.ec2 import EC2Base
 from cloudify_awssdk.common.constants import EXTERNAL_RESOURCE_ID
-# Boto
-from botocore.exceptions import ClientError
 
 RESOURCE_TYPE = 'EC2 Network Interface'
 NETWORKINTERFACES = 'NetworkInterfaces'
@@ -70,11 +71,7 @@ class EC2NetworkInterface(EC2Base):
         """
             Create a new AWS EC2 NetworkInterface.
         """
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.create_network_interface(**params)
-        self.logger.debug('Response: %s' % res)
-        return res['NetworkInterface']
+        return self.make_client_call('create_network_interface', params)
 
     def delete(self, params=None):
         """
@@ -157,7 +154,7 @@ def create(ctx, iface, resource_config, **_):
     params[SEC_GROUPS] = groups
 
     # Actually create the resource
-    create_response = iface.create(params)
+    create_response = iface.create(params)['NetworkInterface']
     cleaned_create_response = utils.JsonCleanuper(create_response).to_dict()
     ctx.instance.runtime_properties['create_response'] = \
         utils.JsonCleanuper(cleaned_create_response).to_dict()

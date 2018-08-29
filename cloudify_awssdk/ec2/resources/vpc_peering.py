@@ -69,13 +69,7 @@ class EC2VpcPeering(EC2Base):
 
     def create(self, params):
         """Create a new AWS EC2 Vpc Peering."""
-        self.logger.debug(
-            'Creating {} with parameters: '
-            '{}'.format(self.type_name, params)
-        )
-        res = self.client.create_vpc_peering_connection(**params)
-        self.logger.debug('Response: {}'.format(res))
-        return res.get(VPC_PEERING_CONNECTION)
+        return self.make_client_call('create_vpc_peering_connection', params)
 
     def update(self, params):
         """Updates a new AWS EC2 Vpc Peering."""
@@ -144,7 +138,7 @@ def create(ctx, iface, resource_config, **_):
         del params[REQUESTER_VPC_PEERING_CONNECTION]
 
     # Actually create the resource
-    create_response = iface.create(params)
+    create_response = iface.create(params)[VPC_PEERING_CONNECTION]
     ctx.instance.runtime_properties['create_response'] = \
         utils.JsonCleanuper(create_response).to_dict()
     if create_response:

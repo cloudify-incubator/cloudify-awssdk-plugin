@@ -18,11 +18,12 @@
     AWS IAM Profile interface
 '''
 
+# Boto
+from botocore.exceptions import ClientError
+
 # Cloudify
 from cloudify_awssdk.common import decorators, utils
 from cloudify_awssdk.iam import IAMBase
-# Boto
-from botocore.exceptions import ClientError
 
 RESOURCE_TYPE = 'IAM Instance Profile'
 IAM_ROLE_TYPE = 'cloudify.nodes.aws.iam.Role'
@@ -59,12 +60,7 @@ class IAMInstanceProfile(IAMBase):
         '''
             Create a new AWS IAM Profile.
         '''
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.create_instance_profile(**params)
-        self.logger.debug('Response: %s' % res)
-        self.update_resource_id(res['InstanceProfile'][RESOURCE_NAME])
-        return self.resource_id, res['InstanceProfile']['Arn']
+        return self.make_client_call('create_instance_profile', params)
 
     def delete(self, params=None):
         '''
@@ -109,9 +105,12 @@ def create(ctx, iface, resource_config, **_):
 
     role_name = params.pop('RoleName', None)
 
-    res_id, res_arn = iface.create(params)
-    utils.update_resource_id(ctx.instance, res_id)
-    utils.update_resource_arn(ctx.instance, res_arn)
+    create_response = iface.create(params)
+    resource_id = create_response['InstanceProfile'][RESOURCE_NAME]
+    iface.update_resource_id(resource_id)
+    utils.update_resource_id(ctx.instance, resource_id)
+    utils.update_resource_arn(
+        ctx.instance, create_response['InstanceProfile']['Arn'])
 
     role_name = role_name or \
         utils.find_resource_id_by_type(ctx.instance,

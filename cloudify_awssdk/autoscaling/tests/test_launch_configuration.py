@@ -140,10 +140,6 @@ class TestAutoscalingLaunchConfiguration(TestBase):
             LaunchConfigurationName='test-lauchconfig3'
         )
 
-        self.fake_client.describe_launch_configurations.assert_called_with(
-            LaunchConfigurationNames=['test-lauchconfig3']
-        )
-
         self.assertEqual(
             _ctx.instance.runtime_properties,
             RUNTIME_PROPERTIES_AFTER_CREATE
