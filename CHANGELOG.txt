@@ -1,3 +1,5 @@
+2.4.2: Improve error handling on instances create.
+2.4.1: Support Swift.
 2.4.0: Support Using Password with Windows Agents.
 2.3.5: Support EC2-Classic Security Groups.
 2.3.4: Verify resource ID exists on existing resources.

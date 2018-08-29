@@ -102,7 +102,10 @@ class EC2Instances(EC2Base):
         self.logger.debug(
             'Creating {0} with parameters: {1}'.format(
                 self.type_name, params))
-        res = self.client.run_instances(**params)
+        try:
+            res = self.client.run_instances(**params)
+        except (ClientError, ParamValidationError) as e:
+            res = e
         self.logger.debug('Response: {0}'.format(res))
         return res
 
@@ -246,10 +249,13 @@ def create(ctx, iface, resource_config, **_):
             nic[DEVICE_INDEX] = counter
     params[NETWORK_INTERFACES] = merged_nics
 
-    try:
-        create_response = iface.create(params)
-    except ParamValidationError as e:
-        raise NonRecoverableError(str(e))
+    create_response = iface.create(params)
+    if isinstance(create_response, ClientError):
+        raise NonRecoverableError(str(create_response))
+    elif isinstance(create_response, ParamValidationError):
+        raise OperationRetry(
+            'Possible recoverable error: {0}'.format(
+                str(create_response)))
 
     ctx.instance.runtime_properties['create_response'] = \
         utils.JsonCleanuper(create_response).to_dict()

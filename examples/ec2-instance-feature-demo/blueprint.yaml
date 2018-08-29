@@ -252,7 +252,7 @@ node_templates:
         install_method: none
       resource_config:
         ImageId: { get_attribute: [ cloudify_manager_ami, aws_resource_id ] }
-        InstanceType: m3.large
+        InstanceType: m4.large
       client_config: *client_config
     relationships:
     - type: cloudify.relationships.depends_on

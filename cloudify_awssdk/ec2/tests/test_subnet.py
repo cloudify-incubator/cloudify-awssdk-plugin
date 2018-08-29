@@ -72,7 +72,7 @@ class TestEC2Subnet(TestBase):
         self.subnet.client = self.make_client_function('create_subnet',
                                                        return_value=value)
         res = self.subnet.create(value)
-        self.assertEqual(res, value[SUBNET])
+        self.assertEqual(res, value)
 
     def test_class_delete(self):
         params = {}
@@ -99,7 +99,7 @@ class TestEC2Subnet(TestBase):
                   VPC_ID: 'vpc'}
         self.subnet.resource_id = config[SUBNET_ID]
         iface = MagicMock()
-        iface.create = self.mock_return(config)
+        iface.create = self.mock_return({SUBNET: config})
         subnet.create(ctx, iface, config)
         self.assertEqual(self.subnet.resource_id,
                          'subnet')
@@ -109,7 +109,7 @@ class TestEC2Subnet(TestBase):
         config = {SUBNET_ID: 'subnet', CIDR_BLOCK: 'cidr_block'}
         self.subnet.resource_id = config[SUBNET_ID]
         iface = MagicMock()
-        iface.create = self.mock_return(config)
+        iface.create = self.mock_return({SUBNET: config})
         with patch('cloudify_awssdk.common.utils.find_rel_by_node_type'):
             subnet.create(ctx, iface, config)
             self.assertEqual(self.subnet.resource_id,

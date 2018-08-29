@@ -18,6 +18,18 @@ inputs:
     type: string
     default: { get_secret: ec2_region_name }
 
+  key_name:
+    type: string
+    default: Cloudify-Ecosystem-Tests
+
+  subnet_id:
+    type: string
+    default: { get_secret: public_subnet_id }
+
+  vpc_id:
+    type: string
+    default: { get_secret: vpc_id }
+
 dsl_definitions:
 
   client_config: &client_config
@@ -32,22 +44,24 @@ dsl_definitions:
 
 node_templates:
 
-  wordpress_example:
+  ec2_instance_example:
     type: cloudify.nodes.aws.CloudFormation.Stack
     properties:
       resource_config:
         kwargs:
-          StackName: WordpressExample
+          StackName: EC2Instance
           Parameters:
           - ParameterKey: KeyName
-            ParameterValue: example
-          - ParameterKey: DBPassword
-            ParameterValue: zadkckdoekd
-          - ParameterKey: DBUser
-            ParameterValue: example
-          - ParameterKey: DBRootPassword
-            ParameterValue: zadkckdoekd
-          TemplateURL: https://s3.eu-central-1.amazonaws.com/cloudformation-templates-eu-central-1/WordPress_Single_Instance.template
+            ParameterValue: { get_input: key_name }
+          - ParameterKey: PrimaryIPAddress
+            ParameterValue: '10.10.4.240'
+          - ParameterKey: SecondaryIPAddress
+            ParameterValue: '10.10.4.250'
+          - ParameterKey: SubnetId
+            ParameterValue: { get_input: subnet_id }
+          - ParameterKey: VpcId
+            ParameterValue: { get_input: vpc_id }
+          TemplateURL: https://s3-ap-northeast-1.amazonaws.com/ecosystem-tests-no-delete/VPC_EC2_Instance_With_Multiple_Static_IPAddresses.yaml.txt
       client_config: *client_config
 
   HelloBucket:

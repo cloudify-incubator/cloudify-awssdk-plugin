@@ -43,17 +43,24 @@ class TestAWSSDK(EcosystemTestBase):
 
     @property
     def inputs(self):
+        # Setting m4.large for Tokyo.
         try:
             return {
                 'password': os.environ['ECOSYSTEM_SESSION_PASSWORD'],
-                'ec2_region_name': 'eu-central-1',
-                'ec2_region_endpoint': 'ec2.eu-central-1.amazonaws.com',
-                'availability_zone': 'eu-central-1b',
+                'ec2_region_name': 'ap-northeast-1',
+                'ec2_region_endpoint': 'ec2.ap-northeast-1.amazonaws.com',
+                'availability_zone': 'ap-northeast-1b',
                 'aws_secret_access_key': os.environ['AWS_SECRET_ACCESS_KEY'],
-                'aws_access_key_id': os.environ['AWS_ACCESS_KEY_ID']
+                'aws_access_key_id': os.environ['AWS_ACCESS_KEY_ID'],
+                'instance_type': 'm4.large'
             }
         except KeyError:
             raise
+
+    @property
+    def plugins_to_upload(self):
+        """plugin yamls to upload to manager"""
+        return []
 
     def check_resource_method(self,
                               resource_id=None,
