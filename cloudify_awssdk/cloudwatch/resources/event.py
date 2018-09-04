@@ -52,11 +52,7 @@ class CloudwatchEvent(AWSCloudwatchBase):
         """
             Create a new AWS Cloudwatch Events Event.
         """
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.put_events(**params)
-        self.logger.debug('Response: %s' % res)
-        return res
+        return self.make_client_call('put_events', params)
 
     def delete(self, params=None):
         return None

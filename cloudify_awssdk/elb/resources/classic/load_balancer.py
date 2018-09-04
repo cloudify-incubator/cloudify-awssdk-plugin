@@ -17,14 +17,15 @@
     ~~~~~~~~~~~~
     AWS ELB load balancer interface
 """
+# Boto
+from botocore.exceptions import ClientError
+
 # Cloudify
-# from cloudify.exceptions import NonRecoverableError
+from cloudify.exceptions import OperationRetry
 from cloudify_awssdk.common import decorators, utils
 from cloudify_awssdk.elb import ELBBase
 from cloudify_awssdk.common.connection import Boto3Connection
 from cloudify_awssdk.common.constants import EXTERNAL_RESOURCE_ID
-# Boto
-from botocore.exceptions import ClientError
 
 RESOURCE_TYPE = 'ELB Classic Load Balancer'
 RESOURCE_NAME = 'LoadBalancerName'
@@ -75,11 +76,7 @@ class ELBClassicLoadBalancer(ELBBase):
         .. note:
             See http://bit.ly/2qtaai1 for config details.
         """
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.create_load_balancer(**params)
-        self.logger.debug('Response: %s' % res)
-        return res['DNSName']
+        return self.make_client_call('create_load_balancer', params)
 
     def delete(self, params=None):
         """
@@ -109,12 +106,8 @@ class ELBClassicLoadBalancer(ELBBase):
         .. note:
             See http://bit.ly/2pIXB10 for config details.
         """
-        self.logger.debug('Registering instances with parameters: %s'
-                          % params)
-        res = \
-            self.client.register_instances_with_load_balancer(**params)
-        self.logger.debug('Response: %s' % res)
-        return res
+        return self.make_client_call(
+            'register_instances_with_load_balancer', params)
 
     def deregister_instances(self, params):
         """
@@ -122,12 +115,8 @@ class ELBClassicLoadBalancer(ELBBase):
         .. note:
             See http://bit.ly/2pIXB10 for config details.
         """
-        self.logger.debug('Registering instances with parameters: %s'
-                          % params)
-        res = \
-            self.client.deregister_instances_from_load_balancer(**params)
-        self.logger.debug('Response: %s' % res)
-        return res
+        return self.make_client_call(
+            'deregister_instances_from_load_balancer', params)
 
 
 @decorators.aws_resource(resource_type=RESOURCE_TYPE)
@@ -176,7 +165,9 @@ def create(ctx, iface, resource_config, **_):
             secgroups_list)
 
     # Actually create the resource
-    dns_name = iface.create(params)
+    dns_name = iface.create(params)['DNSName']
+    iface.update_resource_id(dns_name)
+    utils.update_resource_id(ctx.instance, dns_name)
     ctx.instance.runtime_properties['DNSName'] = dns_name
 
 
@@ -227,14 +218,21 @@ def assoc(ctx, **_):
     lb = ctx.target.instance.runtime_properties.get(EXTERNAL_RESOURCE_ID)
     iface = \
         ELBClassicLoadBalancer(ctx.target.node, lb, logger=ctx.logger)
-    iface.register_instances(
-        {RESOURCE_NAME: lb, 'Instances': [{'InstanceId': instance_id}]})
+    if ctx.operation.retry_number < 1:
+        iface.register_instances(
+            {RESOURCE_NAME: lb, 'Instances': [{'InstanceId': instance_id}]})
     if 'instances' not in ctx.target.instance.runtime_properties.keys():
         ctx.target.instance.runtime_properties['instances'] = []
     instances_list = ctx.target.instance.runtime_properties['instances']
     if instance_id not in instances_list:
         instances_list.append(instance_id)
     ctx.target.instance.runtime_properties['instances'] = instances_list
+    actual_instance_ids = \
+        [i['InstanceId'] for i in iface.properties['Instances']]
+    if instance_id not in actual_instance_ids:
+        raise OperationRetry(
+            'Waiting for Instance {0} to be added to ELB {1}.'.format(
+                instance_id, lb))
 
 
 @decorators.aws_relationship(None, RESOURCE_TYPE)
@@ -252,3 +250,7 @@ def disassoc(ctx, **_):
     instances_list = ctx.target.instance.runtime_properties['instances']
     instances_list.remove(instance_id)
     ctx.target.instance.runtime_properties['instances'] = instances_list
+    if instance_id in [i['InstanceId'] for i in iface.properties['Instances']]:
+        raise OperationRetry(
+            'Waiting for Instance {0} to be removed from ELB {1}.'.format(
+                instance_id, lb))

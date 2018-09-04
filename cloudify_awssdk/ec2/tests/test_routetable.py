@@ -62,7 +62,7 @@ class TestEC2RouteTable(TestBase):
             self.make_client_function('create_route_table',
                                       return_value=value)
         res = self.routetable.create(value)
-        self.assertEqual(res, value['RouteTable'])
+        self.assertEqual(res['RouteTable'], value['RouteTable'])
 
     def test_class_delete(self):
         params = {}
@@ -112,7 +112,7 @@ class TestEC2RouteTable(TestBase):
         config = {ROUTETABLE_ID: 'route table', VPC_ID: 'vpc'}
         self.routetable.resource_id = config[ROUTETABLE_ID]
         iface = MagicMock()
-        iface.create = self.mock_return(config)
+        iface.create = self.mock_return({'RouteTable': config})
         routetable.create(ctx, iface, config)
         self.assertEqual(self.routetable.resource_id,
                          'route table')
@@ -122,7 +122,7 @@ class TestEC2RouteTable(TestBase):
         config = {}
         self.routetable.resource_id = 'routetable'
         iface = MagicMock()
-        iface.create = self.mock_return(config)
+        iface.create = self.mock_return({'RouteTable': config})
         with patch('cloudify_awssdk.common.utils.find_rel_by_node_type'):
             routetable.create(ctx, iface, config)
             self.assertEqual(self.routetable.resource_id,

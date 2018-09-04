@@ -24,6 +24,9 @@ from collections import defaultdict
 import json
 import os
 
+# Boto
+from botocore.exceptions import ClientError
+
 # Cloudify
 from cloudify import compute
 from cloudify import ctx
@@ -32,9 +35,6 @@ from cloudify_awssdk.common import decorators, utils
 from cloudify_awssdk.common.constants import EXTERNAL_RESOURCE_ID
 from cloudify_awssdk.ec2 import EC2Base
 from cloudify_awssdk.ec2.decrypt import decrypt_password
-
-# Boto
-from botocore.exceptions import ClientError, ParamValidationError
 
 RESOURCE_TYPE = 'EC2 Instances'
 RESERVATIONS = 'Reservations'
@@ -99,15 +99,7 @@ class EC2Instances(EC2Base):
         '''
             Create AWS EC2 Instances.
         '''
-        self.logger.debug(
-            'Creating {0} with parameters: {1}'.format(
-                self.type_name, params))
-        try:
-            res = self.client.run_instances(**params)
-        except (ClientError, ParamValidationError) as e:
-            res = e
-        self.logger.debug('Response: {0}'.format(res))
-        return res
+        return self.make_client_call('run_instances', params)
 
     def start(self, params):
         '''
@@ -250,16 +242,14 @@ def create(ctx, iface, resource_config, **_):
     params[NETWORK_INTERFACES] = merged_nics
 
     create_response = iface.create(params)
-    if isinstance(create_response, ClientError):
-        raise NonRecoverableError(str(create_response))
-    elif isinstance(create_response, ParamValidationError):
-        raise OperationRetry(
-            'Possible recoverable error: {0}'.format(
-                str(create_response)))
-
     ctx.instance.runtime_properties['create_response'] = \
         utils.JsonCleanuper(create_response).to_dict()
-    instance = create_response.get(INSTANCES, [None])[0]
+    try:
+        instance = create_response[INSTANCES][0]
+    except (KeyError, IndexError) as e:
+        raise NonRecoverableError(
+            'Error {0}: create response has no instances: {1}'.format(
+                e.message, create_response))
     instance_id = instance.get(INSTANCE_ID, '')
     iface.update_resource_id(instance_id)
     utils.update_resource_id(ctx.instance, instance_id)
@@ -308,7 +298,7 @@ def start(ctx, iface, resource_config, **_):
 @decorators.aws_resource(EC2Instances, RESOURCE_TYPE)
 @decorators.wait_for_status(
     status_good=[STOPPED],
-    status_pending=[STOPPING, SHUTTING_DOWN])
+    status_pending=[PENDING, RUNNING, STOPPING, SHUTTING_DOWN])
 def stop(ctx, iface, resource_config, **_):
     '''Stops AWS EC2 Instances'''
 
@@ -320,7 +310,7 @@ def stop(ctx, iface, resource_config, **_):
 @decorators.aws_resource(EC2Instances, RESOURCE_TYPE)
 @decorators.wait_for_delete(
     status_deleted=[TERMINATED],
-    status_pending=[STOPPING, SHUTTING_DOWN, PENDING])
+    status_pending=[PENDING, STOPPING, SHUTTING_DOWN])
 def delete(iface, resource_config, **_):
     '''Deletes AWS EC2 Instances'''
 

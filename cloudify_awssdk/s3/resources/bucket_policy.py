@@ -19,12 +19,14 @@
 """
 # Generic
 import json
+
+# Boto
+from botocore.exceptions import ClientError, ParamValidationError
+
 # Cloudify
 from cloudify_awssdk.common import decorators, utils
 from cloudify_awssdk.s3 import S3Base
 from cloudify_awssdk.common.constants import EXTERNAL_RESOURCE_ID
-# Boto
-from botocore.exceptions import ClientError
 
 RESOURCE_TYPE = 'S3 Bucket Policy'
 BUCKET = 'Bucket'
@@ -67,11 +69,10 @@ class S3BucketPolicy(S3Base):
         """
             Create a new AWS S3 Bucket Policy.
         """
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.put_bucket_policy(**params)
-        self.logger.debug('Response: %s' % res)
-        return res
+        return self.make_client_call(
+            'put_bucket_policy',
+            params,
+            fatal_handled_exceptions=ParamValidationError)
 
     def delete(self, params=None):
         """

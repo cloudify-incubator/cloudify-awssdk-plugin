@@ -9,3 +9,4 @@ pytest
 # for integration and platform tests
 cloudify>=3.4.1
 awscli
+https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/2.1.1.zip

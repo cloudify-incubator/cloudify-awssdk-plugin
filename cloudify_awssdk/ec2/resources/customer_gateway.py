@@ -17,11 +17,12 @@
     ~~~~~~~~~~~~~~
     AWS EC2 Customer Gateway interface
 """
+# Boto
+from botocore.exceptions import ClientError
+
 # Cloudify
 from cloudify_awssdk.common import decorators, utils
 from cloudify_awssdk.ec2 import EC2Base
-# Boto
-from botocore.exceptions import ClientError
 
 RESOURCE_TYPE = 'EC2 Customer Gateway'
 CUSTOMERGATEWAYS = 'CustomerGateways'
@@ -64,11 +65,7 @@ class EC2CustomerGateway(EC2Base):
         """
             Create a new AWS EC2 Customer Gateway.
         """
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.create_customer_gateway(**params)
-        self.logger.debug('Response: %s' % res)
-        return res['CustomerGateway']
+        return self.make_client_call('create_customer_gateway', params)
 
     def delete(self, params=None):
         """
@@ -109,7 +106,7 @@ def create(ctx, iface, resource_config, **_):
         params.update({PUBLIC_IP: public_ip})
 
     # Actually create the resource
-    create_response = iface.create(params)
+    create_response = iface.create(params)['CustomerGateway']
     ctx.instance.runtime_properties['create_response'] = \
         utils.JsonCleanuper(create_response).to_dict()
     utils.update_resource_id(ctx.instance,

@@ -17,9 +17,18 @@
     ~~~~~~
     AWS common interfaces
 '''
+import sys
 from logging import NullHandler
+
+# Boto
+from botocore.exceptions import ClientError, ParamValidationError
+
 # Cloudify
+from cloudify.exceptions import NonRecoverableError
 from cloudify.logs import init_cloudify_logger
+from cloudify.utils import exception_to_error_cause
+
+FATAL_EXCEPTIONS = (ClientError, ParamValidationError)
 
 
 class AWSResourceBase(object):
@@ -49,6 +58,47 @@ class AWSResourceBase(object):
     def create(self, params):
         '''Creates a resource'''
         raise NotImplementedError()
+
+    def make_client_call(self,
+                         client_method_name,
+                         client_method_args=None,
+                         log_response=True,
+                         fatal_handled_exceptions=FATAL_EXCEPTIONS):
+        """
+
+        :param client_method_name: A method on self.client.
+        :param client_method_args: Optional Args.
+        :param log_response: Whether to log API response.
+        :param fatal_handled_exceptions: exceptions to fail on.
+        :return: Either Exception class or successful response content.
+        """
+
+        type_name = getattr(self, 'type_name')
+
+        self.logger.debug(
+            'Calling {0} method {1} with parameters: {2}'.format(
+                type_name, client_method_name, client_method_args))
+
+        client_method = getattr(self.client, client_method_name)
+
+        if not client_method:
+            return
+        try:
+            if isinstance(client_method_args, dict):
+                res = client_method(**client_method_args)
+            elif isinstance(client_method_args, list):
+                res = client_method(*client_method_args)
+            else:
+                res = client_method_args()
+        except fatal_handled_exceptions as error:
+            _, _, tb = sys.exc_info()
+            raise NonRecoverableError(
+                str(error.message),
+                causes=[exception_to_error_cause(error, tb)])
+        else:
+            if log_response:
+                self.logger.debug('Response: {0}'.format(res))
+        return res
 
     def delete(self, params=None):
         '''Deletes a resource'''

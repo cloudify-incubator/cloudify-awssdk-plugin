@@ -85,7 +85,7 @@ class TestEC2NetworkAcl(TestBase):
             self.make_client_function('create_network_acl',
                                       return_value=value)
         res = self.networkacl.create(value)
-        self.assertEqual(res, value['NetworkAcl'])
+        self.assertEqual(res['NetworkAcl'], value['NetworkAcl'])
 
     def test_class_delete(self):
         params = {}
@@ -133,7 +133,7 @@ class TestEC2NetworkAcl(TestBase):
         config = {NETWORKACL_ID: 'network acl', VPC_ID: 'vpc'}
         self.networkacl.resource_id = config[NETWORKACL_ID]
         iface = MagicMock()
-        iface.create = self.mock_return(config)
+        iface.create = self.mock_return({'NetworkAcl': config})
         networkacl.create(ctx, iface, config)
         self.assertEqual(self.networkacl.resource_id,
                          'network acl')
@@ -143,7 +143,7 @@ class TestEC2NetworkAcl(TestBase):
         config = {}
         self.networkacl.resource_id = 'networkacl'
         iface = MagicMock()
-        iface.create = self.mock_return(config)
+        iface.create = self.mock_return({'NetworkAcl': config})
         with patch('cloudify_awssdk.common.utils.find_rel_by_node_type'):
             networkacl.create(ctx, iface, config)
             self.assertEqual(self.networkacl.resource_id,

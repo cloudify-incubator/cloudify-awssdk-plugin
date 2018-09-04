@@ -74,14 +74,7 @@ class ECSService(ECSBase):
         """
             Create a new AWS ECS Service.
         """
-        self.logger.debug(
-            'Creating {} with parameters: {}'
-            ''.format(self.type_name, params)
-        )
-
-        res = self.client.create_service(**params)
-        self.logger.debug('Response: {}'.format(res))
-        return res.get(SERVICE)
+        return self.make_client_call('create_service', params)
 
     def delete(self, params=None):
         """
@@ -152,7 +145,7 @@ def create(ctx, iface, resource_config, **_):
     utils.update_resource_id(ctx.instance, params.get(SERVICE_RESOURCE))
 
     iface = prepare_describe_service_filter(resource_config.copy(), iface)
-    iface.create(params)
+    iface.create(params)[SERVICE]
 
 
 @decorators.aws_resource(ECSService, RESOURCE_TYPE)

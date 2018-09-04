@@ -18,6 +18,9 @@
     AWS EC2 Keypair interface
 '''
 
+# Boto
+from botocore.exceptions import ClientError
+
 # Cloudify
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError
@@ -25,9 +28,6 @@ from cloudify.manager import get_rest_client
 from cloudify_awssdk.common import decorators, utils
 from cloudify_awssdk.ec2 import EC2Base
 from cloudify_rest_client.exceptions import CloudifyClientError
-
-# Boto
-from botocore.exceptions import ClientError
 
 RESOURCE_TYPE = 'EC2 Keypairs'
 KEYPAIRS = 'KeyPairs'
@@ -68,13 +68,8 @@ class EC2Keypair(EC2Base):
         '''
             Create AWS EC2 Instances.
         '''
-        self.logger.debug(
-            'Creating {0} with parameters: {1}'.format(
-                self.type_name, params))
-        res = self.client.create_key_pair(**params)
-        if log_response:
-            self.logger.debug('Response: {0}'.format(res))
-        return res
+        return self.make_client_call(
+            'create_key_pair', params, log_response)
 
     def import_keypair(self, params, log_response=False):
         '''
@@ -123,10 +118,8 @@ def create(ctx, iface, resource_config, **_):
                 params,
                 log_response=ctx.node.properties['log_create_response'])
     else:
-        create_response = \
-            iface.create(
-                params,
-                log_response=ctx.node.properties['log_create_response'])
+        create_response = iface.create(
+            params, log_response=ctx.node.properties['log_create_response'])
 
         # Allow the end user to store the key material in a secret.
         if ctx.node.properties['create_secret']:

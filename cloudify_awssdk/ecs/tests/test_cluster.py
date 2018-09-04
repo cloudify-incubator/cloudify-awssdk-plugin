@@ -130,8 +130,9 @@ class TestECSCluster(TestBase):
         self.cluster.client = self.make_client_function(
             'create_cluster', return_value=response)
 
-        self.assertEqual(self.cluster.create(params),
-                         response.get(cluster.CLUSTER))
+        self.assertEqual(
+            self.cluster.create(params)[cluster.CLUSTER],
+            response.get(cluster.CLUSTER))
 
     def test_class_delete(self):
         params = {cluster.CLUSTER: 'test_cluster_name'}

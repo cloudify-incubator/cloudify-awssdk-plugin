@@ -59,11 +59,7 @@ class CloudwatchTarget(AWSCloudwatchBase):
         """
             Create a new AWS Cloudwatch Target.
         """
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.put_targets(**params)
-        self.logger.debug('Response: %s' % res)
-        return res
+        return self.make_client_call('put_targets', params)
 
     def delete(self, params=None):
         """

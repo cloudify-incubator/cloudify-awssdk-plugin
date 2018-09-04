@@ -59,7 +59,7 @@ class TestEC2DHCPOptions(TestBase):
             self.make_client_function('create_dhcp_options',
                                       return_value=value)
         res = self.dhcp.create(value)
-        self.assertEqual(res, value[DHCPOPTIONS])
+        self.assertEqual(res[DHCPOPTIONS], value[DHCPOPTIONS])
 
     def test_class_delete(self):
         params = {}
@@ -107,7 +107,7 @@ class TestEC2DHCPOptions(TestBase):
         config = {DHCPOPTIONS_ID: 'dhcp'}
         self.dhcp.resource_id = config[DHCPOPTIONS_ID]
         iface = MagicMock()
-        iface.create = self.mock_return(config)
+        iface.create = self.mock_return({DHCPOPTIONS: config})
         dhcp.create(ctx, iface, config)
         self.assertEqual(self.dhcp.resource_id,
                          'dhcp')

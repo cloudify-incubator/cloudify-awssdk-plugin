@@ -48,11 +48,8 @@ class EC2VPNConnectionRoute(EC2Base):
 
     def create(self, params):
         """Create a new AWS EC2 VPN Connection Route."""
-        self.logger.debug(
-            'Creating {} with parameters: '
-            '{}'.format(self.type_name, params)
-        )
-        self.client.create_vpn_connection_route(**params)
+        return self.make_client_call(
+            'create_vpn_connection_route', params)
 
     def delete(self, params=None):
         """ Deletes an existing AWS EC2 VPN Connection Route."""

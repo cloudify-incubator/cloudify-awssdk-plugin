@@ -63,24 +63,7 @@ class SQSQueue(SQSBase):
         """
             Create a new AWS SQS Queue.
         """
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.create_queue(**params)
-        self.logger.debug('Response: %s' % res)
-
-        # Attempt to retrieve the ARN.
-        try:
-            resource_attributes = \
-                self.client.get_queue_attributes(
-                    QueueUrl=res[QUEUE_URL],
-                    AttributeNames=[QUEUE_ARN])
-        except ClientError:
-            pass
-        else:
-            res_arn = \
-                resource_attributes.get('Attributes', {}).get(QUEUE_ARN)
-            return res[QUEUE_URL], res_arn
-        return res[QUEUE_URL], None
+        return self.make_client_call('create_queue', params)
 
     def delete(self, params=None):
         """
@@ -120,9 +103,21 @@ def create(ctx, iface, resource_config, **_):
         queue_attributes[POLICY] = json.dumps(queue_attributes_policy)
 
     # Actually create the resource
-    res_id, res_arn = iface.create(params)
-    utils.update_resource_id(ctx.instance, res_id)
-    utils.update_resource_arn(ctx.instance, res_arn)
+    create_response = iface.create(params)
+    # Attempt to retrieve the ARN.
+    try:
+        resource_attributes = iface.client.get_queue_attributes(
+            QueueUrl=create_response[QUEUE_URL],
+            AttributeNames=[QUEUE_ARN])
+    except ClientError:
+        utils.update_resource_arn(
+            ctx.instance,
+            None)
+    else:
+        utils.update_resource_arn(
+            ctx.instance,
+            resource_attributes.get('Attributes', {}).get(QUEUE_ARN))
+    utils.update_resource_id(ctx.instance, create_response[QUEUE_URL])
 
 
 @decorators.aws_resource(SQSQueue, RESOURCE_TYPE,

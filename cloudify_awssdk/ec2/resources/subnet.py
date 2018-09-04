@@ -17,14 +17,13 @@
     ~~~~~~~~~~~~~~
     AWS EC2 Subnet interface
 '''
+# Boto
+from botocore.exceptions import ClientError
 
 # Cloudify
-from cloudify.exceptions import OperationRetry, NonRecoverableError
 from cloudify_awssdk.common import decorators, utils
 from cloudify_awssdk.ec2 import EC2Base
 from cloudify_awssdk.common.constants import EXTERNAL_RESOURCE_ID
-# Boto
-from botocore.exceptions import ClientError, ParamValidationError
 
 RESOURCE_TYPE = 'EC2 Subnet'
 SUBNET = 'Subnet'
@@ -70,14 +69,7 @@ class EC2Subnet(EC2Base):
         '''
             Create a new AWS EC2 Subnet.
         '''
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        try:
-            res = self.client.create_subnet(**params)
-        except (ClientError, ParamValidationError) as e:
-            res = e
-        self.logger.debug('Response: %s' % res)
-        return res
+        return self.make_client_call('create_subnet', params)
 
     def delete(self, params=None):
         '''
@@ -131,17 +123,7 @@ def create(ctx, iface, resource_config, **_):
                 'resource_config', {}).get(CIDR_BLOCK)
 
     # Actually create the resource
-    create_response = iface.create(params)
-    if isinstance(create_response, ClientError):
-        raise NonRecoverableError(str(create_response))
-    elif isinstance(create_response, ParamValidationError):
-        if NO_ID_ERROR in create_response.msg:
-            raise NonRecoverableError(str(create_response))
-        raise OperationRetry(
-            'Possible recoverable error: {0}'.format(
-                str(create_response)))
-    create_response = create_response[SUBNET]
-
+    create_response = iface.create(params)[SUBNET]
     ctx.instance.runtime_properties['create_response'] = \
         utils.JsonCleanuper(create_response).to_dict()
     subnet_id = create_response.get(SUBNET_ID)

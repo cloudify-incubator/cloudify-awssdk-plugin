@@ -66,11 +66,7 @@ class DBInstance(RDSBase):
         .. note:
             See http://bit.ly/2p4c3Bx for config details.
         '''
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.create_db_instance(**params)
-        self.logger.debug('Response: %s' % res)
-        return res
+        return self.make_client_call('create_db_instance', params)
 
     def delete(self, params=None):
         '''
@@ -100,7 +96,8 @@ def prepare(ctx, resource_config, **_):
 def create(ctx, iface, resource_config, **_):
     '''Creates an AWS RDS Instance'''
     # Build API params
-    params = ctx.instance.runtime_properties['resource_config'] or dict()
+    params = \
+        dict() if not resource_config else resource_config.copy()
     params.update(dict(DBInstanceIdentifier=iface.resource_id))
     # Actually create the resource
     res = iface.create(params)

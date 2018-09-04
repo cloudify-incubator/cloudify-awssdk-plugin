@@ -60,12 +60,7 @@ class DBInstanceReadReplica(RDSBase):
         '''
             Create a new AWS RDS DB Instance Read Replica.
         '''
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.create_db_instance_read_replica(**params)
-        self.logger.debug('Response: %s' % res)
-        self.update_resource_id(res['DBInstance']['DBInstanceIdentifier'])
-        return self.resource_id, res['DBInstance']['DBInstanceArn']
+        return self.make_client_call('create_db_instance_read_replica', params)
 
     def delete(self, params=None):
         '''
@@ -93,12 +88,17 @@ def prepare(ctx, resource_config, **_):
 def create(ctx, iface, resource_config, **_):
     '''Creates an AWS RDS Instance Read Replica'''
     # Build API params
-    params = ctx.instance.runtime_properties['resource_config'] or dict()
-    params.update(dict(DBInstanceIdentifier=iface.resource_id))
+    params = \
+        dict() if not resource_config else resource_config.copy()
+    if iface.resource_id:
+        params.update({'DBInstanceIdentifier': iface.resource_id})
     # Actually create the resource
-    res_id, res_arn = iface.create(params)
-    utils.update_resource_id(ctx.instance, res_id)
-    utils.update_resource_arn(ctx.instance, res_arn)
+    create_response = iface.create(params)
+    resource_id = create_response['DBInstance']['DBInstanceIdentifier']
+    iface.update_resource_id(resource_id)
+    utils.update_resource_id(ctx.instance, resource_id)
+    utils.update_resource_arn(
+        ctx.instance, create_response['DBInstance']['DBInstanceArn'])
 
 
 @decorators.aws_resource(DBInstanceReadReplica, RESOURCE_TYPE,

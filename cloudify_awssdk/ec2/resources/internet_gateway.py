@@ -17,12 +17,13 @@
     ~~~~~~~~~~~~~~
     AWS EC2 Internet interface
 '''
+# Boto
+from botocore.exceptions import ClientError
+
 # Cloudify
 from cloudify_awssdk.common import decorators, utils
 from cloudify_awssdk.ec2 import EC2Base
 from cloudify_awssdk.common.constants import EXTERNAL_RESOURCE_ID
-# Boto
-from botocore.exceptions import ClientError
 
 RESOURCE_TYPE = 'EC2 Internet Gateway Bucket'
 INTERNETGATEWAYS = 'InternetGateways'
@@ -65,11 +66,7 @@ class EC2InternetGateway(EC2Base):
         '''
             Create a new AWS EC2 Internet Gateway.
         '''
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.create_internet_gateway(**params)
-        self.logger.debug('Response: %s' % res)
-        return res['InternetGateway']
+        return self.make_client_call('create_internet_gateway', params)
 
     def delete(self, params=None):
         '''
@@ -113,8 +110,7 @@ def prepare(ctx, resource_config, **_):
 def create(ctx, iface, resource_config, **_):
     '''Creates an AWS EC2 Internet Gateway'''
     params = dict() if not resource_config else resource_config.copy()
-
-    create_response = iface.create(params)
+    create_response = iface.create(params)['InternetGateway']
     ctx.instance.runtime_properties['create_response'] = \
         utils.JsonCleanuper(create_response).to_dict()
     utils.update_resource_id(ctx.instance,

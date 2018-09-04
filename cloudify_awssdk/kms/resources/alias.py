@@ -49,11 +49,7 @@ class KMSKeyAlias(KMSKey):
         """
             Create a new AWS KMS Key Alias.
         """
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.create_alias(**params)
-        self.logger.debug('Response: %s' % res)
-        return res
+        return self.make_client_call('create_alias', params)
 
     def enable(self, params):
         return None

@@ -100,10 +100,7 @@ class S3BucketObject(S3Base):
         """
             Create a new AWS S3 Bucket Object.
         """
-        self.logger.debug('Creating {0} with parameters: {1}'
-                          .format(self.type_name, params))
-        res = self.client.put_object(**params)
-        return res
+        return self.make_client_call('put_object', params)
 
     def delete(self, params=None):
         """

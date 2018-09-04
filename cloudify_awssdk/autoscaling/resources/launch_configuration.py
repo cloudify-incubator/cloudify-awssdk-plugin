@@ -70,14 +70,7 @@ class AutoscalingLaunchConfiguration(AutoscalingBase):
         """
             Create a new AWS Autoscaling Autoscaling Launch Configuration.
         """
-        if not self.resource_id:
-            setattr(self, 'resource_id', params.get(RESOURCE_NAME))
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.create_launch_configuration(**params)
-        launch_configuration = self.properties
-        self.logger.debug('Response: %s' % res)
-        return launch_configuration.get(LC_ARN)
+        return self.make_client_call('create_launch_configuration', params)
 
     def delete(self, params=None):
         """
@@ -154,7 +147,10 @@ def create(ctx, iface, resource_config, **_):
         ctx.instance, params.get(RESOURCE_NAME))
     iface.update_resource_id(params.get(RESOURCE_NAME))
     # Actually create the resource
-    resource_arn = iface.create(params)
+    if not iface.resource_id:
+        setattr(iface, 'resource_id', params.get(RESOURCE_NAME))
+    iface.create(params)
+    resource_arn = iface.properties[LC_ARN]
     utils.update_resource_arn(
         ctx.instance, resource_arn)
 

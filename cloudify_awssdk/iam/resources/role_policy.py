@@ -18,6 +18,7 @@
     AWS IAM Role Policy interface
 '''
 from json import dumps as json_dumps
+
 # Cloudify
 from cloudify_awssdk.common import decorators, utils
 from cloudify_awssdk.iam import IAMBase
@@ -50,11 +51,7 @@ class IAMRolePolicy(IAMBase):
         '''
             Create a new AWS IAM Role Policy.
         '''
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.put_role_policy(**params)
-        self.logger.debug('Response: %s' % res)
-        return res
+        return self.make_client_call('put_role_policy', params)
 
     def delete(self, params=None):
         '''

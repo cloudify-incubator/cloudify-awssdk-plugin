@@ -22,7 +22,6 @@ from __future__ import unicode_literals
 # Boto
 from botocore.exceptions import ClientError
 
-
 # Cloudify
 from cloudify_awssdk.common import decorators, utils
 from cloudify_awssdk.ec2 import EC2Base
@@ -68,13 +67,7 @@ class EC2VPNConnection(EC2Base):
 
     def create(self, params):
         """Create a new AWS EC2 VPN Connection."""
-        self.logger.debug(
-            'Creating {} with parameters: '
-            '{}'.format(self.type_name, params)
-        )
-        res = self.client.create_vpn_connection(**params)
-        self.logger.debug('Response: {}'.format(res))
-        return res.get(VPN_CONNECTION)
+        return self.make_client_call('create_vpn_connection', params)
 
     def delete(self, params=None):
         """ Deletes an existing AWS EC2 VPN Connection."""
@@ -102,7 +95,7 @@ def create(ctx, iface, resource_config, **_):
     """Creates an AWS EC2 VPN Connection"""
     params = dict() if not resource_config else resource_config.copy()
     # Actually create the resource
-    create_response = iface.create(params)
+    create_response = iface.create(params)[VPN_CONNECTION]
     ctx.instance.runtime_properties['create_response'] = \
         utils.JsonCleanuper(create_response).to_dict()
     if create_response:

@@ -65,12 +65,7 @@ class ELBClassicPolicy(ELBBase):
         .. note:
             See http://bit.ly/2oYIQrZ for config details.
         """
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        res = \
-            self.client.create_load_balancer_policy(**params)
-        self.logger.debug('Response: %s' % res)
-        return res
+        return self.make_client_call('create_load_balancer_policy', params)
 
     def create_sticky(self, params):
         """

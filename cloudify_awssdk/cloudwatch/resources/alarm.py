@@ -61,13 +61,7 @@ class CloudwatchAlarm(AWSCloudwatchBase):
         """
             Create a new AWS Cloudwatch Alarm.
         """
-        if not self.resource_id:
-            setattr(self, 'resource_id', params.get(RESOURCE_NAME))
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.put_metric_alarm(**params)
-        self.logger.debug('Response: %s' % res)
-        return res
+        return self.make_client_call('put_metric_alarm', params)
 
     def delete(self, params=None):
         """
@@ -102,6 +96,8 @@ def create(ctx, iface, resource_config, **_):
             use_instance_id=True)
     params[RESOURCE_NAME] = resource_id
     utils.update_resource_id(ctx.instance, resource_id)
+    if not iface.resource_id:
+        setattr(iface, 'resource_id', params.get(RESOURCE_NAME))
 
     # Actually create the resource
     iface.create(params)

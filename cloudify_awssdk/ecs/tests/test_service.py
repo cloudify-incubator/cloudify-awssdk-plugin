@@ -111,7 +111,7 @@ class TestECSService(TestBase):
         self.service.client = self.make_client_function(
             'create_service', return_value=response)
 
-        self.assertEqual(self.service.create(params),
+        self.assertEqual(self.service.create(params)[service.SERVICE],
                          response.get(service.SERVICE))
 
     def test_class_delete(self):

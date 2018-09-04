@@ -17,11 +17,12 @@
     ~~~~~~~~~~~~~~
     AWS EC2 NAT Gateway interface
 """
+# Boto
+from botocore.exceptions import ClientError
+
 # Cloudify
 from cloudify_awssdk.common import decorators, utils
 from cloudify_awssdk.ec2 import EC2Base
-# Boto
-from botocore.exceptions import ClientError
 
 RESOURCE_TYPE = 'EC2 NAT Gateway'
 NATGATEWAY = 'NatGateway'
@@ -72,12 +73,7 @@ class EC2NatGateway(EC2Base):
         """
             Create a new AWS EC2 NAT Gateway.
         """
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.create_nat_gateway(**params)
-        self.logger.debug('Response: %s' % res)
-        self.update_resource_id(res['NatGateway'][NATGATEWAY_ID])
-        return res['NatGateway']
+        return self.make_client_call('create_nat_gateway', params)
 
     def delete(self, params=None):
         """
@@ -136,7 +132,7 @@ def create(ctx, iface, resource_config, **_):
         allocation_id
 
     # Actually create the resource
-    create_response = iface.create(params)
+    create_response = iface.create(params)['NatGateway']
     ctx.instance.runtime_properties['create_response'] = \
         utils.JsonCleanuper(create_response).to_dict()
     utils.update_resource_id(

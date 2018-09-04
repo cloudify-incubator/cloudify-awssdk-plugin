@@ -17,12 +17,13 @@
     ~~~~~~~~~~~~~~
     AWS EC2 Security Group interface
 '''
+# Boto
+from botocore.exceptions import ClientError
+
 # Cloudify
 from cloudify_awssdk.common import decorators, utils
 from cloudify_awssdk.common.constants import EXTERNAL_RESOURCE_ID
 from cloudify_awssdk.ec2 import EC2Base
-# Boto
-from botocore.exceptions import ClientError
 
 RESOURCE_TYPE = 'EC2 Security Group'
 GROUP = 'SecurityGroup'
@@ -71,11 +72,7 @@ class EC2SecurityGroup(EC2Base):
         '''
             Create a new AWS EC2 Vpc.
         '''
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.create_security_group(**params)
-        self.logger.debug('Response: %s' % res)
-        return res
+        return self.make_client_call('create_security_group', params)
 
     def delete(self, params=None):
         '''

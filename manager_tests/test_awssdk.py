@@ -68,7 +68,7 @@ class TestAWSSDK(EcosystemTestBase):
                               exists=True,
                               command=None):
 
-        print 'Checking AWS resource args {0} {0} {0} {0}'.format(
+        print 'Checking AWS resource args {0} {1} {2} {3}'.format(
             resource_id, resource_type, exists, command)
 
         if not isinstance(resource_id, basestring):

@@ -60,11 +60,7 @@ class KMSKey(KMSBase):
         """
             Create a new AWS KMS Key.
         """
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.create_key(**params)
-        self.logger.debug('Response: %s' % res)
-        return res[KEY_META]
+        return self.make_client_call('create_key', params)
 
     def enable(self, params):
         """
@@ -110,14 +106,14 @@ def create(ctx, iface, resource_config, **_):
     params = \
         dict() if not resource_config else resource_config.copy()
 
-    output = iface.create(params)
+    create_response = iface.create(params)[KEY_META]
     utils.update_resource_arn(
         ctx.instance,
-        output.get(ARN)
+        create_response.get(ARN)
     )
     utils.update_resource_id(
         ctx.instance,
-        output.get(KEY_ID)
+        create_response.get(KEY_ID)
     )
 
 

@@ -18,11 +18,13 @@
     AWS IAM Role interface
 '''
 from json import dumps as json_dumps
+
+# Boto
+from botocore.exceptions import ClientError
+
 # Cloudify
 from cloudify_awssdk.common import decorators, utils
 from cloudify_awssdk.iam import IAMBase
-# Boto
-from botocore.exceptions import ClientError
 
 RESOURCE_TYPE = 'IAM Role'
 RESOURCE_NAME = 'RoleName'
@@ -59,12 +61,7 @@ class IAMRole(IAMBase):
         '''
             Create a new AWS IAM Role.
         '''
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.create_role(**params)
-        self.logger.debug('Response: %s' % res)
-        self.update_resource_id(res['Role']['RoleName'])
-        return self.resource_id, res['Role']['Arn']
+        return self.make_client_call('create_role', params)
 
     def delete(self, params=None):
         '''
@@ -118,9 +115,12 @@ def create(ctx, iface, resource_config, **_):
         params['AssumeRolePolicyDocument'] = \
             json_dumps(params['AssumeRolePolicyDocument'])
     # Actually create the resource
-    res_id, res_arn = iface.create(params)
-    utils.update_resource_id(ctx.instance, res_id)
-    utils.update_resource_arn(ctx.instance, res_arn)
+    create_response = iface.create(params)
+    resource_id = create_response['Role']['RoleName']
+    iface.update_resource_id(resource_id)
+    utils.update_resource_id(ctx.instance, resource_id)
+    utils.update_resource_arn(
+        ctx.instance, create_response['Role']['Arn'])
 
 
 @decorators.aws_resource(IAMRole, RESOURCE_TYPE,

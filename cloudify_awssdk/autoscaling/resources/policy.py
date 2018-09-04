@@ -65,13 +65,7 @@ class AutoscalingPolicy(AutoscalingBase):
         """
             Create a new AWS Autoscaling Autoscaling Policy.
         """
-        if not self.resource_id:
-            setattr(self, 'resource_id', params.get(RESOURCE_NAME))
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.put_scaling_policy(**params)
-        self.logger.debug('Response: %s' % res)
-        return res.get(POLICY_ARN)
+        return self.make_client_call('put_scaling_policy', params)
 
     def delete(self, params=None):
         """
@@ -117,7 +111,9 @@ def create(ctx, iface, resource_config, **_):
         autoscaling_group
 
     # Actually create the resource
-    resource_arn = iface.create(params)
+    if not iface.resource_id:
+        setattr(iface, 'resource_id', params.get(RESOURCE_NAME))
+    resource_arn = iface.create(params)[POLICY_ARN]
     utils.update_resource_arn(
         ctx.instance, resource_arn)
 

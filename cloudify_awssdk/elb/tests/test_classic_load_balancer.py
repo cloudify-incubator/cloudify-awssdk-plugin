@@ -20,6 +20,8 @@ from cloudify_awssdk.common.constants import EXTERNAL_RESOURCE_ID
 from mock import patch, MagicMock
 from cloudify_awssdk.elb.resources.classic import load_balancer
 
+from cloudify.exceptions import OperationRetry
+
 PATCH_PREFIX = 'cloudify_awssdk.elb.resources.classic.load_balancer.'
 
 
@@ -82,7 +84,7 @@ class TestELBClassicLoadBalancer(TestBase):
             'create_load_balancer',
             return_value=value)
         res = self.load_balancer.create(value)
-        self.assertEqual(res, 'dns')
+        self.assertEqual(res['DNSName'], 'dns')
 
     def test_class_delete(self):
         params = {}
@@ -161,6 +163,27 @@ class TestELBClassicLoadBalancer(TestBase):
         self.assertTrue(iface.delete.called)
 
     def test_assoc(self):
+        load_balancer_properties = {
+            'Instances': [
+                {'InstanceId': 'ext_id'}
+            ]
+        }
+        mocked_elb = MagicMock()
+        setattr(mocked_elb, 'properties', load_balancer_properties)
+
+        ctx_target = self.get_mock_relationship_ctx(
+            "elb",
+            test_target=self.get_mock_ctx("elb", {},
+                                          {EXTERNAL_RESOURCE_ID: 'ext_id'}),
+            test_source=self.get_mock_ctx("elb", {},
+                                          {EXTERNAL_RESOURCE_ID: 'ext_id'}))
+
+        with patch(
+                PATCH_PREFIX + 'ELBClassicLoadBalancer',
+                return_value=mocked_elb):
+            load_balancer.assoc(ctx_target)
+
+    def test_assoc_raises(self):
         ctx_target = self.get_mock_relationship_ctx(
             "elb",
             test_target=self.get_mock_ctx("elb", {},
@@ -168,7 +191,7 @@ class TestELBClassicLoadBalancer(TestBase):
             test_source=self.get_mock_ctx("elb", {},
                                           {EXTERNAL_RESOURCE_ID: 'ext_id'}))
         with patch(PATCH_PREFIX + 'ELBClassicLoadBalancer'):
-            load_balancer.assoc(ctx_target)
+            self.assertRaises(OperationRetry, load_balancer.assoc, ctx_target)
 
     def test_disassoc(self):
         ctx_target = self.get_mock_relationship_ctx(
@@ -180,6 +203,27 @@ class TestELBClassicLoadBalancer(TestBase):
                                           {EXTERNAL_RESOURCE_ID: 'ext_id'}))
         with patch(PATCH_PREFIX + 'ELBClassicLoadBalancer'):
             load_balancer.disassoc(ctx_target)
+
+    def test_disassoc_raises(self):
+        load_balancer_properties = {
+            'Instances': [
+                {'InstanceId': 'ext_id'}
+            ]
+        }
+        mocked_elb = MagicMock()
+        setattr(mocked_elb, 'properties', load_balancer_properties)
+        ctx_target = self.get_mock_relationship_ctx(
+            "elb",
+            test_target=self.get_mock_ctx("elb", {},
+                                          {EXTERNAL_RESOURCE_ID: 'ext_id',
+                                           'instances': ['ext_id']}),
+            test_source=self.get_mock_ctx("elb", {},
+                                          {EXTERNAL_RESOURCE_ID: 'ext_id'}))
+        with patch(
+                PATCH_PREFIX + 'ELBClassicLoadBalancer',
+                return_value=mocked_elb):
+            self.assertRaises(
+                OperationRetry, load_balancer.disassoc, ctx_target)
 
 
 if __name__ == '__main__':

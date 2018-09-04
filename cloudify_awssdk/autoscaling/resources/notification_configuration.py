@@ -61,11 +61,7 @@ class AutoscalingNotification(AutoscalingBase):
         """
             Create a new AWS Autoscaling Group Notification Configuration.
         """
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.put_notification_configuration(**params)
-        self.logger.debug('Response: %s' % res)
-        return res
+        return self.make_client_call('put_notification_configuration', params)
 
     def delete(self, params=None):
         """
