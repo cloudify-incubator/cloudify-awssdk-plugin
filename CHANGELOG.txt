@@ -1,4 +1,10 @@
-2.5.0: Raise ClientError and ParamValidationError on certain create operations.
+2.5.0:
+  - New behavior for external resources in relationships.
+    - New + External = Perform Op (Current Behavior)
+    - External + External = No Op (Current Behavior)
+    - External + New = Op (Added New Behavior)
+  - Verify instances added to ELB on assoc.
+  - Raise ClientError and ParamValidationError on certain create operations.
 2.4.2: Improve error handling on instances create.
 2.4.1: Support Swift.
 2.4.0: Support Using Password with Windows Agents.

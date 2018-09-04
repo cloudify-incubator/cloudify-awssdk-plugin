@@ -59,7 +59,18 @@ def aws_relationship(class_decl=None,
                     node=ctx.source.node, instance=ctx.source.instance)
                 ctx.logger.info('%s ID# "%s" is user-provided.'
                                 % (resource_type, resource_id))
-                if not kwargs.get('force_operation', False):
+                force_op = kwargs.get('force_operation', False)
+                old_target = ctx.target.node.properties.get(
+                    'use_external_resource', False)
+                if not force_op and not old_target:
+                    ctx.logger.info(
+                        '%s ID# "%s" does not have force_operation '
+                        'set but target ID "%s" is new, therefore '
+                        'execution relationship operation.' % (
+                            resource_type,
+                            ctx.target.instance.runtime_properties[EXT_RES_ID],
+                            resource_id))
+                elif not kwargs.get('force_operation', False):
                     return
                 ctx.logger.warn('%s ID# "%s" has force_operation set.'
                                 % (resource_type, resource_id))
