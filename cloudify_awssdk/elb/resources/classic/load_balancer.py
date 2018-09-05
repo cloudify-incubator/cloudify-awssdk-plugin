@@ -165,10 +165,8 @@ def create(ctx, iface, resource_config, **_):
             secgroups_list)
 
     # Actually create the resource
-    dns_name = iface.create(params)['DNSName']
-    iface.update_resource_id(dns_name)
-    utils.update_resource_id(ctx.instance, dns_name)
-    ctx.instance.runtime_properties['DNSName'] = dns_name
+    ctx.instance.runtime_properties['DNSName'] = \
+        iface.create(params)['DNSName']
 
 
 @decorators.aws_resource(ELBClassicLoadBalancer,
@@ -218,7 +216,7 @@ def assoc(ctx, **_):
     lb = ctx.target.instance.runtime_properties.get(EXTERNAL_RESOURCE_ID)
     iface = \
         ELBClassicLoadBalancer(ctx.target.node, lb, logger=ctx.logger)
-    if ctx.operation.retry_number < 1:
+    if ctx.operation.retry_number == 0:
         iface.register_instances(
             {RESOURCE_NAME: lb, 'Instances': [{'InstanceId': instance_id}]})
     if 'instances' not in ctx.target.instance.runtime_properties.keys():

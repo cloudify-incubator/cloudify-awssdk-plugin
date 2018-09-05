@@ -17,12 +17,14 @@
     ~~~~~~~~~~~~~~
     AWS S3 Bucket Lifecycle Configuration interface
 """
+# Boto
+from botocore.exceptions import ClientError, ParamValidationError
+
 # Cloudify
 from cloudify_awssdk.common import decorators, utils
 from cloudify_awssdk.s3 import S3Base
 from cloudify_awssdk.common.constants import EXTERNAL_RESOURCE_ID
-# Boto
-from botocore.exceptions import ClientError
+
 
 RESOURCE_TYPE = 'S3 Lifecycle Configuration'
 BUCKET = 'Bucket'
@@ -67,7 +69,10 @@ class S3BucketLifecycleConfiguration(S3Base):
         """
             Create a new AWS Bucket Lifecycle Configuration Policy.
         """
-        return self.make_client_call('put_bucket_lifecycle', params)
+        return self.make_client_call(
+            'put_bucket_lifecycle',
+            params,
+            fatal_handled_exceptions=ParamValidationError)
 
     def delete(self, params=None):
         """

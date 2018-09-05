@@ -60,9 +60,9 @@ def aws_relationship(class_decl=None,
                 ctx.logger.info('%s ID# "%s" is user-provided.'
                                 % (resource_type, resource_id))
                 force_op = kwargs.get('force_operation', False)
-                new_target = ctx.target.node.properties.get(
+                old_target = ctx.target.node.properties.get(
                     'use_external_resource', False)
-                if not force_op and new_target:
+                if not force_op and not old_target:
                     ctx.logger.info(
                         '%s ID# "%s" does not have force_operation '
                         'set but target ID "%s" is new, therefore '

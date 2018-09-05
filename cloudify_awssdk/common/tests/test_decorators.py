@@ -309,7 +309,7 @@ class TestDecorators(TestBase):
 
         _target_ctx = self.get_mock_ctx(
             'test_target',
-            test_properties={},
+            test_properties={'use_external_resource': True},
             test_runtime_properties={
                 'resource_id': 'prepare_target',
                 'aws_resource_id': 'aws_target_mock_id',

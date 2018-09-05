@@ -125,6 +125,7 @@ workflows:
           context: ecosystem
           requires:
             - wagon
+            - unittests
           filters:
             branches:
               only: /([0-9\.]*\-build|master|dev)/
