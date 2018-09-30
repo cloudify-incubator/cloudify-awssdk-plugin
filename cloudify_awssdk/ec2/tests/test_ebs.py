@@ -12,13 +12,19 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
+# Standard Imports
 import unittest
 
+# Third Party Imports
 from mock import patch, MagicMock
 
-from cloudify_awssdk.ec2.resources.ebs import EC2Volume, EC2VolumeAttachment
-from cloudify_awssdk.ec2.resources.ebs import\
-    VOLUME_ID, VOLUMES, VOLUME_STATE, AVAILABLE
+# Local Imports
+from cloudify_awssdk.ec2.resources.ebs import (EC2Volume,
+                                               EC2VolumeAttachment,
+                                               VOLUME_ID,
+                                               VOLUMES,
+                                               VOLUME_STATE,
+                                               AVAILABLE)
 from cloudify_awssdk.common.tests.test_base import TestBase
 from cloudify_awssdk.common.tests.test_base import mock_decorator
 from cloudify_awssdk.ec2.resources import ebs
