@@ -2,9 +2,9 @@ plugins:
 
   awssdk:
     executor: central_deployment_agent
-    source: https://github.com/cloudify-incubator/cloudify-awssdk-plugin/archive/2.5.0.zip
+    source: https://github.com/cloudify-incubator/cloudify-awssdk-plugin/archive/2.6.0.zip
     package_name: cloudify-awssdk-plugin
-    package_version: '2.5.0'
+    package_version: '2.6.0'
 
 data_types:
 
@@ -1636,6 +1636,9 @@ node_types:
         delete:
           implementation: awssdk.cloudify_awssdk.ec2.resources.vpc.delete
           inputs: *operation_inputs
+        modify_vpc_attribute:
+          implementation: awssdk.cloudify_awssdk.ec2.resources.vpc.modify_vpc_attribute
+          inputs: *operation_inputs
 
   cloudify.nodes.aws.ec2.VpcPeering:
     derived_from: cloudify.nodes.Root
@@ -1721,6 +1724,9 @@ node_types:
           inputs: *operation_inputs
         delete:
           implementation: awssdk.cloudify_awssdk.ec2.resources.subnet.delete
+          inputs: *operation_inputs
+        modify_subnet_attribute:
+          implementation: awssdk.cloudify_awssdk.ec2.resources.subnet.modify_subnet_attribute
           inputs: *operation_inputs
 
   cloudify.nodes.aws.ec2.SecurityGroup:

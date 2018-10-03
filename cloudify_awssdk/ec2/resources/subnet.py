@@ -81,6 +81,17 @@ class EC2Subnet(EC2Base):
         self.logger.debug('Response: %s' % res)
         return res
 
+    def modify_instance_attribute(self, params=None):
+        '''
+            Modifies an existing AWS EC2 Subnet Attribute.
+        '''
+        self.logger.debug(
+            'Modifying {0} attribute with parameters: {1}'.format(
+                self.type_name, params))
+        res = self.client.modify_instance_attribute(**params)
+        self.logger.debug('Response: %s' % res)
+        return res
+
 
 @decorators.aws_resource(EC2Subnet, resource_type=RESOURCE_TYPE)
 def prepare(ctx, iface, resource_config, **_):
@@ -130,6 +141,14 @@ def create(ctx, iface, resource_config, **_):
     iface.update_resource_id(subnet_id)
     utils.update_resource_id(ctx.instance, subnet_id)
 
+    modify_subnet_attribute_args = \
+        _.get('modify_subnet_attribute_args')
+    if modify_subnet_attribute_args:
+        modify_subnet_attribute_args[SUBNET_ID] = \
+            subnet_id
+        iface.modify_subnet_attribute(
+            modify_subnet_attribute_args)
+
 
 @decorators.aws_resource(EC2Subnet, RESOURCE_TYPE,
                          ignore_properties=True)
@@ -145,3 +164,14 @@ def delete(ctx, iface, resource_config, **_):
             ctx.instance.runtime_properties.get(EXTERNAL_RESOURCE_ID)
 
     iface.delete(params)
+
+
+@decorators.aws_resource(EC2Subnet, RESOURCE_TYPE)
+def modify_subnet_attribute(ctx, iface, resource_config, **_):
+    params = \
+        dict() if not resource_config else resource_config.copy()
+    instance_id = \
+        ctx.instance.runtime_properties.get(
+            SUBNET_ID, iface.resource_id)
+    params[SUBNET_ID] = instance_id
+    iface.modify_subnet_attribute(params)

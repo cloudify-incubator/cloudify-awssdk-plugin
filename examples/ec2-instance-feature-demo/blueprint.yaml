@@ -51,6 +51,13 @@ node_templates:
         kwargs:
           CidrBlock: { get_input: vpc_cidr }
       client_config: *client_config
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure:
+          implementation: awssdk.cloudify_awssdk.ec2.resources.vpc.create
+          inputs:
+            modify_vpc_attribute_args:
+              EnableDnsHostnames: true
 
   internet_gateway:
     type: cloudify.nodes.aws.ec2.InternetGateway
@@ -73,6 +80,13 @@ node_templates:
       target: vpc
     - type: cloudify.relationships.depends_on
       target: internet_gateway
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        configure:
+          implementation: awssdk.cloudify_awssdk.ec2.resources.subnet.create
+          inputs:
+            modify_subnet_attribute_args:
+              AssignIpv6AddressOnCreation: true
 
   private_subnet:
     type: cloudify.nodes.aws.ec2.Subnet

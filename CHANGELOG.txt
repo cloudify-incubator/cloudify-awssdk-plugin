@@ -1,3 +1,7 @@
+2.6.0:
+  - Add Modify VPC Attribute
+  - Add Modify Subnet Attribute
+  - Add these runtime properties to instances: ipv4_address, ipv4_addresses, ipv6_address, ipv6_addresses.
 2.5.0:
   - New behavior for external resources in relationships.
     - New + External = Perform Op (Current Behavior)

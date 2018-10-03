@@ -77,6 +77,17 @@ class EC2Vpc(EC2Base):
         self.logger.debug('Response: %s' % res)
         return res
 
+    def modify_vpc_attribute(self, params):
+        '''
+            Modify attribute of AWS EC2 VPC.
+        '''
+        self.logger.debug(
+            'Modifying {0} attribute with parameters: {1}'.format(
+                self.type_name, params))
+        res = self.client.modify_vpc_attribute(**params)
+        self.logger.debug('Response: {0}'.format(res))
+        return res
+
 
 @decorators.aws_resource(EC2Vpc, resource_type=RESOURCE_TYPE)
 def prepare(ctx, iface, resource_config, **_):
@@ -102,6 +113,14 @@ def create(ctx, iface, resource_config, **_):
     utils.update_resource_id(
         ctx.instance, vpc_id)
 
+    modify_vpc_attribute_args = \
+        _.get('modify_vpc_attribute_args')
+    if modify_vpc_attribute_args:
+        modify_vpc_attribute_args[VPC_ID] = \
+            vpc_id
+        iface.modify_vpc_attribute(
+            modify_vpc_attribute_args)
+
 
 @decorators.aws_resource(EC2Vpc, RESOURCE_TYPE,
                          ignore_properties=True)
@@ -115,3 +134,14 @@ def delete(iface, resource_config, **_):
         params.update({VPC_ID: iface.resource_id})
 
     iface.delete(params)
+
+
+@decorators.aws_resource(EC2Vpc, RESOURCE_TYPE)
+def modify_vpc_attribute(ctx, iface, resource_config, **_):
+    params = \
+        dict() if not resource_config else resource_config.copy()
+    instance_id = \
+        ctx.instance.runtime_properties.get(
+            VPC_ID, iface.resource_id)
+    params[VPC_ID] = instance_id
+    iface.modify_vpc_attribute(params)

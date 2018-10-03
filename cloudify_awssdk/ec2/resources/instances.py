@@ -263,20 +263,59 @@ def create(ctx, iface, resource_config, **_):
             modify_instance_attribute_args)
 
 
+def assign_ip_properties(_ctx, current_properties):
+
+    nics = current_properties.get('NetworkInterfaces', [])
+    ipv4_addresses = \
+        _ctx.instance.runtime_properties.get('ipv4_addresses', [])
+    ipv6_addresses = \
+        _ctx.instance.runtime_properties.get('ipv6_addresses', [])
+
+    for nic in nics:
+        nic_ipv4 = nic.get('PrivateIpAddresses', [])
+        for _nic_ipv4 in nic_ipv4:
+            _private_ip = _nic_ipv4.get('PrivateIpAddress')
+            if _nic_ipv4.get('Primary', False):
+                _ctx.instance.runtime_properties['ipv4_address'] = _private_ip
+                _ctx.instance.runtime_properties['private_ip_address'] = \
+                    _private_ip
+            if _private_ip not in ipv4_addresses:
+                ipv4_addresses.append(_private_ip)
+        nic_ipv6 = nic.get('Ipv6Addresses', [])
+        for _nic_ipv6 in nic_ipv6:
+            if _nic_ipv6 not in ipv6_addresses:
+                ipv6_addresses.append(_nic_ipv6)
+
+    _ctx.instance.runtime_properties['ipv4_addresses'] = ipv4_addresses
+    _ctx.instance.runtime_properties['ipv6_addresses'] = ipv6_addresses
+
+    if len(ipv4_addresses) > 0 and \
+            not _ctx.instance.runtime_properties.get('ipv4_address'):
+        _ctx.instance.runtime_properties['ipv4_address'] = ipv4_addresses[0]
+
+    if len(ipv6_addresses) > 0 and \
+            not _ctx.instance.runtime_properties.get('ipv6_address'):
+        _ctx.instance.runtime_properties['ipv6_address'] = ipv6_addresses[0]
+
+    pip = current_properties.get('PublicIpAddress')
+    ip = current_properties.get('PrivateIpAddress')
+
+    if ctx.node.properties['use_public_ip']:
+        _ctx.instance.runtime_properties['ip'] = pip
+        _ctx.instance.runtime_properties['public_ip_address'] = pip
+    else:
+        _ctx.instance.runtime_properties['ip'] = ip
+        _ctx.instance.runtime_properties['public_ip_address'] = pip
+
+    _ctx.instance.runtime_properties['private_ip_address'] = ip
+
+
 @decorators.aws_resource(EC2Instances, RESOURCE_TYPE)
 def start(ctx, iface, resource_config, **_):
     '''Starts AWS EC2 Instances'''
 
     if iface.status in [RUNNING] and ctx.operation.retry_number > 0:
-        current_properties = iface.properties
-        ip = current_properties.get('PrivateIpAddress')
-        pip = current_properties.get('PublicIpAddress')
-        if ctx.node.properties['use_public_ip']:
-            ctx.instance.runtime_properties['ip'] = pip
-        else:
-            ctx.instance.runtime_properties['ip'] = ip
-        ctx.instance.runtime_properties['public_ip_address'] = pip
-        ctx.instance.runtime_properties['private_ip_address'] = ip
+        assign_ip_properties(ctx, iface.properties)
         if not _handle_password(iface):
             raise OperationRetry(
                 'Waiting for {0} ID# {1} password.'.format(

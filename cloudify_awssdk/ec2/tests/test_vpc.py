@@ -17,6 +17,7 @@ from cloudify_awssdk.common.tests.test_base import TestBase, mock_decorator
 from cloudify_awssdk.ec2.resources.vpc import EC2Vpc, VPC, CIDR_BLOCK, VPC_ID
 from mock import patch, MagicMock
 from cloudify_awssdk.ec2.resources import vpc
+from cloudify.exceptions import OperationRetry
 
 
 class TestEC2Vpc(TestBase):
@@ -105,6 +106,18 @@ class TestEC2Vpc(TestBase):
         iface = MagicMock()
         vpc.delete(iface, {})
         self.assertTrue(iface.delete.called)
+
+    def test_modify_vpc_attribute(self):
+        ctx = self.get_mock_ctx("Vpc")
+        iface = MagicMock()
+        iface.status = 0
+        self.vpc.resource_id = 'test_name'
+        try:
+            vpc.modify_vpc_attribute(
+                ctx, iface, {VPC_ID: self.vpc.resource_id})
+        except OperationRetry:
+            pass
+        self.assertTrue(iface.modify_vpc_attribute.called)
 
 
 if __name__ == '__main__':

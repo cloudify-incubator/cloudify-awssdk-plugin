@@ -19,6 +19,7 @@ from cloudify_awssdk.ec2.resources.subnet import (
     SUBNET_ID, VPC_ID, VPC_TYPE)
 from mock import patch, MagicMock
 from cloudify_awssdk.ec2.resources import subnet
+from cloudify.exceptions import OperationRetry
 
 
 class TestEC2Subnet(TestBase):
@@ -120,6 +121,18 @@ class TestEC2Subnet(TestBase):
         iface = MagicMock()
         subnet.delete(ctx, iface, {})
         self.assertTrue(iface.delete.called)
+
+    def test_modify_subnet_attribute(self):
+        ctx = self.get_mock_ctx("Subnet")
+        iface = MagicMock()
+        iface.status = 0
+        self.subnet.resource_id = 'test_name'
+        try:
+            subnet.modify_subnet_attribute(
+                ctx, iface, {SUBNET_ID: self.subnet.resource_id})
+        except OperationRetry:
+            pass
+        self.assertTrue(iface.modify_subnet_attribute.called)
 
 
 if __name__ == '__main__':
