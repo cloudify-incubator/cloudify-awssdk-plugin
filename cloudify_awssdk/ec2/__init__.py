@@ -50,3 +50,17 @@ class EC2Base(AWSResourceBase):
     def delete(self, params=None):
         """Deletes a resource"""
         raise NotImplementedError()
+
+    def tag(self, params):
+        """Creates a resource"""
+        self.logger.info('Tagging %s.' % params)
+        res = self.client.create_tags(**params)
+        self.logger.debug('Response: %s' % res)
+        return res
+
+    def untag(self, params):
+        """Creates a resource"""
+        self.logger.info('Untagging %s.' % params)
+        res = self.client.delete_tags(**params)
+        self.logger.debug('Response: %s' % res)
+        return res

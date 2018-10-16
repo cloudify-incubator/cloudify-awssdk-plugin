@@ -195,6 +195,9 @@ node_templates:
           GroupName: SecurityGroup1
           Description: Example Security Group 1
       client_config: *client_config
+      Tags:
+      - Key: Name
+        Value: MyGroup
     relationships:
     - type: cloudify.relationships.depends_on
       target: vpc
@@ -207,6 +210,9 @@ node_templates:
           CidrBlock: '10.0.1.0/24'
           AvailabilityZone: { concat: [ { get_input: aws_region_name }, 'a' ] }
       client_config: *client_config
+      Tags:
+      - Key: Name
+        Value: MySubnet1
     relationships:
       - type: cloudify.relationships.depends_on
         target: vpc
@@ -219,6 +225,9 @@ node_templates:
           CidrBlock: '10.0.2.0/24'
           AvailabilityZone: { concat: [ { get_input: aws_region_name }, 'b' ] }
       client_config: *client_config
+      Tags:
+      - Key: Name
+        Value: MySubnet2
     relationships:
       - type: cloudify.relationships.depends_on
         target: vpc
@@ -231,6 +240,9 @@ node_templates:
           CidrBlock: '10.0.3.0/24'
           AvailabilityZone: { concat: [ { get_input: aws_region_name }, 'b' ] }
       client_config: *client_config
+      Tags:
+      - Key: Name
+        Value: MySubnet3
     relationships:
       - type: cloudify.relationships.depends_on
         target: vpc
@@ -239,6 +251,9 @@ node_templates:
     type: cloudify.nodes.aws.ec2.InternetGateway
     properties:
       client_config: *client_config
+      Tags:
+      - Key: Name
+        Value: MyIGW
     relationships:
       - type: cloudify.relationships.connected_to
         target: vpc
@@ -250,3 +265,6 @@ node_templates:
         kwargs:
           CidrBlock: '10.0.0.0/16'
       client_config: *client_config
+      Tags:
+      - Key: Name
+        Value: MyVPC

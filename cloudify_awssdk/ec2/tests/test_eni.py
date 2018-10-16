@@ -130,7 +130,7 @@ class TestEC2NetworkInterface(TestBase):
         self.eni.resource_id = config[NETWORKINTERFACE_ID]
         iface = MagicMock()
         iface.create = self.mock_return({'NetworkInterface': config})
-        eni.create(ctx, iface, config)
+        eni.create(ctx=ctx, iface=iface, resource_config=config)
         self.assertEqual(self.eni.resource_id,
                          'eni')
 
@@ -152,7 +152,7 @@ class TestEC2NetworkInterface(TestBase):
         self.eni.resource_id = 'eni'
         iface = MagicMock()
         iface.create = self.mock_return({'NetworkInterface': config})
-        eni.create(ctx, iface, config)
+        eni.create(ctx=ctx, iface=iface, resource_config=config)
         self.assertEqual(self.eni.resource_id,
                          'eni')
         self.assertEqual(
@@ -167,9 +167,7 @@ class TestEC2NetworkInterface(TestBase):
         modify_args = {'SourceDestCheck': {'Value': True}}
         iface.create = self.mock_return({'NetworkInterface': config})
         eni.create(
-            ctx,
-            iface,
-            config,
+            ctx=ctx, iface=iface, resource_config=config,
             modify_network_interface_attribute_args=modify_args)
         self.assertEqual(self.eni.resource_id,
                          'eni')
@@ -197,7 +195,7 @@ class TestEC2NetworkInterface(TestBase):
         iface = MagicMock()
         iface.create = self.mock_return({'NetworkInterface': config})
         with patch('cloudify_awssdk.common.utils.find_rel_by_node_type'):
-            eni.create(ctx, iface, config)
+            eni.create(ctx=ctx, iface=iface, resource_config=config)
             self.assertEqual(self.eni.resource_id,
                              'eni')
 
@@ -226,7 +224,7 @@ class TestEC2NetworkInterface(TestBase):
     def test_delete(self):
         ctx = self.get_mock_ctx("NetworkInterface")
         iface = MagicMock()
-        eni.delete(ctx, iface, {})
+        eni.delete(ctx=ctx, iface=iface, resource_config={})
         self.assertTrue(iface.delete.called)
         for prop in ['resource_config',
                      'aws_resource_id',

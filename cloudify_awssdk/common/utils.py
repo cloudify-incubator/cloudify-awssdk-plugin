@@ -444,3 +444,14 @@ def generate_swift_access_config(auth_url, username, password):
     # client
     token = resp.headers['X-Auth-Token']
     return endpoint_url, token
+
+
+def get_tags_list(node_prop, runtime_prop, input_prop):
+    tags_list = []
+    if isinstance(node_prop, list):
+        tags_list = node_prop
+    if isinstance(runtime_prop, list):
+        tags_list = list(set(tags_list + runtime_prop))
+    if isinstance(input_prop, list):
+        tags_list = list(set(tags_list + input_prop))
+    return tags_list

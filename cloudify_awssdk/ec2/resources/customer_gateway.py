@@ -88,6 +88,7 @@ def prepare(ctx, resource_config, **_):
 @decorators.aws_resource(EC2CustomerGateway, RESOURCE_TYPE)
 @decorators.wait_for_status(status_good=['available'],
                             status_pending=['pending'])
+@decorators.tag_resources
 def create(ctx, iface, resource_config, **_):
     """Creates an AWS EC2 Customer Gateway"""
 
@@ -117,6 +118,7 @@ def create(ctx, iface, resource_config, **_):
                          ignore_properties=True)
 @decorators.wait_for_delete(status_deleted=['deleted'],
                             status_pending=['deleting'])
+@decorators.untag_resources
 def delete(iface, resource_config, **_):
     """Deletes an AWS EC2 Customer Gateway"""
 

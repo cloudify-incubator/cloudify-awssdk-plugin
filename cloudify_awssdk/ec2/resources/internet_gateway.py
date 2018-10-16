@@ -107,6 +107,7 @@ def prepare(ctx, resource_config, **_):
 
 
 @decorators.aws_resource(EC2InternetGateway, RESOURCE_TYPE)
+@decorators.tag_resources
 def create(ctx, iface, resource_config, **_):
     '''Creates an AWS EC2 Internet Gateway'''
     params = dict() if not resource_config else resource_config.copy()
@@ -119,6 +120,7 @@ def create(ctx, iface, resource_config, **_):
 
 @decorators.aws_resource(EC2InternetGateway, RESOURCE_TYPE,
                          ignore_properties=True)
+@decorators.untag_resources
 def delete(iface, resource_config, **_):
     '''Deletes an AWS EC2 Internet Gateway'''
     params = dict() if not resource_config else resource_config.copy()

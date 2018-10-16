@@ -103,6 +103,7 @@ def prepare(ctx, iface, resource_config, **_):
 
 
 @decorators.aws_resource(EC2Keypair, RESOURCE_TYPE)
+@decorators.tag_resources
 def create(ctx, iface, resource_config, **_):
     '''Creates AWS EC2 Keypairs'''
 
@@ -166,6 +167,7 @@ def create(ctx, iface, resource_config, **_):
 
 
 @decorators.aws_resource(EC2Keypair, RESOURCE_TYPE)
+@decorators.untag_resources
 def delete(iface, resource_config, **_):
     '''Deletes AWS EC2 Keypairs'''
 

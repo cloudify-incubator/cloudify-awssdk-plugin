@@ -98,6 +98,7 @@ def prepare(ctx, resource_config, **_):
     status_good=['available'],
     status_pending=['pending'],
     fail_on_missing=False)
+@decorators.tag_resources
 def create(ctx, iface, resource_config, **_):
     """Creates an AWS EC2 NAT Gateway"""
 
@@ -144,6 +145,7 @@ def create(ctx, iface, resource_config, **_):
 @decorators.wait_for_delete(
     status_deleted=['deleted'],
     status_pending=['deleting'])
+@decorators.untag_resources
 def delete(iface, resource_config, **_):
     """Deletes an AWS EC2 NAT Gateway"""
 

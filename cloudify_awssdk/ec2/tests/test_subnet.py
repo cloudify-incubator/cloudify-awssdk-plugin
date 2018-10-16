@@ -101,7 +101,7 @@ class TestEC2Subnet(TestBase):
         self.subnet.resource_id = config[SUBNET_ID]
         iface = MagicMock()
         iface.create = self.mock_return({SUBNET: config})
-        subnet.create(ctx, iface, config)
+        subnet.create(ctx=ctx, iface=iface, resource_config=config)
         self.assertEqual(self.subnet.resource_id,
                          'subnet')
 
@@ -112,14 +112,14 @@ class TestEC2Subnet(TestBase):
         iface = MagicMock()
         iface.create = self.mock_return({SUBNET: config})
         with patch('cloudify_awssdk.common.utils.find_rel_by_node_type'):
-            subnet.create(ctx, iface, config)
+            subnet.create(ctx=ctx, iface=iface, resource_config=config)
             self.assertEqual(self.subnet.resource_id,
                              'subnet')
 
     def test_delete(self):
         ctx = self.get_mock_ctx("Subnet")
         iface = MagicMock()
-        subnet.delete(ctx, iface, {})
+        subnet.delete(ctx=ctx, iface=iface, resource_config={})
         self.assertTrue(iface.delete.called)
 
     def test_modify_subnet_attribute(self):
