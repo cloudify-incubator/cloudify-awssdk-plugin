@@ -96,7 +96,7 @@ class TestEC2Keypair(TestBase):
         iface = MagicMock()
         value = {KEYNAME: 'test_name'}
         iface.create = self.mock_return(value)
-        keypair.create(ctx, iface, params)
+        keypair.create(ctx=ctx, iface=iface, resource_config=params)
         self.assertEqual(self.keypair.resource_id,
                          'test_name')
 
@@ -113,7 +113,7 @@ class TestEC2Keypair(TestBase):
         iface = MagicMock()
         value = {KEYNAME: 'test_name'}
         iface.create = self.mock_return(value)
-        keypair.create(ctx, iface, params)
+        keypair.create(ctx=ctx, iface=iface, resource_config=params)
         self.assertEqual(self.keypair.resource_id,
                          'test_name')
 
@@ -132,7 +132,7 @@ class TestEC2Keypair(TestBase):
             test_runtime_properties=test_runtime_properties)
         current_ctx.set(ctx=ctx)
         iface = MagicMock()
-        keypair.delete(iface, {})
+        keypair.delete(ctx=ctx, iface=iface, resource_config={})
         self.assertTrue(iface.delete.called)
 
 

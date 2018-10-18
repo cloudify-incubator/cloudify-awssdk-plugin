@@ -105,6 +105,7 @@ def prepare(ctx, iface, resource_config, **_):
 
 
 @decorators.aws_resource(EC2RouteTable, RESOURCE_TYPE)
+@decorators.tag_resources
 def create(ctx, iface, resource_config, **_):
     '''Creates an AWS EC2 Route Table'''
     params = dict() if not resource_config else resource_config.copy()
@@ -135,6 +136,7 @@ def create(ctx, iface, resource_config, **_):
 
 @decorators.aws_resource(EC2RouteTable, RESOURCE_TYPE,
                          ignore_properties=True)
+@decorators.untag_resources
 def delete(ctx, iface, resource_config, **_):
     '''Deletes an AWS EC2 Route Table'''
     params = \

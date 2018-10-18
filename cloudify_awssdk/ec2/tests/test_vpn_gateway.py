@@ -131,7 +131,7 @@ class TestEC2VPNGateway(TestBase):
         self.vpn_gateway.resource_id = config[VPNGATEWAY_ID]
         iface = MagicMock()
         iface.create = self.mock_return({'VpnGateway': config})
-        vpn_gateway.create(ctx, iface, config)
+        vpn_gateway.create(ctx=ctx, iface=iface, resource_config=config)
         self.assertEqual(self.vpn_gateway.resource_id,
                          'vpn gateway')
 
@@ -157,8 +157,9 @@ class TestEC2VPNGateway(TestBase):
                              'vpn gateway')
 
     def test_delete(self):
+        ctx = self.get_mock_ctx("VpnGateway")
         iface = MagicMock()
-        vpn_gateway.delete(iface, {})
+        vpn_gateway.delete(ctx=ctx, iface=iface, resource_config={})
         self.assertTrue(iface.delete.called)
 
     def test_detach(self):

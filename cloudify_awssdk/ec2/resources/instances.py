@@ -168,6 +168,7 @@ def prepare(ctx, iface, resource_config, **_):
 @decorators.wait_for_status(
     status_good=[RUNNING, PENDING],
     fail_on_missing=False)
+@decorators.tag_resources
 def create(ctx, iface, resource_config, **_):
     '''Creates AWS EC2 Instances'''
 
@@ -350,6 +351,7 @@ def stop(ctx, iface, resource_config, **_):
 @decorators.wait_for_delete(
     status_deleted=[TERMINATED],
     status_pending=[PENDING, STOPPING, SHUTTING_DOWN])
+@decorators.untag_resources
 def delete(iface, resource_config, **_):
     '''Deletes AWS EC2 Instances'''
 

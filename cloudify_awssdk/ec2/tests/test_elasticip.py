@@ -120,7 +120,7 @@ class TestEC2NetworkInterface(TestBase):
         self.elasticip.resource_id = config[ELASTICIP_ID]
         iface = MagicMock()
         iface.create = self.mock_return(config)
-        elasticip.create(ctx, iface, config)
+        elasticip.create(ctx=ctx, iface=iface, resource_config=config)
         self.assertEqual(self.elasticip.resource_id,
                          'elasticip')
 
@@ -132,7 +132,7 @@ class TestEC2NetworkInterface(TestBase):
         iface = MagicMock()
         iface.create = self.mock_return(config)
         with patch('cloudify_awssdk.common.utils.find_rel_by_node_type'):
-            elasticip.create(ctx, iface, config)
+            elasticip.create(ctx=ctx, iface=iface, resource_config=config)
             self.assertEqual(self.elasticip.resource_id,
                              'elasticip')
 
@@ -182,10 +182,10 @@ class TestEC2NetworkInterface(TestBase):
     def test_delete(self):
         ctx = self.get_mock_ctx("PublicIp")
         iface = MagicMock()
-        elasticip.delete(ctx, iface, {})
+        elasticip.delete(ctx=ctx, iface=iface, resource_config={})
         self.assertTrue(iface.delete.called)
         ctx.instance.runtime_properties['allocation_id'] = 'elasticip-attach'
-        elasticip.delete(ctx, iface, {})
+        elasticip.delete(ctx=ctx, iface=iface, resource_config={})
         self.assertTrue(iface.delete.called)
 
     def test_detach(self):

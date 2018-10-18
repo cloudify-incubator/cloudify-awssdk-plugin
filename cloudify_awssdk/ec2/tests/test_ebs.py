@@ -182,7 +182,7 @@ class TestEC2Volume(TestBase):
         self.ebs_volume.resource_id = config[VOLUME_ID]
         iface = MagicMock()
         iface.create = self.mock_return(config)
-        ebs.create(ctx, iface, config)
+        ebs.create(ctx=ctx, iface=iface, resource_config=config)
         self.assertEqual(self.ebs_volume.resource_id, 'test_volume_id')
 
     def test_delete(self):
@@ -193,7 +193,7 @@ class TestEC2Volume(TestBase):
             = 'test_volume_id'
         ctx.instance.runtime_properties['resource_config'] = {'DryRun': False}
 
-        ebs.delete(ctx, iface, {})
+        ebs.delete(ctx=ctx, iface=iface, resource_config={})
         self.assertTrue(iface.delete.called)
 
 

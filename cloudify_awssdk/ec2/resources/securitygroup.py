@@ -133,6 +133,7 @@ def prepare(ctx, iface, resource_config, **_):
 
 
 @decorators.aws_resource(EC2SecurityGroup, RESOURCE_TYPE)
+@decorators.tag_resources
 def create(ctx, iface, resource_config, **_):
     '''Creates an AWS EC2 Security Group'''
     params = \
@@ -170,6 +171,7 @@ def create(ctx, iface, resource_config, **_):
 
 
 @decorators.aws_resource(EC2SecurityGroup, RESOURCE_TYPE)
+@decorators.untag_resources
 def delete(ctx, iface, resource_config, **_):
     '''Deletes an AWS EC2 Security Group'''
 

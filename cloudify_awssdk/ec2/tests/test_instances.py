@@ -131,7 +131,7 @@ class TestEC2Instances(TestBase):
         iface = MagicMock()
         value = {INSTANCES: [{INSTANCE_ID: 'test_name'}]}
         iface.create = self.mock_return(value)
-        instances.create(ctx, iface, params)
+        instances.create(ctx=ctx, iface=iface, resource_config=params)
         self.assertEqual(self.instances.resource_id,
                          'test_name')
 
@@ -145,7 +145,7 @@ class TestEC2Instances(TestBase):
         self.instances.resource_id = 'test_name'
         iface = MagicMock()
         with patch('cloudify_awssdk.common.utils.find_rel_by_node_type'):
-            instances.create(ctx, iface, params)
+            instances.create(ctx=ctx, iface=iface, resource_config=params)
             self.assertEqual(self.instances.resource_id,
                              'test_name')
 
@@ -156,7 +156,7 @@ class TestEC2Instances(TestBase):
             type_hierarchy=['cloudify.nodes.Root', 'cloudify.nodes.Compute'])
         current_ctx.set(ctx=ctx)
         iface = MagicMock()
-        instances.delete(iface, {})
+        instances.delete(ctx=ctx, iface=iface, resource_config={})
         self.assertTrue(iface.delete.called)
         for prop in ['ip',
                      'private_ip_address',
@@ -199,7 +199,7 @@ class TestEC2Instances(TestBase):
         iface = MagicMock()
         self.instances.resource_id = 'test_name'
         with patch('cloudify_awssdk.common.utils.find_rels_by_node_type'):
-            instances.create(_ctx, iface, params)
+            instances.create(ctx=_ctx, iface=iface, resource_config=params)
             self.assertEqual(self.instances.resource_id, 'test_name')
 
     def test_multiple_nics(self):
@@ -246,7 +246,7 @@ class TestEC2Instances(TestBase):
         iface = MagicMock()
         value = {INSTANCES: [{INSTANCE_ID: 'test_name'}]}
         iface.create = self.mock_return(value)
-        instances.create(_ctx, iface, params)
+        instances.create(ctx=_ctx, iface=iface, resource_config=params)
 
     def test_start(self):
         ctx = self.get_mock_ctx(

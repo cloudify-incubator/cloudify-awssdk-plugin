@@ -97,9 +97,9 @@ def aws_resource(class_decl=None,
         def wrapper_inner(**kwargs):
             '''Inner, worker function'''
             ctx = kwargs['ctx']
+            _, _, _, operation_name = ctx.operation.name.split('.')
             props = ctx.node.properties
             runtime_instance_properties = ctx.instance.runtime_properties
-
             # Override the resource ID if needed
             resource_id = kwargs.get(EXT_RES_ID)
             if resource_id and not \
@@ -178,11 +178,11 @@ def aws_resource(class_decl=None,
                     kwargs['resource_config'] =\
                         runtime_instance_properties['resource_config']
                     resource_config = kwargs['resource_config']
-
+            resource_id = utils.get_resource_id(
+                node=ctx.node,
+                instance=ctx.instance)
             # Check if using external
             if ctx.node.properties.get('use_external_resource', False):
-                resource_id = utils.get_resource_id(
-                    node=ctx.node, instance=ctx.instance)
                 ctx.logger.info('%s ID# "%s" is user-provided.'
                                 % (resource_type, resource_id))
                 if not kwargs.get('force_operation', False):
@@ -192,7 +192,6 @@ def aws_resource(class_decl=None,
                     # Set "resource_config" and "EXT_RES_ID"
                     ctx.instance.runtime_properties[
                         'resource_config'] = resource_config
-                    _, _, _, operation_name = ctx.operation.name.split('.')
                     ctx.instance.runtime_properties[EXT_RES_ID] = resource_id
                     if operation_name not in ['delete', 'create'] and \
                             not kwargs['iface'].verify_resource_exists():
@@ -360,4 +359,43 @@ def check_swift_resource(func):
             return response
 
         return func(**kwargs)
+    return wrapper
+
+
+def tag_resources(fn):
+    def wrapper(**kwargs):
+        result = fn(**kwargs)
+        ctx = kwargs.get('ctx')
+        iface = kwargs.get('iface')
+        resource_id = utils.get_resource_id(
+            node=ctx.node,
+            instance=ctx.instance)
+        tags = utils.get_tags_list(
+            ctx.node.properties.get('Tags'),
+            ctx.instance.runtime_properties.get('Tags'),
+            kwargs.get('Tags'))
+        if iface and tags and resource_id:
+            iface.tag({
+                'Tags': tags,
+                'Resources': [resource_id]})
+        return result
+    return wrapper
+
+
+def untag_resources(fn):
+    def wrapper(**kwargs):
+        ctx = kwargs.get('ctx')
+        iface = kwargs.get('iface')
+        resource_id = utils.get_resource_id(
+            node=ctx.node,
+            instance=ctx.instance)
+        tags = utils.get_tags_list(
+            ctx.node.properties.get('Tags'),
+            ctx.instance.runtime_properties.get('Tags'),
+            kwargs.get('Tags'))
+        if iface and tags and resource_id:
+            iface.untag({
+                'Tags': tags,
+                'Resources': [resource_id]})
+        return fn(**kwargs)
     return wrapper

@@ -98,13 +98,14 @@ class TestEC2Vpc(TestBase):
         self.vpc.resource_id = config[VPC_ID]
         iface = MagicMock()
         iface.create = self.mock_return({VPC: config})
-        vpc.create(ctx, iface, config)
+        vpc.create(ctx=ctx, iface=iface, resource_config=config)
         self.assertEqual(self.vpc.resource_id,
                          'vpc')
 
     def test_delete(self):
+        ctx = self.get_mock_ctx("Vpc")
         iface = MagicMock()
-        vpc.delete(iface, {})
+        vpc.delete(ctx=ctx, iface=iface, resource_config={})
         self.assertTrue(iface.delete.called)
 
     def test_modify_vpc_attribute(self):

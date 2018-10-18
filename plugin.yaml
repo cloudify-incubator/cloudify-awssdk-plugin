@@ -2,9 +2,9 @@ plugins:
 
   awssdk:
     executor: central_deployment_agent
-    source: https://github.com/cloudify-incubator/cloudify-awssdk-plugin/archive/2.6.0.zip
+    source: https://github.com/cloudify-incubator/cloudify-awssdk-plugin/archive/2.7.0.zip
     package_name: cloudify-awssdk-plugin
-    package_version: '2.6.0'
+    package_version: '2.7.0'
 
 data_types:
 
@@ -660,6 +660,11 @@ dsl_definitions:
         A dictionary of values to pass to authenticate with the SWIFT API.
       type: cloudify.datatypes.swift.Connection
       required: true
+
+  tags_property: &tags_property
+    Tags:
+      description: Tags to add to an EC2 resource.
+      required: false
 
 node_types:
 
@@ -1613,12 +1618,17 @@ node_types:
     properties:
       <<: *client_config
 
-  cloudify.nodes.aws.ec2.Vpc:
+  cloudify.nodes.aws.ec2.BaseType:
     derived_from: cloudify.nodes.Root
     properties:
       <<: *external_resource
       <<: *client_config
       <<: *resource_id
+      <<: *tags_property
+
+  cloudify.nodes.aws.ec2.Vpc:
+    derived_from: cloudify.nodes.aws.ec2.BaseType
+    properties:
       resource_config:
         description: >
           Configuration key-value data to be passed as-is to the corresponding
@@ -1641,11 +1651,8 @@ node_types:
           inputs: *operation_inputs
 
   cloudify.nodes.aws.ec2.VpcPeering:
-    derived_from: cloudify.nodes.Root
+    derived_from: cloudify.nodes.aws.ec2.BaseType
     properties:
-      <<: *external_resource
-      <<: *client_config
-      <<: *resource_id
       resource_config:
         description: >
           Configuration key-value data to be passed as-is to the corresponding
@@ -1703,11 +1710,8 @@ node_types:
           inputs: *operation_inputs
 
   cloudify.nodes.aws.ec2.Subnet:
-    derived_from: cloudify.nodes.Root
+    derived_from: cloudify.nodes.aws.ec2.BaseType
     properties:
-      <<: *external_resource
-      <<: *client_config
-      <<: *resource_id
       resource_config:
         description: >
           Configuration key-value data to be passed as-is to the corresponding
@@ -1730,11 +1734,8 @@ node_types:
           inputs: *operation_inputs
 
   cloudify.nodes.aws.ec2.SecurityGroup:
-    derived_from: cloudify.nodes.Root
+    derived_from: cloudify.nodes.aws.ec2.BaseType
     properties:
-      <<: *external_resource
-      <<: *client_config
-      <<: *resource_id
       resource_config:
         description: >
           Configuration key-value data to be passed as-is to the corresponding
@@ -1796,11 +1797,8 @@ node_types:
           inputs: *operation_inputs
 
   cloudify.nodes.aws.ec2.NATGateway:
-    derived_from: cloudify.nodes.Root
+    derived_from: cloudify.nodes.aws.ec2.BaseType
     properties:
-      <<: *external_resource
-      <<: *client_config
-      <<: *resource_id
       resource_config:
         description: >
           Configuration key-value data to be passed as-is to the corresponding
@@ -1820,11 +1818,8 @@ node_types:
           inputs: *operation_inputs
 
   cloudify.nodes.aws.ec2.Interface:
-    derived_from: cloudify.nodes.Root
+    derived_from: cloudify.nodes.aws.ec2.BaseType
     properties:
-      <<: *external_resource
-      <<: *client_config
-      <<: *resource_id
       resource_config:
         description: >
           Configuration key-value data to be passed as-is to the corresponding
@@ -1858,6 +1853,7 @@ node_types:
       <<: *external_resource
       <<: *client_config
       <<: *resource_id
+      <<: *tags_property
       resource_config:
         description: >
           Configuration key-value data to be passed as-is to the corresponding
@@ -1896,11 +1892,8 @@ node_types:
           inputs: *operation_inputs
 
   cloudify.nodes.aws.ec2.Keypair:
-    derived_from: cloudify.nodes.Root
+    derived_from: cloudify.nodes.aws.ec2.BaseType
     properties:
-      <<: *external_resource
-      <<: *client_config
-      <<: *resource_id
       resource_config:
         description: >
           Configuration key-value data to be passed as-is to the corresponding
@@ -1940,11 +1933,8 @@ node_types:
           inputs: *operation_inputs
 
   cloudify.nodes.aws.ec2.ElasticIP:
-    derived_from: cloudify.nodes.Root
+    derived_from: cloudify.nodes.aws.ec2.BaseType
     properties:
-      <<: *external_resource
-      <<: *client_config
-      <<: *resource_id
       resource_config:
         description: >
           Configuration key-value data to be passed as-is to the corresponding
@@ -1970,11 +1960,8 @@ node_types:
           inputs: *operation_inputs
 
   cloudify.nodes.aws.ec2.NetworkACL:
-    derived_from: cloudify.nodes.Root
+    derived_from: cloudify.nodes.aws.ec2.BaseType
     properties:
-      <<: *external_resource
-      <<: *client_config
-      <<: *resource_id
       resource_config:
         description: >
           Configuration key-value data to be passed as-is to the corresponding
@@ -2054,11 +2041,8 @@ node_types:
           inputs: *operation_inputs
 
   cloudify.nodes.aws.ec2.VPNGateway:
-    derived_from: cloudify.nodes.Root
+    derived_from: cloudify.nodes.aws.ec2.BaseType
     properties:
-      <<: *external_resource
-      <<: *client_config
-      <<: *resource_id
       resource_config:
         description: >
           Configuration key-value data to be passed as-is to the corresponding
@@ -2132,11 +2116,8 @@ node_types:
           inputs: *operation_inputs
 
   cloudify.nodes.aws.ec2.CustomerGateway:
-    derived_from: cloudify.nodes.Root
+    derived_from: cloudify.nodes.aws.ec2.BaseType
     properties:
-      <<: *external_resource
-      <<: *client_config
-      <<: *resource_id
       resource_config:
         description: >
           Configuration key-value data to be passed as-is to the corresponding
@@ -2156,11 +2137,8 @@ node_types:
           inputs: *operation_inputs
 
   cloudify.nodes.aws.ec2.InternetGateway:
-    derived_from: cloudify.nodes.Root
+    derived_from: cloudify.nodes.aws.ec2.BaseType
     properties:
-      <<: *external_resource
-      <<: *client_config
-      <<: *resource_id
       resource_config:
         description: >
           Configuration key-value data to be passed as-is to the corresponding
@@ -2186,11 +2164,8 @@ node_types:
           inputs: *operation_inputs
 
   cloudify.nodes.aws.ec2.RouteTable:
-    derived_from: cloudify.nodes.Root
+    derived_from: cloudify.nodes.aws.ec2.BaseType
     properties:
-      <<: *external_resource
-      <<: *client_config
-      <<: *resource_id
       resource_config:
         description: >
           Configuration key-value data to be passed as-is to the corresponding
@@ -2282,7 +2257,7 @@ node_types:
           inputs: *operation_inputs
 
   cloudify.nodes.aws.ec2.EBSVolume:
-    derived_from: cloudify.nodes.Root
+    derived_from: cloudify.nodes.aws.ec2.BaseType
     properties:
       <<: *external_resource
       <<: *client_config

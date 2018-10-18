@@ -53,26 +53,6 @@ class EC2Tags(EC2Base):
         '''Gets the status of an external resource'''
         return None
 
-    def create(self, params):
-        '''
-            Create a new AWS EC2 Tags.
-        '''
-        self.logger.debug('Creating %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.create_tags(**params)
-        self.logger.debug('Response: %s' % res)
-        return res
-
-    def delete(self, params=None):
-        '''
-            Deletes an existing AWS EC2 Tags.
-        '''
-        self.logger.debug('Deleting %s with parameters: %s'
-                          % (self.type_name, params))
-        res = self.client.delete_tags(**params)
-        self.logger.debug('Response: %s' % res)
-        return res
-
 
 @decorators.aws_resource(EC2Tags, resource_type=RESOURCE_TYPE)
 def prepare(ctx, iface, resource_config, **_):
@@ -99,7 +79,7 @@ def create(ctx, iface, resource_config, **_):
         params['Resources'] = resources
 
     # Actually create the resource
-    create_response = iface.create(params)
+    create_response = iface.tag(params)
     ctx.instance.runtime_properties['create_response'] = \
         utils.JsonCleanuper(create_response).to_dict()
 
@@ -122,4 +102,4 @@ def delete(ctx, iface, resource_config, **_):
              .get(EXTERNAL_RESOURCE_ID) for rel in targets]
         params['Resources'] = resources
 
-    iface.delete(params)
+    iface.untag(params)

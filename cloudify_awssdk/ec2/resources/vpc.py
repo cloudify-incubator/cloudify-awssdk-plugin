@@ -99,6 +99,7 @@ def prepare(ctx, iface, resource_config, **_):
 @decorators.aws_resource(EC2Vpc, RESOURCE_TYPE)
 @decorators.wait_for_status(status_good=['available'],
                             status_pending=['pending'])
+@decorators.tag_resources
 def create(ctx, iface, resource_config, **_):
     '''Creates an AWS EC2 Vpc'''
     params = \
@@ -124,6 +125,7 @@ def create(ctx, iface, resource_config, **_):
 
 @decorators.aws_resource(EC2Vpc, RESOURCE_TYPE,
                          ignore_properties=True)
+@decorators.untag_resources
 def delete(iface, resource_config, **_):
     '''Deletes an AWS EC2 Vpc'''
 

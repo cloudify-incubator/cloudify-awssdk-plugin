@@ -111,7 +111,7 @@ class TestEC2NatGateway(TestBase):
         self.nat_gateway.resource_id = config[NATGATEWAY_ID]
         iface = MagicMock()
         iface.create = self.mock_return({'NatGateway': config})
-        nat_gateway.create(ctx, iface, config)
+        nat_gateway.create(ctx=ctx, iface=iface, resource_config=config)
         self.assertEqual(self.nat_gateway.resource_id,
                          'nat_gateway')
 
@@ -123,13 +123,14 @@ class TestEC2NatGateway(TestBase):
         iface = MagicMock()
         iface.create = self.mock_return({'NatGateway': config})
         with patch('cloudify_awssdk.common.utils.find_rel_by_node_type'):
-            nat_gateway.create(ctx, iface, config)
+            nat_gateway.create(ctx=ctx, iface=iface, resource_config=config)
             self.assertEqual(self.nat_gateway.resource_id,
                              'nat_gateway')
 
     def test_delete(self):
+        ctx = self.get_mock_ctx("NATGateway")
         iface = MagicMock()
-        nat_gateway.delete(iface, {})
+        nat_gateway.delete(ctx=ctx, iface=iface, resource_config={})
         self.assertTrue(iface.delete.called)
 
 

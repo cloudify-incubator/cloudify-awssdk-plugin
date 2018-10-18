@@ -133,7 +133,7 @@ class TestEC2InternetGateway(TestBase):
         self.internet_gateway.resource_id = config[INTERNETGATEWAY_ID]
         iface = MagicMock()
         iface.create = self.mock_return({'InternetGateway': config})
-        internet_gateway.create(ctx, iface, config)
+        internet_gateway.create(ctx=ctx, iface=iface, resource_config=config)
         self.assertEqual(self.internet_gateway.resource_id,
                          'internet gateway')
 
@@ -159,8 +159,9 @@ class TestEC2InternetGateway(TestBase):
                              'internet gateway')
 
     def test_delete(self):
+        ctx = self.get_mock_ctx("InternetGateway")
         iface = MagicMock()
-        internet_gateway.delete(iface, {})
+        internet_gateway.delete(ctx=ctx, iface=iface, resource_config={})
         self.assertTrue(iface.delete.called)
 
     def test_detach(self):
