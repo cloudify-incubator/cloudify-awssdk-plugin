@@ -105,7 +105,6 @@ def prepare(ctx, resource_config, **_):
 
 
 @decorators.aws_resource(EC2ElasticIP, RESOURCE_TYPE)
-@decorators.tag_resources
 def create(ctx, iface, resource_config, **_):
     """Creates an AWS EC2 ElasticIP"""
 
@@ -126,7 +125,6 @@ def create(ctx, iface, resource_config, **_):
 
 @decorators.aws_resource(EC2ElasticIP, RESOURCE_TYPE,
                          ignore_properties=True)
-@decorators.untag_resources
 def delete(ctx, iface, resource_config, **_):
     """Deletes an AWS EC2 ElasticIP"""
 

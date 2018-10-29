@@ -2,9 +2,9 @@ plugins:
 
   awssdk:
     executor: central_deployment_agent
-    source: https://github.com/cloudify-incubator/cloudify-awssdk-plugin/archive/2.7.0.zip
+    source: https://github.com/cloudify-incubator/cloudify-awssdk-plugin/archive/2.7.1.zip
     package_name: cloudify-awssdk-plugin
-    package_version: '2.7.0'
+    package_version: '2.7.1'
 
 data_types:
 
@@ -1933,8 +1933,11 @@ node_types:
           inputs: *operation_inputs
 
   cloudify.nodes.aws.ec2.ElasticIP:
-    derived_from: cloudify.nodes.aws.ec2.BaseType
+    derived_from: cloudify.nodes.Root
     properties:
+      <<: *external_resource
+      <<: *client_config
+      <<: *resource_id
       resource_config:
         description: >
           Configuration key-value data to be passed as-is to the corresponding
