@@ -1,3 +1,6 @@
+2.7.1:
+  - Remove tagging for EIP as it is not supported.
+  - Add use_ipv6_ip property to compute.
 2.7.0: Add Tag property/runtime property/operation input for EC2 resource node templates (without the previously only available Tagging node type): Customer Gateway, Volumes, Elastic IPs, Elastic Network Interfaces, Instances, Internet Gateways, Keypairs, NAT Gateways, Network ACLs, Route Tables, Security Groups, Subnets, VPCs, VPC Peerings, and VPN Gateways.
 2.6.0:
   - Add Modify VPC Attribute

@@ -288,7 +288,11 @@ def assign_ip_properties(_ctx, current_properties):
                 ipv6_addresses.append(_nic_ipv6)
 
     _ctx.instance.runtime_properties['ipv4_addresses'] = ipv4_addresses
-    _ctx.instance.runtime_properties['ipv6_addresses'] = ipv6_addresses
+    ipv6_addr_list = []
+    for ipv6_addr in ipv6_addresses:
+        if isinstance(ipv6_addr, dict) and ipv6_addr.get('Ipv6Address'):
+            ipv6_addr_list.append(ipv6_addr['Ipv6Address'])
+    _ctx.instance.runtime_properties['ipv6_addresses'] = ipv6_addr_list
 
     if len(ipv4_addresses) > 0 and \
             not _ctx.instance.runtime_properties.get('ipv4_address'):
@@ -303,6 +307,9 @@ def assign_ip_properties(_ctx, current_properties):
 
     if ctx.node.properties['use_public_ip']:
         _ctx.instance.runtime_properties['ip'] = pip
+        _ctx.instance.runtime_properties['public_ip_address'] = pip
+    elif ctx.node.properties.get('use_ipv6_ip', False) and ipv6_addresses:
+        _ctx.instance.runtime_properties['ip'] = ipv6_addresses[0]
         _ctx.instance.runtime_properties['public_ip_address'] = pip
     else:
         _ctx.instance.runtime_properties['ip'] = ip

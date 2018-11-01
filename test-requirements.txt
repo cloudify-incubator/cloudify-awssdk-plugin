@@ -1,4 +1,4 @@
-flake8
+flake8==3.5.0
 mock>=1.0
 nose-testconfig>=0.9
 nose>=1.3
