@@ -293,6 +293,7 @@ def assign_ip_properties(_ctx, current_properties):
         if isinstance(ipv6_addr, dict) and ipv6_addr.get('Ipv6Address'):
             ipv6_addr_list.append(ipv6_addr['Ipv6Address'])
     _ctx.instance.runtime_properties['ipv6_addresses'] = ipv6_addr_list
+    ipv6_addresses = ipv6_addr_list
 
     if len(ipv4_addresses) > 0 and \
             not _ctx.instance.runtime_properties.get('ipv4_address'):
