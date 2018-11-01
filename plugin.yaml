@@ -1860,6 +1860,11 @@ node_types:
           Boto3 method. Key names must match the case that Boto3 requires.
         type: cloudify.datatypes.aws.ec2.Instances.config
         required: false
+      use_ipv6_ip:
+        type: boolean
+        description: >
+          Tells us to use the IPv6 IP if one exists for agent installation. If use_public_ip is provided, this is overridden.
+        default: false
       use_public_ip:
         type: boolean
         description: >
