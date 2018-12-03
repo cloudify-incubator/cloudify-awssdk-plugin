@@ -27,7 +27,7 @@ setup(
     install_requires=[
         'cloudify-plugins-common>=4.0',
         'cloudify-rest-client>=4.0',
-        'boto3==1.5.31',
-        'botocore==1.8.50'
+        'boto3==1.9.57',
+        'botocore==1.12.57'
     ]
 )
