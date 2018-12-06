@@ -20,6 +20,8 @@
 # Cloudify
 from cloudify_awssdk.common import decorators, utils
 from cloudify_awssdk.rds import RDSBase
+from cloudify.exceptions import NonRecoverableError
+
 # Boto
 from botocore.exceptions import ClientError
 
@@ -90,6 +92,26 @@ def create(ctx, iface, resource_config, **_):
     # Build API params
     params = \
         dict() if not resource_config else resource_config.copy()
+
+    node_subnet_ids = params.get('SubnetIds')
+    instance_subnet_ids = \
+        ctx.instance.runtime_properties['resource_config'].get('SubnetIds',
+                                                               list())
+
+    if not params.get('SubnetIds'):
+        if not instance_subnet_ids:
+            raise NonRecoverableError(
+                'Missing required parameter in input: SubnetIds')
+
+        subnet_ids = instance_subnet_ids
+
+    # if it is set then we need to combine them to what we already have as
+    # runtime_properties
+    else:
+        subnet_ids = list(set().union(node_subnet_ids, instance_subnet_ids))
+
+    params['SubnetIds'] = subnet_ids
+
     if iface.resource_id:
         params.update({'DBSubnetGroupName': iface.resource_id})
     create_response = iface.create(params)
@@ -110,8 +132,7 @@ def delete(iface, resource_config, **_):
 @decorators.aws_relationship(SubnetGroup, RESOURCE_TYPE)
 def prepare_assoc(ctx, iface, resource_config, **_):
     '''Prepares to associate an RDS SubnetGroup to something else'''
-    if utils.is_node_type(ctx.target.node,
-                          'cloudify.aws.nodes.Subnet'):
+    if utils.is_node_type(ctx.target.node, 'cloudify.nodes.aws.ec2.Subnet'):
         subnet_ids = ctx.source.instance.runtime_properties[
             'resource_config'].get('SubnetIds', list())
         subnet_ids.append(

@@ -2,7 +2,7 @@ plugins:
 
   awssdk:
     executor: central_deployment_agent
-    source: https://github.com/cloudify-incubator/cloudify-awssdk-plugin/archive/2.7.1.zip
+    source: https://github.com/cloudify-incubator/cloudify-awssdk-plugin/archive/CY-837_update_SDK_library_versions.zip
     package_name: cloudify-awssdk-plugin
     package_version: '2.7.1'
 
@@ -1746,13 +1746,13 @@ node_types:
       cloudify.interfaces.lifecycle:
         create:
           implementation: awssdk.cloudify_awssdk.ec2.resources.securitygroup.prepare
-          inputs: *operation_inputs
+#          inputs: *operation_inputs
         configure:
           implementation: awssdk.cloudify_awssdk.ec2.resources.securitygroup.create
-          inputs: *operation_inputs
+#          inputs: *operation_inputs
         delete:
           implementation: awssdk.cloudify_awssdk.ec2.resources.securitygroup.delete
-          inputs: *operation_inputs
+#          inputs: *operation_inputs
 
   cloudify.nodes.aws.ec2.SecurityGroupRuleIngress:
     derived_from: cloudify.nodes.Root
@@ -1770,10 +1770,10 @@ node_types:
       cloudify.interfaces.lifecycle:
         start:
           implementation: awssdk.cloudify_awssdk.ec2.resources.securitygroup.authorize_ingress_rules
-          inputs: *operation_inputs
+#          inputs: *operation_inputs
         stop:
           implementation: awssdk.cloudify_awssdk.ec2.resources.securitygroup.revoke_ingress_rules
-          inputs: *operation_inputs
+#          inputs: *operation_inputs
 
   cloudify.nodes.aws.ec2.SecurityGroupRuleEgress:
     derived_from: cloudify.nodes.Root

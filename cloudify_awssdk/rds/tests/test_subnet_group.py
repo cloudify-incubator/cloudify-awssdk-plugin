@@ -74,8 +74,10 @@ class TestRDSSubnetGroup(TestBase):
         )
         current_ctx.set(_ctx)
 
+        resource_config = {'SubnetIds': ['test_subnet_id_1']}
         with self.assertRaises(UnknownServiceError) as error:
-            subnet_group.create(ctx=_ctx, resource_config=None, iface=None)
+            subnet_group.create(ctx=_ctx,
+                                resource_config=resource_config, iface=None)
 
         self.assertEqual(
             str(error.exception),
@@ -99,7 +101,8 @@ class TestRDSSubnetGroup(TestBase):
                 'SubnetGroupStatus': 'Complete',
                 'DBSubnetGroup': {
                     'DBSubnetGroupName': 'zzzzzz-subnet-group',
-                    'DBSubnetGroupArn': 'DBSubnetGroupArn'
+                    'DBSubnetGroupArn': 'DBSubnetGroupArn',
+                    'SubnetIds': ['subnet-xxxxxxxx', 'subnet-yyyyyyyy']
                 }
             }]}
         )
@@ -107,11 +110,18 @@ class TestRDSSubnetGroup(TestBase):
         self.fake_client.create_db_subnet_group = MagicMock(
             return_value={'DBSubnetGroup': {
                 'DBSubnetGroupName': 'zzzzzz-subnet-group',
-                'DBSubnetGroupArn': 'DBSubnetGroupArn'}
+                'DBSubnetGroupArn': 'DBSubnetGroupArn',
+                'SubnetIds': ['subnet-xxxxxxxx', 'subnet-yyyyyyyy']}
             }
         )
 
-        subnet_group.create(ctx=_ctx, resource_config=None, iface=None)
+        resource_config = {
+            'DBSubnetGroupName': 'zzzzzz-subnet-group',
+            'SubnetIds': ['subnet-xxxxxxxx', 'subnet-yyyyyyyy']
+        }
+        subnet_group.create(ctx=_ctx,
+                            resource_config=resource_config,
+                            iface=None)
 
         self.fake_boto.assert_called_with(
             'rds', **CLIENT_CONFIG
@@ -187,7 +197,7 @@ class TestRDSSubnetGroup(TestBase):
                 '_set_changed': True
             },
             type_hierarchy=['cloudify.nodes.Root',
-                            'cloudify.aws.nodes.Subnet']
+                            'cloudify.nodes.aws.ec2.Subnet']
         )
 
         _ctx = self.get_mock_relationship_ctx(

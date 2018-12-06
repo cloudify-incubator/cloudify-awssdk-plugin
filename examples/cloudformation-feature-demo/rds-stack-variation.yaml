@@ -1,9 +1,8 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
-  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/4.1/resources/rest-service/cloudify/types/types.yaml
-  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-aws-plugin/1.4.13/plugin.yaml
-  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-awssdk-plugin/1.0.0/plugin.yaml
+  - http://www.getcloudify.org/spec/cloudify/4.5/types.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-awssdk-plugin/CY-837_update_SDK_library_versions/plugin.yaml
 
 inputs:
 
@@ -19,17 +18,15 @@ inputs:
     type: string
     default: { get_secret: ec2_region_name }
 
+  availability_zone:
+    default: { get_secret: availability_zone }
+
 dsl_definitions:
 
   client_config: &client_config
     aws_access_key_id: { get_input: aws_access_key_id }
     aws_secret_access_key: { get_input: aws_secret_access_key }
     region_name: { get_input: aws_region_name }
-
-  aws_config: &aws_config
-    aws_access_key_id: { get_input: aws_access_key_id }
-    aws_secret_access_key: { get_input: aws_secret_access_key }
-    ec2_region_name: { get_input: aws_region_name }
 
 node_templates:
 
@@ -71,25 +68,25 @@ node_templates:
                       MasterUsername: MyUser
                       MasterUserPassword: MyPassword
                       VPCSecurityGroups:
-                      - { get_attribute: [ rds_security_group, aws_resource_id ] }
+                       - { get_attribute: [ rds_security_group, aws_resource_id ] }
                       DBParameterGroupName: { get_property: [ rds_parameter_group, resource_id ] }
                       DBSubnetGroupName: { get_property: [ rds_subnet_group, resource_id ] }
                       OptionGroupName: { get_property: [ rds_option_group, resource_id ] }
                     DeletionPolicy: "Snapshot"
     relationships:
-    - type: cloudify.relationships.depends_on
-      target: rds_security_group
-    - type: cloudify.relationships.depends_on
-      target: rds_parameter_group
-    - type: cloudify.relationships.depends_on
-      target: rds_subnet_group
-    - type: cloudify.relationships.depends_on
-      target: rds_option_group
+      - type: cloudify.relationships.depends_on
+        target: rds_security_group
+      - type: cloudify.relationships.depends_on
+        target: rds_parameter_group
+      - type: cloudify.relationships.depends_on
+        target: rds_subnet_group
+      - type: cloudify.relationships.depends_on
+        target: rds_option_group
 
   rds_parameter_group:
     type: cloudify.nodes.aws.rds.ParameterGroup
     properties:
-      resource_id: dev-db-param-group
+      resource_id: dev-rds-param-group
       resource_config:
         kwargs:
           DBParameterGroupFamily: mysql5.5
@@ -101,12 +98,12 @@ node_templates:
           inputs:
             resource_config:
               Parameters:
-              - ParameterName: time_zone
-                ParameterValue: US/Eastern
-                ApplyMethod: immediate
-              - ParameterName: lc_time_names
-                ParameterValue: en_US
-                ApplyMethod: immediate
+                - ParameterName: time_zone
+                  ParameterValue: US/Eastern
+                  ApplyMethod: immediate
+                - ParameterName: lc_time_names
+                  ParameterValue: en_US
+                  ApplyMethod: immediate
 
   rds_option_group:
     type: cloudify.nodes.aws.rds.OptionGroup
@@ -128,52 +125,83 @@ node_templates:
           DBSubnetGroupDescription: MySQL5.5 Subnet Group for Dev
       client_config: *client_config
     relationships:
-    - type: cloudify.relationships.aws.rds.subnet_group.connected_to
-      target: rds_subnet_1
-    - type: cloudify.relationships.aws.rds.subnet_group.connected_to
-      target: rds_subnet_2
+      - type: cloudify.relationships.aws.rds.subnet_group.connected_to
+        target: rds_subnet_1
+      - type: cloudify.relationships.aws.rds.subnet_group.connected_to
+        target: rds_subnet_2
 
   rds_subnet_1:
-    type: cloudify.aws.nodes.Subnet
+    type: cloudify.nodes.aws.ec2.Subnet
     properties:
-      aws_config: *aws_config
-      cidr_block: 10.10.3.0/24
-      availability_zone: { concat: [ { get_input: aws_region_name }, 'b' ] }
+      resource_config:
+        kwargs:
+          CidrBlock: 10.10.3.0/24
+          AvailabilityZone: { concat: [ { get_input: aws_region_name }, 'c'] }
+      client_config: *client_config
     relationships:
-    - type: cloudify.aws.relationships.subnet_contained_in_vpc
-      target: rds_vpc
+      - type: cloudify.relationships.depends_on
+        target: rds_vpc
 
   rds_subnet_2:
-    type: cloudify.aws.nodes.Subnet
+    type: cloudify.nodes.aws.ec2.Subnet
     properties:
-      aws_config: *aws_config
-      cidr_block: 10.10.2.0/24
-      availability_zone: { concat: [ { get_input: aws_region_name }, 'c' ] }
+      resource_config:
+        kwargs:
+          CidrBlock: 10.10.2.0/24
+          AvailabilityZone: { get_input: availability_zone }
+      client_config: *client_config
     relationships:
-    - type: cloudify.aws.relationships.subnet_contained_in_vpc
-      target: rds_vpc
+      - type: cloudify.relationships.depends_on
+        target: rds_vpc
+
 
   rds_security_group:
-    type: cloudify.aws.nodes.SecurityGroup
+    type: cloudify.nodes.aws.ec2.SecurityGroup
     properties:
-      description: RDS Example Security Group
-      aws_config: *aws_config
-      rules:
-      - ip_protocol: -1
-        from_port: -1
-        to_port: -1
-        cidr_ip: 0.0.0.0/0
+      resource_config:
+        kwargs:
+          GroupName: security_group1
+          Description: Example.
+          VpcId:  { get_attribute: [ rds_vpc, aws_resource_id ] }
+      client_config: *client_config
     relationships:
-    - type: cloudify.aws.relationships.security_group_contained_in_vpc
-      target: rds_vpc
+      - type: cloudify.relationships.depends_on
+        target: rds_vpc
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          inputs:
+            resource_config: { get_property: [ SELF, resource_config ] }
+
+  security_group_rules:
+    type: cloudify.nodes.aws.ec2.SecurityGroupRuleIngress
+    properties:
+      client_config: *client_config
+      resource_config:
+        kwargs:
+          IpPermissions:
+           - IpProtocol: -1
+             FromPort: -1
+             ToPort: -1
+             IpRanges:
+              - CidrIp: 0.0.0.0/0
+             UserIdGroupPairs: [  { GroupId: { get_attribute: [ rds_security_group, aws_resource_id ] } } ]
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: rds_security_group
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          inputs:
+            resource_config: { get_property: [ SELF, resource_config ] }
 
   rds_vpc:
-    type: cloudify.aws.nodes.VPC
+    type: cloudify.nodes.aws.ec2.Vpc
     properties:
-      use_external_resource: true
-      resource_id: { get_secret: vpc_id }
-      cidr_block:  N/A
-      aws_config: *aws_config
+      resource_config:
+        kwargs:
+          CidrBlock: 10.10.0.0/16
+      client_config: *client_config
 
 outputs:
 
