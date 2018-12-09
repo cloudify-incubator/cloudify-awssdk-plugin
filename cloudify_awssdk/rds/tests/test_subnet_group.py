@@ -33,9 +33,11 @@ NODE_PROPERTIES = {
     'client_config': CLIENT_CONFIG
 }
 
+SUBNET_IDS = ['subnet-xxxxxxxx', 'subnet-yyyyyyyy']
+
 RUNTIME_PROPERTIES = {
     'resource_config': {
-        'SubnetIds': ['subnet-xxxxxxxx', 'subnet-yyyyyyyy'],
+        'SubnetIds': SUBNET_IDS,
         'DBSubnetGroupDescription': 'MySQL5.7 Subnet Group',
         'DBSubnetGroupName': 'zzzzzz-subnet-group'
     }
@@ -102,7 +104,7 @@ class TestRDSSubnetGroup(TestBase):
                 'DBSubnetGroup': {
                     'DBSubnetGroupName': 'zzzzzz-subnet-group',
                     'DBSubnetGroupArn': 'DBSubnetGroupArn',
-                    'SubnetIds': ['subnet-xxxxxxxx', 'subnet-yyyyyyyy']
+                    'SubnetIds': SUBNET_IDS
                 }
             }]}
         )
@@ -111,13 +113,13 @@ class TestRDSSubnetGroup(TestBase):
             return_value={'DBSubnetGroup': {
                 'DBSubnetGroupName': 'zzzzzz-subnet-group',
                 'DBSubnetGroupArn': 'DBSubnetGroupArn',
-                'SubnetIds': ['subnet-xxxxxxxx', 'subnet-yyyyyyyy']}
+                'SubnetIds': SUBNET_IDS}
             }
         )
 
         resource_config = {
             'DBSubnetGroupName': 'zzzzzz-subnet-group',
-            'SubnetIds': ['subnet-xxxxxxxx', 'subnet-yyyyyyyy']
+            'SubnetIds': SUBNET_IDS
         }
         subnet_group.create(ctx=_ctx,
                             resource_config=resource_config,
@@ -129,7 +131,7 @@ class TestRDSSubnetGroup(TestBase):
         self.fake_client.create_db_subnet_group.assert_called_with(
             DBSubnetGroupDescription='MySQL5.7 Subnet Group',
             DBSubnetGroupName='zzzzzz-subnet-group',
-            SubnetIds=['subnet-xxxxxxxx', 'subnet-yyyyyyyy']
+            SubnetIds=SUBNET_IDS
         )
         self.fake_client.describe_db_subnet_groups.assert_called_with(
             DBSubnetGroupName='zzzzzz-subnet-group'

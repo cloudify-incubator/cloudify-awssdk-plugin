@@ -20,6 +20,7 @@ inputs:
 
   aws_vpc_id:
     default: { get_secret: vpc_id }
+
   openstack_public_ip:
     type: string
 

@@ -1,17 +1,16 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
-- https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/4.1/resources/rest-service/cloudify/types/types.yaml
-- http://getcloudify.org.s3.amazonaws.com/spec/aws-plugin/1.4.13/plugin.yaml
-- plugin.yaml
+- http://www.getcloudify.org/spec/cloudify/4.5/types.yaml
+- https://raw.githubusercontent.com/cloudify-incubator/cloudify-awssdk-plugin/CY-865-remove-references-to-old-aws-plugin-from-example/plugin.yaml
 
 inputs:
   aws_access_key_id:
     type: string
-  
+
   aws_secret_access_key:
     type: string
-    
+
   aws_region_name:
     type: string
     default: us-east-1
@@ -20,17 +19,17 @@ inputs:
     description: |
       AWS VPC ID
     type: string
-    
+
   aws_security_group_id:
     description: |
       AWS VPC Security Group ID
     type: string
-    
+
   aws_vpc_subnet_1_id:
     description: |
       AWS VPC Subnet ID (Zone 1)
     type: string
-    
+
   aws_vpc_subnet_2_id:
     description: |
       AWS VPC Subnet ID (Zone 2)
@@ -43,12 +42,6 @@ dsl_definitions:
     aws_secret_access_key: { get_input: aws_secret_access_key }
     region_name: { get_input: aws_region_name }
 
-  aws_config: &aws_config
-    aws_access_key_id: { get_input: aws_access_key_id }
-    aws_secret_access_key: { get_input: aws_secret_access_key }
-    ec2_region_name: { get_input: aws_region_name }
-
-
 node_templates:
   rds_mysql_read_replica:
     type: cloudify.nodes.aws.rds.InstanceReadReplica
@@ -56,8 +49,9 @@ node_templates:
       resource_id: devdbinstance-replica
       resource_config:
         kwargs:
+          SourceDBInstanceIdentifier: { get_property: [rds_mysql_instance, resource_id] }
           DBInstanceClass: db.t2.small
-          AvailabilityZone: us-east-1d
+          AvailabilityZone: us-west-1c
       client_config: *client_config
     relationships:
     - type: cloudify.relationships.aws.rds.instance_read_replica.connected_to
@@ -66,7 +60,7 @@ node_templates:
       target: rds_option_group
     - type: cloudify.relationships.aws.rds.instance_read_replica.connected_to
       target: rds_parameter_group
-  
+
   rds_mysql_instance:
     type: cloudify.nodes.aws.rds.Instance
     properties:
@@ -80,7 +74,7 @@ node_templates:
               DBInstanceClass: db.t2.small
               Engine: mysql
               EngineVersion: 5.7.16
-              AvailabilityZone: us-east-1a
+              AvailabilityZone: us-west-1a
               StorageType: gp2
               AllocatedStorage: 10
               DBName: devdb
@@ -97,7 +91,7 @@ node_templates:
       target: rds_parameter_group
     - type: cloudify.relationships.aws.rds.instance.connected_to
       target: rds_security_group
-    #- type: cloudify.relationships.aws.rds.instance.connected_to
+#    #- type: cloudify.relationships.aws.rds.instance.connected_to
     #  target: my_monitoring_iam_role
     #  source_interfaces:
     #    cloudify.interfaces.relationship_lifecycle:
@@ -115,7 +109,7 @@ node_templates:
   rds_parameter_group:
     type: cloudify.nodes.aws.rds.ParameterGroup
     properties:
-      resource_id: dev-db-param-group
+      resource_id: dev-rds-param-group
       resource_config:
         kwargs:
           DBParameterGroupFamily: mysql5.7
@@ -140,7 +134,7 @@ node_templates:
   rds_option_group:
     type: cloudify.nodes.aws.rds.OptionGroup
     properties:
-      resource_id: dev-db-option-group
+      resource_id: dev-rds-option-group
       resource_config:
         kwargs:
           EngineName: mysql
@@ -165,7 +159,7 @@ node_templates:
   rds_subnet_group:
     type: cloudify.nodes.aws.rds.SubnetGroup
     properties:
-      resource_id: dev-db-subnet-group
+      resource_id: dev-rds-subnet-group
       resource_config:
         kwargs:
           DBSubnetGroupDescription: MySQL5.7 Subnet Group for Dev
@@ -177,42 +171,38 @@ node_templates:
       target: rds_subnet_2
   
   rds_subnet_1:
-    type: cloudify.aws.nodes.Subnet
-    properties:
-      use_external_resource: true
-      resource_id: { get_input: aws_vpc_subnet_2_id }
-      cidr_block: N/A
-      aws_config: *aws_config
-    relationships:
-    - type: cloudify.aws.relationships.subnet_contained_in_vpc
-      target: rds_vpc
-        
-  rds_subnet_2:
-    type: cloudify.aws.nodes.Subnet
+    type: cloudify.nodes.aws.ec2.Subnet
     properties:
       use_external_resource: true
       resource_id: { get_input: aws_vpc_subnet_1_id }
-      cidr_block: N/A
-      aws_config: *aws_config
+      client_config: *client_config
     relationships:
-    - type: cloudify.aws.relationships.subnet_contained_in_vpc
-      target: rds_vpc
+      - type: cloudify.relationships.depends_on
+        target: rds_vpc
+
+  rds_subnet_2:
+    type: cloudify.nodes.aws.ec2.Subnet
+    properties:
+      use_external_resource: true
+      resource_id: { get_input: aws_vpc_subnet_2_id }
+      client_config: *client_config
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: rds_vpc
   
   rds_security_group:
-    type: cloudify.aws.nodes.SecurityGroup
+    type: cloudify.nodes.aws.ec2.SecurityGroup
     properties:
       use_external_resource: true
       resource_id: { get_input: aws_security_group_id }
-      description: N/A
-      aws_config: *aws_config
+      client_config: *client_config
     relationships:
-    - type: cloudify.aws.relationships.security_group_contained_in_vpc
-      target: rds_vpc
+      - type: cloudify.relationships.depends_on
+        target: rds_vpc
   
   rds_vpc:
-    type: cloudify.aws.nodes.VPC
+    type: cloudify.nodes.aws.ec2.Vpc
     properties:
       use_external_resource: true
       resource_id: { get_input: aws_vpc_id }
-      cidr_block:  N/A
-      aws_config: *aws_config
+      client_config: *client_config

@@ -52,7 +52,7 @@ def attach_to(ctx, resource_config, **_):
                 instance=ctx.target.instance,
                 raise_on_missing=True)).include_option(params)
     elif utils.is_node_type(ctx.target.node,
-                            'cloudify.aws.nodes.SecurityGroup'):
+                            'cloudify.nodes.aws.ec2.SecurityGroup'):
         security_groups = rtprops.get('resource_config').get(
             'VpcSecurityGroupMemberships', list())
         security_groups.append(

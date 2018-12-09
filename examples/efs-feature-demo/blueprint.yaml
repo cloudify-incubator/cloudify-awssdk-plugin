@@ -1,10 +1,9 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
-- https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/4.1/resources/rest-service/cloudify/types/types.yaml
-- http://getcloudify.org.s3.amazonaws.com/spec/aws-plugin/1.4.13/plugin.yaml
-- plugin.yaml
-- http://www.getcloudify.org/spec/fabric-plugin/1.4.2/plugin.yaml
+  - http://www.getcloudify.org/spec/cloudify/4.5/types.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-awssdk-plugin/CY-865-remove-references-to-old-aws-plugin-from-example/plugin.yaml
+  - http://www.getcloudify.org/spec/fabric-plugin/1.5.2/plugin.yaml
 
 inputs:
 
@@ -20,16 +19,15 @@ inputs:
     type: string
     default: { get_secret: ec2_region_name}
 
+  availability_zone:
+    type: string
+    default: us-west-1a
+
 dsl_definitions:
   client_config: &client_config
     aws_access_key_id: { get_input: aws_access_key_id }
     aws_secret_access_key: { get_input: aws_secret_access_key }
     region_name: { get_input: aws_region_name }
-
-  aws_config: &aws_config
-    aws_access_key_id: { get_input: aws_access_key_id }
-    aws_secret_access_key: { get_input: aws_secret_access_key }
-    ec2_region_name: { get_input: aws_region_name }
 
 node_templates:
 
@@ -42,65 +40,104 @@ node_templates:
           inputs:
             use_sudo: true
             commands:
-            - yum update -y
+              - yum update -y
             fabric_env: &mount_fabric_env
               host_string: { get_attribute: [ elasticip, aws_resource_id ] }
               user: ec2-user
-              key_filename: { get_property: [ key, private_key_path ] }
+              key: { get_attribute: [ key, create_response, KeyMaterial ] }
         configure:
           implementation: fabric.fabric_plugin.tasks.run_commands
           inputs:
             use_sudo: true
             commands:
-            - yum -y install nfs-utils
+              - yum -y install nfs-utils
             fabric_env: *mount_fabric_env
         start:
           implementation: fabric.fabric_plugin.tasks.run_commands
           inputs:
             use_sudo: true
             commands:
-            - mkdir /efs
-            - concat:
-              - 'mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 '
-              - { get_attribute: [ mount_target, IpAddress ] }
-              - ':/ efs'
+              - mkdir /efs
+              - concat:
+                - 'mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 '
+                - { get_attribute: [ mount_target, IpAddress ] }
+                - ':/ /efs'
             fabric_env: *mount_fabric_env
     relationships:
-    - type: cloudify.relationships.depends_on
-      target: instance
+      - type: cloudify.relationships.depends_on
+        target: instance
+
+  ami:
+    type: cloudify.nodes.aws.ec2.Image
+    properties:
+      resource_config:
+        kwargs:
+          Filters:
+          - Name: name
+            Values:
+            - 'CentOS 7.3.1611 x86_64 with cloud-init (HVM)'
+          - Name: owner-id
+            Values:
+            - '057448758665'
+      client_config: *client_config
 
   instance:
-    type: cloudify.aws.nodes.Instance
+    type: cloudify.nodes.aws.ec2.Instances
     properties:
       agent_config:
         install_method: none
-      image_id: ami-c58c1dd3
-      instance_type: t2.micro
-      aws_config: *aws_config
+      resource_config:
+        ImageId: { get_attribute: [ ami, aws_resource_id ] }
+        InstanceType: t2.micro
+        kwargs:
+          KeyName: { get_property: [ key, resource_config,  KeyName] }
+      client_config: *client_config
     relationships:
-    - type: cloudify.aws.relationships.instance_connected_to_subnet
-      target: subnet
-    - type: cloudify.aws.relationships.instance_connected_to_security_group
-      target: security_group
-    - type: cloudify.aws.relationships.connected_to_elastic_ip
-      target: elasticip
-    - type: cloudify.relationships.depends_on
-      target: mount_target
-    - type: cloudify.aws.relationships.instance_connected_to_keypair
-      target: key
+      - type: cloudify.relationships.depends_on
+        target: network_interface
+      - type: cloudify.relationships.depends_on
+        target: mount_target
+      - type: cloudify.relationships.depends_on
+        target: ami
+      - type: cloudify.relationships.depends_on
+        target: key
 
   key:
-    type: cloudify.aws.nodes.KeyPair
+    type: cloudify.nodes.aws.ec2.Keypair
     properties:
-      aws_config: *aws_config
-      resource_id: efs-demo
-      private_key_path: ~/.ssh/efs-demo.pem
+      resource_config:
+        KeyName: efs-demo
+      store_in_runtime_properties: true
+      client_config: *client_config
 
   elasticip:
-    type: cloudify.aws.nodes.ElasticIP
+    type: cloudify.nodes.aws.ec2.ElasticIP
     properties:
-      aws_config: *aws_config
-      domain: vpc
+      resource_config:
+        kwargs:
+          Domain: 'vpc'
+      client_config: *client_config
+    relationships:
+      - type: cloudify.relationships.connected_to
+        target: network_interface
+
+  network_interface:
+    type: cloudify.nodes.aws.ec2.Interface
+    properties:
+      resource_config:
+        kwargs:
+          Description: Created by efs-feature-demo blueprint.yaml.
+          SubnetId: { get_attribute: [ subnet, aws_resource_id] }
+          Groups:
+          - { get_attribute: [ security_group, aws_resource_id ] }
+      client_config: *client_config
+    relationships:
+      - type: cloudify.relationships.connected_to
+        target: subnet
+      - type: cloudify.relationships.depends_on
+        target: security_group
+      - type: cloudify.relationships.depends_on
+        target: security_group_rules
 
   mount_target:
     type: cloudify.nodes.aws.efs.MountTarget
@@ -135,51 +172,87 @@ node_templates:
       client_config: *client_config
 
   security_group:
-    type: cloudify.aws.nodes.SecurityGroup
+    type: cloudify.nodes.aws.ec2.SecurityGroup
     properties:
-      aws_config: *aws_config
-      description: efs security group
-      rules:
-      - ip_protocol: -1
-        from_port: -1
-        to_port: -1
-        cidr_ip: 0.0.0.0/0
+      resource_config:
+        kwargs:
+          GroupName: security_group1
+          Description: efs security group
+          VpcId:  { get_attribute: [ vpc, aws_resource_id ] }
+      client_config: *client_config
     relationships:
-    - type: cloudify.aws.relationships.security_group_contained_in_vpc
-      target: vpc
+      - type: cloudify.relationships.depends_on
+        target: vpc
+
+  security_group_rules:
+    type: cloudify.nodes.aws.ec2.SecurityGroupRuleIngress
+    properties:
+      client_config: *client_config
+      resource_config:
+        kwargs:
+          IpPermissions:
+           - IpProtocol: '-1'
+             FromPort: -1
+             ToPort: -1
+             IpRanges:
+              - CidrIp: 0.0.0.0/0
+             UserIdGroupPairs: [  { GroupId: { get_attribute: [ security_group, aws_resource_id ] } } ]
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: security_group
 
   route_table:
-    type: cloudify.aws.nodes.RouteTable
+    type: cloudify.nodes.aws.ec2.RouteTable
     properties:
-      aws_config: *aws_config
+      client_config: *client_config
     relationships:
-      - type: cloudify.aws.relationships.routetable_contained_in_vpc
-        target: vpc
-      - type: cloudify.aws.relationships.routetable_associated_with_subnet
-        target: subnet
-      - type: cloudify.aws.relationships.route_table_to_gateway
-        target: igw
+    - type: cloudify.relationships.contained_in
+      target: vpc
+    - type: cloudify.relationships.connected_to
+      target: subnet
+
+  route_subnet_internet_gateway:
+    type: cloudify.nodes.aws.ec2.Route
+    properties:
+      resource_config:
+        kwargs:
+          DestinationCidrBlock: '0.0.0.0/0'
+      client_config: *client_config
+    relationships:
+    - type: cloudify.relationships.contained_in
+      target: route_table
+    - type: cloudify.relationships.connected_to
+      target: igw
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        stop: {}
 
   subnet:
-    type: cloudify.aws.nodes.Subnet
+    type: cloudify.nodes.aws.ec2.Subnet
     properties:
-      aws_config: *aws_config
-      cidr_block:  172.30.0.0/24
-      availability_zone: { concat: [ { get_input: aws_region_name }, 'b' ] }
+      resource_config:
+        kwargs:
+          CidrBlock: 172.30.0.0/24
+          AvailabilityZone: { get_input: availability_zone }
+      client_config: *client_config
     relationships:
-    - type: cloudify.aws.relationships.subnet_contained_in_vpc
-      target: vpc
+      - type: cloudify.relationships.depends_on
+        target: vpc
+      - type: cloudify.relationships.depends_on
+        target: igw
 
   igw:
-    type: cloudify.aws.nodes.InternetGateway
+    type: cloudify.nodes.aws.ec2.InternetGateway
     properties:
-      aws_config: *aws_config
+      client_config: *client_config
     relationships:
-      - type: cloudify.aws.relationships.gateway_connected_to_vpc
+      - type: cloudify.relationships.connected_to
         target: vpc
 
   vpc:
-    type: cloudify.aws.nodes.VPC
+    type: cloudify.nodes.aws.ec2.Vpc
     properties:
-      aws_config: *aws_config
-      cidr_block:  172.30.0.0/16
+      resource_config:
+        kwargs:
+          CidrBlock: 172.30.0.0/16
+      client_config: *client_config

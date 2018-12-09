@@ -2,7 +2,7 @@ tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
   - http://www.getcloudify.org/spec/cloudify/4.5/types.yaml
-  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-awssdk-plugin/CY-837_update_SDK_library_versions/plugin.yaml
+  - plugin:cloudify-awssdk-plugin
 
 inputs:
 
@@ -108,7 +108,7 @@ node_templates:
   rds_option_group:
     type: cloudify.nodes.aws.rds.OptionGroup
     properties:
-      resource_id: dev-db-option-group
+      resource_id: dev-rds-option-group
       resource_config:
         kwargs:
           EngineName: mysql
@@ -154,7 +154,6 @@ node_templates:
       - type: cloudify.relationships.depends_on
         target: rds_vpc
 
-
   rds_security_group:
     type: cloudify.nodes.aws.ec2.SecurityGroup
     properties:
@@ -167,11 +166,6 @@ node_templates:
     relationships:
       - type: cloudify.relationships.depends_on
         target: rds_vpc
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        create:
-          inputs:
-            resource_config: { get_property: [ SELF, resource_config ] }
 
   security_group_rules:
     type: cloudify.nodes.aws.ec2.SecurityGroupRuleIngress
@@ -189,11 +183,6 @@ node_templates:
     relationships:
       - type: cloudify.relationships.contained_in
         target: rds_security_group
-    interfaces:
-      cloudify.interfaces.lifecycle:
-        create:
-          inputs:
-            resource_config: { get_property: [ SELF, resource_config ] }
 
   rds_vpc:
     type: cloudify.nodes.aws.ec2.Vpc

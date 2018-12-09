@@ -31,7 +31,7 @@ FILESYSTEM_TYPE = 'cloudify.nodes.aws.efs.FileSystem'
 SUBNET_ID = 'SubnetId'
 SUBNET_TYPE = 'cloudify.nodes.aws.ec2.Subnet'
 SUBNET_TYPE_DEPRECATED = 'cloudify.aws.nodes.Subnet'
-SECGROUP_TYPE = 'cloudify.aws.nodes.SecurityGroup'
+SECGROUP_TYPE = 'cloudify.nodes.aws.ec2.SecurityGroup'
 SECGROUPS = 'SecurityGroups'
 IP_ADDRESS = 'IpAddress'
 NAT_ID = 'NetworkInterfaceId'
@@ -130,6 +130,7 @@ def create(ctx, iface, resource_config, **_):
     utils.update_resource_id(ctx.instance, output.get(MOUNTTARGET_ID))
     ctx.instance.runtime_properties[FILESYSTEM_ID] = output.get(FILESYSTEM_ID)
     ctx.instance.runtime_properties[SUBNET_ID] = output.get(SUBNET_ID)
+    ctx.instance.runtime_properties[SECGROUPS] = output.get(SECGROUPS)
     ctx.instance.runtime_properties[IP_ADDRESS] = output.get(IP_ADDRESS)
     ctx.instance.runtime_properties[NAT_ID] = output.get(NAT_ID)
 

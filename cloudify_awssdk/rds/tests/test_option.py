@@ -173,7 +173,7 @@ class TestRDSOption(TestBase):
     def test_attach_to_security_group(self):
         _source_ctx, _target_ctx, _ctx = self._create_option_relationships(
             'test_attach_to',
-            ['cloudify.nodes.Root', 'cloudify.aws.nodes.SecurityGroup']
+            ['cloudify.nodes.Root', 'cloudify.nodes.aws.ec2.SecurityGroup']
         )
         current_ctx.set(_ctx)
 
