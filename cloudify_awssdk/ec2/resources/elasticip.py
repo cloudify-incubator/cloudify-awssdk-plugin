@@ -238,7 +238,8 @@ def detach(ctx, iface, resource_config, **_):
     if not elasticip_id:
         elasticip_id = iface.resource_id
         params[ELASTICIP_ID] = elasticip_id
-    elif not association_id:
+
+    if not association_id:
         return
 
     if association_id and elasticip_id:

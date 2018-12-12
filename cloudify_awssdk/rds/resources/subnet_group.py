@@ -93,24 +93,25 @@ def create(ctx, iface, resource_config, **_):
     params = \
         dict() if not resource_config else resource_config.copy()
 
-    node_subnet_ids = params.get('SubnetIds')
+    node_subnet_ids = params.get('SubnetIds', list())
     instance_subnet_ids = \
         ctx.instance.runtime_properties['resource_config'].get('SubnetIds',
                                                                list())
-
-    if not params.get('SubnetIds'):
+    if not node_subnet_ids:
         if not instance_subnet_ids:
             raise NonRecoverableError(
                 'Missing required parameter in input: SubnetIds')
 
-        subnet_ids = instance_subnet_ids
+        params['SubnetIds'] = instance_subnet_ids
 
     # if it is set then we need to combine them to what we already have as
     # runtime_properties
     else:
-        subnet_ids = list(set().union(node_subnet_ids, instance_subnet_ids))
+        for subnet_id in instance_subnet_ids:
+            if subnet_id not in node_subnet_ids:
+                node_subnet_ids.append(subnet_id)
 
-    params['SubnetIds'] = subnet_ids
+        params['SubnetIds'] = node_subnet_ids
 
     if iface.resource_id:
         params.update({'DBSubnetGroupName': iface.resource_id})
