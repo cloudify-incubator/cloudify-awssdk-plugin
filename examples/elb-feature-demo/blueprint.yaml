@@ -1,9 +1,8 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
-  - http://www.getcloudify.org/spec/cloudify/4.3.2/types.yaml
+  - http://www.getcloudify.org/spec/cloudify/4.5/types.yaml
   - plugin:cloudify-awssdk-plugin
-  # - plugin.yaml
 
 inputs:
 
@@ -53,6 +52,9 @@ node_templates:
         ImageId: { get_attribute: [ ubuntu_trusty_ami, aws_resource_id ] }
         InstanceType: m3.large
       client_config: *client_config
+      Tags:
+        - Key: Name
+          Value: Instance3
     relationships:
       - type: cloudify.relationships.depends_on
         target: ubuntu_trusty_ami
@@ -72,6 +74,9 @@ node_templates:
         ImageId: { get_attribute: [ ubuntu_trusty_ami, aws_resource_id ] }
         InstanceType: m3.large
       client_config: *client_config
+      Tags:
+        - Key: Name
+          Value: Instance2
     relationships:
       - type: cloudify.relationships.depends_on
         target: ubuntu_trusty_ami
@@ -91,6 +96,9 @@ node_templates:
         ImageId: { get_attribute: [ ubuntu_trusty_ami, aws_resource_id ] }
         InstanceType: m3.large
       client_config: *client_config
+      Tags:
+        - Key: Name
+          Value: Instance1
     relationships:
       - type: cloudify.relationships.depends_on
         target: ubuntu_trusty_ami
@@ -108,10 +116,10 @@ node_templates:
           CookieExpirationPeriod: 3600
       client_config: *client_config
     relationships:
-    - type: cloudify.relationships.depends_on
-      target: classic_elb
-    - type: cloudify.relationships.depends_on
-      target: classic_elb_listener
+      - type: cloudify.relationships.depends_on
+        target: classic_elb
+      - type: cloudify.relationships.depends_on
+        target: classic_elb_listener
 
   classic_policy:
     type: cloudify.nodes.aws.elb.Classic.Policy
@@ -125,8 +133,8 @@ node_templates:
               AttributeValue: 'true'
       client_config: *client_config
     relationships:
-    - type: cloudify.relationships.depends_on
-      target: classic_elb
+      - type: cloudify.relationships.depends_on
+        target: classic_elb
 
   classic_health_check:
     type: cloudify.nodes.aws.elb.Classic.HealthCheck
@@ -141,8 +149,8 @@ node_templates:
             HealthyThreshold: 5
       client_config: *client_config
     relationships:
-    - type: cloudify.relationships.depends_on
-      target: classic_elb
+      - type: cloudify.relationships.depends_on
+        target: classic_elb
 
   classic_elb_listener:
     type: cloudify.nodes.aws.elb.Classic.Listener
@@ -155,8 +163,8 @@ node_templates:
             InstancePort: 8080
       client_config: *client_config
     relationships:
-    - type: cloudify.relationships.depends_on
-      target: classic_elb
+      - type: cloudify.relationships.depends_on
+        target: classic_elb
 
   classic_elb:
     type: cloudify.nodes.aws.elb.Classic.LoadBalancer
@@ -167,14 +175,16 @@ node_templates:
           Listeners: { get_property: [ classic_elb_listener, resource_config, kwargs, Listeners ] }
       client_config: *client_config
     relationships:
-    - type: cloudify.relationships.depends_on
-      target: subnet1
-    - type: cloudify.relationships.depends_on
-      target: subnet2
-    - type: cloudify.relationships.depends_on
-      target: subnet3
-    - type: cloudify.relationships.depends_on
-      target: security_group
+      - type: cloudify.relationships.depends_on
+        target: subnet1
+      - type: cloudify.relationships.depends_on
+        target: subnet2
+      - type: cloudify.relationships.depends_on
+        target: subnet3
+      - type: cloudify.relationships.depends_on
+        target: security_group
+      - type: cloudify.relationships.depends_on
+        target: igw
     interfaces:
       cloudify.interfaces.lifecycle:
         start:
@@ -196,11 +206,11 @@ node_templates:
           Description: Example Security Group 1
       client_config: *client_config
       Tags:
-      - Key: Name
-        Value: MyGroup
+        - Key: Name
+          Value: MyGroup
     relationships:
-    - type: cloudify.relationships.depends_on
-      target: vpc
+      - type: cloudify.relationships.depends_on
+        target: vpc
 
   subnet1:
     type: cloudify.nodes.aws.ec2.Subnet
@@ -208,7 +218,7 @@ node_templates:
       resource_config:
         kwargs:
           CidrBlock: '10.0.1.0/24'
-          AvailabilityZone: { concat: [ { get_input: aws_region_name }, 'a' ] }
+          AvailabilityZone: { concat: [ { get_input: aws_region_name }, 'b' ] }
       client_config: *client_config
       Tags:
       - Key: Name
@@ -223,11 +233,11 @@ node_templates:
       resource_config:
         kwargs:
           CidrBlock: '10.0.2.0/24'
-          AvailabilityZone: { concat: [ { get_input: aws_region_name }, 'b' ] }
+          AvailabilityZone: { concat: [ { get_input: aws_region_name }, 'c' ] }
       client_config: *client_config
       Tags:
-      - Key: Name
-        Value: MySubnet2
+        - Key: Name
+          Value: MySubnet2
     relationships:
       - type: cloudify.relationships.depends_on
         target: vpc
@@ -238,11 +248,11 @@ node_templates:
       resource_config:
         kwargs:
           CidrBlock: '10.0.3.0/24'
-          AvailabilityZone: { concat: [ { get_input: aws_region_name }, 'b' ] }
+          AvailabilityZone: { concat: [ { get_input: aws_region_name }, 'd' ] }
       client_config: *client_config
       Tags:
-      - Key: Name
-        Value: MySubnet3
+        - Key: Name
+          Value: MySubnet3
     relationships:
       - type: cloudify.relationships.depends_on
         target: vpc
@@ -252,11 +262,13 @@ node_templates:
     properties:
       client_config: *client_config
       Tags:
-      - Key: Name
-        Value: MyIGW
+        - Key: Name
+          Value: MyIGW
     relationships:
       - type: cloudify.relationships.connected_to
         target: vpc
+      - type: cloudify.relationships.depends_on
+        target: security_group
 
   vpc:
     type: cloudify.nodes.aws.ec2.Vpc
@@ -266,5 +278,5 @@ node_templates:
           CidrBlock: '10.0.0.0/16'
       client_config: *client_config
       Tags:
-      - Key: Name
-        Value: MyVPC
+        - Key: Name
+          Value: MyVPC

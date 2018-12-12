@@ -37,7 +37,7 @@ LB_ARN = 'LoadBalancerArn'
 LB_ATTR = 'Attributes'
 SUBNET_TYPE = 'cloudify.nodes.aws.ec2.Subnet'
 SUBNET_TYPE_DEPRECATED = 'cloudify.aws.nodes.Subnet'
-SECGROUP_TYPE = 'cloudify.aws.nodes.SecurityGroup'
+SECGROUP_TYPE = 'cloudify.nodes.aws.ec2.SecurityGroup'
 SUBNETS = 'Subnets'
 SECGROUPS = 'SecurityGroups'
 

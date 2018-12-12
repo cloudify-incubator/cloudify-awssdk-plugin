@@ -1,9 +1,8 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
-- https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/4.1/resources/rest-service/cloudify/types/types.yaml
-- http://getcloudify.org.s3.amazonaws.com/spec/aws-plugin/1.4.13/plugin.yaml
-- plugin.yaml
+  - http://www.getcloudify.org/spec/cloudify/4.5/types.yaml
+  - plugin:cloudify-awssdk-plugin
 
 inputs:
 
@@ -19,17 +18,37 @@ inputs:
     type: string
     default: { get_secret: ec2_region_name }
 
+  aws_vpc_id:
+    description: |
+      AWS VPC ID
+    type: string
+
+  aws_security_group_id:
+    description: |
+      AWS VPC Security Group ID
+    type: string
+
+  aws_vpc_subnet_1_id:
+    description: |
+      AWS VPC Subnet ID
+    type: string
+
+  aws_vpc_subnet_2_id:
+    description: |
+      AWS VPC Subnet ID
+    type: string
+
+  aws_vpc_subnet_3_id:
+    description: |
+      AWS VPC Subnet ID
+    type: string
+
 dsl_definitions:
 
   client_config: &client_config
     aws_access_key_id: { get_input: aws_access_key_id }
     aws_secret_access_key: { get_input: aws_secret_access_key }
     region_name: { get_input: aws_region_name }
-
-  aws_config: &aws_config
-    aws_access_key_id: { get_input: aws_access_key_id }
-    aws_secret_access_key: { get_input: aws_secret_access_key }
-    ec2_region_name: { get_input: aws_region_name }
 
 node_templates:
 
@@ -45,15 +64,15 @@ node_templates:
                 - example.com
           Actions:
             - Type: forward
-              TargetGroupArn: forward_target_group
+              TargetGroupArn: { get_attribute: [ forward_target_group, aws_resource_arn ] }
       client_config: *client_config
     relationships:
-    - type: cloudify.relationships.depends_on
-      target: vpc
-    - type: cloudify.relationships.depends_on
-      target: http_listener
-    - type: cloudify.relationships.depends_on
-      target: forward_target_group
+      - type: cloudify.relationships.depends_on
+        target: vpc
+      - type: cloudify.relationships.depends_on
+        target: http_listener
+      - type: cloudify.relationships.depends_on
+        target: forward_target_group
 
   forward_target_group:
     type: cloudify.nodes.aws.elb.TargetGroup
@@ -75,8 +94,9 @@ node_templates:
               Value: 'true'
       client_config: *client_config
     relationships:
-    - type: cloudify.relationships.depends_on
-      target: vpc
+      - type: cloudify.relationships.depends_on
+        target: vpc
+
 
   http_listener:
     type: cloudify.nodes.aws.elb.Listener
@@ -88,11 +108,13 @@ node_templates:
           # SslPolicy: SSLNegotiationPolicyType
           DefaultActions:
             - Type: forward
-              TargetGroupArn: arn:aws:elasticloadbalancing:eu-west-1:535075449278:targetgroup/TEST/c46b448a282b8c9a
+              TargetGroupArn: { get_attribute: [ forward_target_group, aws_resource_arn ] }
       client_config: *client_config
     relationships:
-    - type: cloudify.relationships.depends_on
-      target: elb
+      - type: cloudify.relationships.depends_on
+        target: elb
+      - type: cloudify.relationships.depends_on
+        target: forward_target_group
 
   elb:
     type: cloudify.nodes.aws.elb.LoadBalancer
@@ -110,67 +132,58 @@ node_templates:
             #   Value: bucket-name
       client_config: *client_config
     relationships:
-    - type: cloudify.relationships.depends_on
-      target: subnet1
-    - type: cloudify.relationships.depends_on
-      target: subnet2
-    - type: cloudify.relationships.depends_on
-      target: subnet3
-    - type: cloudify.relationships.depends_on
-      target: security_group
+      - type: cloudify.relationships.depends_on
+        target: subnet1
+      - type: cloudify.relationships.depends_on
+        target: subnet2
+#      - type: cloudify.relationships.depends_on
+#        target: subnet3
+      - type: cloudify.relationships.depends_on
+        target: security_group
 
   security_group:
-    type: cloudify.aws.nodes.SecurityGroup
+    type: cloudify.nodes.aws.ec2.SecurityGroup
     properties:
-      aws_config: *aws_config
       use_external_resource: true
-      resource_id: sg-8aaf7bef
-      description: default security group
-      rules: []
+      resource_id: { get_input: aws_security_group_id }
+      client_config: *client_config
     relationships:
-    - type: cloudify.aws.relationships.security_group_contained_in_vpc
-      target: vpc
+      - type: cloudify.relationships.depends_on
+        target: vpc
 
   subnet1:
-    type: cloudify.aws.nodes.Subnet
+    type: cloudify.nodes.aws.ec2.Subnet
     properties:
-      aws_config: *aws_config
       use_external_resource: true
-      resource_id: subnet-b545b1c2
-      cidr_block:  172.30.0.0/24
-      availability_zone: eu-west-1a
+      resource_id: { get_input: aws_vpc_subnet_1_id }
+      client_config: *client_config
     relationships:
-    - type: cloudify.aws.relationships.subnet_contained_in_vpc
-      target: vpc
+      - type: cloudify.relationships.depends_on
+        target: vpc
 
   subnet2:
-    type: cloudify.aws.nodes.Subnet
+    type: cloudify.nodes.aws.ec2.Subnet
     properties:
-      aws_config: *aws_config
       use_external_resource: true
-      resource_id: subnet-0c9b5369
-      cidr_block:  172.30.1.0/24
-      availability_zone: eu-west-1b
+      resource_id: { get_input: aws_vpc_subnet_2_id }
+      client_config: *client_config
     relationships:
-    - type: cloudify.aws.relationships.subnet_contained_in_vpc
-      target: vpc
+      - type: cloudify.relationships.depends_on
+        target: vpc
 
   subnet3:
-    type: cloudify.aws.nodes.Subnet
+    type: cloudify.nodes.aws.ec2.Subnet
     properties:
-      aws_config: *aws_config
       use_external_resource: true
-      resource_id: subnet-1f909a59
-      cidr_block:  172.30.2.0/24
-      availability_zone: eu-west-1c
+      resource_id: { get_input: aws_vpc_subnet_3_id }
+      client_config: *client_config
     relationships:
-    - type: cloudify.aws.relationships.subnet_contained_in_vpc
-      target: vpc
+      - type: cloudify.relationships.depends_on
+        target: vpc
 
   vpc:
-    type: cloudify.aws.nodes.VPC
+    type: cloudify.nodes.aws.ec2.Vpc
     properties:
-      aws_config: *aws_config
       use_external_resource: true
-      resource_id: vpc-ffec199a
-      cidr_block:  172.30.0.0/16
+      resource_id: { get_input: aws_vpc_id }
+      client_config: *client_config

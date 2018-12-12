@@ -117,12 +117,8 @@ class TestRDSSubnetGroup(TestBase):
             }
         )
 
-        resource_config = {
-            'DBSubnetGroupName': 'zzzzzz-subnet-group',
-            'SubnetIds': SUBNET_IDS
-        }
         subnet_group.create(ctx=_ctx,
-                            resource_config=resource_config,
+                            resource_config=None,
                             iface=None)
 
         self.fake_boto.assert_called_with(
@@ -145,7 +141,7 @@ class TestRDSSubnetGroup(TestBase):
                     'DBSubnetGroupDescription':
                                     'MySQL5.7 Subnet Group',
                     'DBSubnetGroupName': 'zzzzzz-subnet-group',
-                    'SubnetIds': ['subnet-xxxxxxxx', 'subnet-yyyyyyyy']
+                    'SubnetIds': SUBNET_IDS
                 }
             }
         )
