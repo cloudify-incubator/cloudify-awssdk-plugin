@@ -5,7 +5,7 @@ description: >
 
 imports:
   - http://www.getcloudify.org/spec/cloudify/4.5/types.yaml
-  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-awssdk-plugin/CY-865-remove-references-to-old-aws-plugin-from-example/plugin.yaml
+  - plugin:cloudify-awssdk-plugin
 
 inputs:
 
@@ -72,12 +72,12 @@ node_templates:
             ZipFile: function/main.zip
       client_config: *client_config
     relationships:
-      - type: cloudify.relationships.connected_to
-        target: subnet_1
-      - type: cloudify.relationships.connected_to
-        target: subnet_2
-      - type: cloudify.relationships.connected_to
-        target: security_group
+#      - type: cloudify.relationships.connected_to
+#        target: subnet_1
+#      - type: cloudify.relationships.connected_to
+#        target: subnet_2
+#      - type: cloudify.relationships.connected_to
+#        target: security_group
       - type: cloudify.relationships.connected_to
         target: iam_role_lambda_function
 
