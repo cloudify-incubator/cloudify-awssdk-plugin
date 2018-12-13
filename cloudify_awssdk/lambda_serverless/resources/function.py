@@ -96,7 +96,7 @@ def create(ctx, iface, resource_config, **_):
     # Attach a Subnet Group if it exists
     subnet_ids = vpc_config.get('SubnetIds', list())
     for rel in utils.find_rels_by_node_type(
-            ctx.instance, 'cloudify.aws.nodes.Subnet'):
+            ctx.instance, 'cloudify.nodes.aws.ec2.Subnet'):
         subnet_ids.append(utils.get_resource_id(
             node=rel.target.node,
             instance=rel.target.instance,
@@ -105,7 +105,7 @@ def create(ctx, iface, resource_config, **_):
     # Attach any security groups if they exist
     security_groups = vpc_config.get('SecurityGroupIds', list())
     for rel in utils.find_rels_by_node_type(
-            ctx.instance, 'cloudify.aws.nodes.SecurityGroup'):
+            ctx.instance, 'cloudify.nodes.aws.ec2.SecurityGroup'):
         security_groups.append(
             utils.get_resource_id(
                 node=rel.target.node,
