@@ -28,7 +28,7 @@ inputs:
 
   container_instance_image:
     type: string
-    default: ami-0a6b7e0cc0b1f464f
+    default: ami-037a92bf1efdb11a2
 
   container_name:
     type: string
@@ -76,6 +76,19 @@ node_templates:
     type: cloudify.nodes.aws.autoscaling.Group
     properties:
       client_config: *client_config
+      resource_config:
+        kwargs:
+          AutoScalingGroupName: ecs_autoscaling_group
+          MinSize: 1
+          MaxSize: 1
+          DesiredCapacity: 1
+          DefaultCooldown: 20
+          AvailabilityZones:
+            - { get_property: [ subnet1, resource_config, kwargs, AvailabilityZone ] }
+            - { get_property: [ subnet2, resource_config, kwargs, AvailabilityZone ] }
+            - { get_property: [ subnet3, resource_config, kwargs, AvailabilityZone ] }
+          VPCZoneIdentifier: { concat: [ { get_attribute: [ subnet1, aws_resource_id ] }, ',', { get_attribute: [ subnet2, aws_resource_id ]}, ',', { get_attribute: [ subnet3, aws_resource_id ] }  ] }
+
     relationships:
     - type: cloudify.relationships.depends_on
       target: container_instance
@@ -87,17 +100,6 @@ node_templates:
       target: subnet3
     interfaces:
       cloudify.interfaces.lifecycle:
-        configure:
-          inputs:
-            resource_config:
-              AutoScalingGroupName: ecs_autoscaling_group
-              MinSize: 1
-              MaxSize: 1
-              DesiredCapacity: 1
-              DefaultCooldown: 20
-              AvailabilityZones:
-              - { get_property: [ subnet1, resource_config, kwargs, AvailabilityZone ] }
-              VPCZoneIdentifier: { concat: [ { get_attribute: [ subnet1, aws_resource_id ] }, ',' { get_attribute: [ subnet2, aws_resource_id ], ',', { get_attribute: [ subnet3, aws_resource_id ] } } ] }
         delete:
           implementation: awssdk.cloudify_awssdk.autoscaling.resources.autoscaling_group.delete
           inputs:
@@ -125,6 +127,9 @@ node_templates:
                '#!/bin/bash'
               - { concat: [ 'echo ECS_CLUSTER=', { get_input: ecs_cluster_name}, ' >> /etc/ecs/ecs.config' ] }
       client_config: *client_config
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: securitygroup1
 
 
   forward_rule:
@@ -286,6 +291,9 @@ node_templates:
           CidrBlock: '10.0.2.0/24'
           AvailabilityZone: { concat: [ { get_input: aws_region_name}, 'c' ] }
       client_config: *client_config
+      Tags:
+        - Key: Name
+          Value: Subnet3
     relationships:
       - type: cloudify.relationships.depends_on
         target: vpc
@@ -298,6 +306,9 @@ node_templates:
           CidrBlock: '10.0.1.0/24'
           AvailabilityZone: { concat: [ { get_input: aws_region_name}, 'b' ] }
       client_config: *client_config
+      Tags:
+        - Key: Name
+          Value: Subnet2
     relationships:
       - type: cloudify.relationships.depends_on
         target: vpc
@@ -324,6 +335,10 @@ node_templates:
         target: vpc
       - type: cloudify.relationships.connected_to
         target: subnet1
+      - type: cloudify.relationships.connected_to
+        target: subnet2
+      - type: cloudify.relationships.connected_to
+        target: subnet3
 
   igw:
     type: cloudify.nodes.aws.ec2.InternetGateway
@@ -341,6 +356,9 @@ node_templates:
           CidrBlock: '10.0.0.0/24'
           AvailabilityZone: { concat: [ { get_input: aws_region_name}, 'a' ] }
       client_config: *client_config
+      Tags:
+        - Key: Name
+          Value: Subnet1
     relationships:
       - type: cloudify.relationships.depends_on
         target: vpc
@@ -352,6 +370,9 @@ node_templates:
         kwargs:
           CidrBlock: '10.0.0.0/16'
       client_config: *client_config
+      Tags:
+        - Key: Name
+          Value: VPC
 
   task_definition:
     type: cloudify.nodes.aws.ecs.TaskDefinition
@@ -418,9 +439,4 @@ node_templates:
       resource_config:
         kwargs:
           clusterName: { get_input: ecs_cluster_name }
-          UserData:
-            concat:
-              - >
-                 '#!/bin/bash'
-              - { concat: [ 'echo ECS_CLUSTER=', { get_input: ecs_cluster_name}, ' >> /etc/ecs/ecs.config' ] }
       client_config: *client_config
