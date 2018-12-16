@@ -34,7 +34,7 @@ from cloudify.exceptions import NonRecoverableError
 
 RESOURCE_TYPE = 'ECS Service'
 CLUSTER = 'cluster'
-CLUSTER_TYPE = 'cloudify.nodes.aws.ECS.Cluster'
+CLUSTER_TYPE = 'cloudify.nodes.aws.ecs.Cluster'
 SERVICES = 'services'
 SERVICE = 'service'
 SERVICE_RESOURCE = 'serviceName'

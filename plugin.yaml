@@ -2705,7 +2705,7 @@ node_types:
           implementation: awssdk.cloudify_awssdk.cloudformation.resources.stack.delete
           inputs: *operation_inputs
 
-  cloudify.nodes.aws.ECS.Cluster:
+  cloudify.nodes.aws.ecs.Cluster:
     derived_from: cloudify.nodes.Root
     properties:
       <<: *external_resource
@@ -2729,7 +2729,7 @@ node_types:
           implementation: awssdk.cloudify_awssdk.ecs.resources.cluster.delete
           inputs: *operation_inputs
 
-  cloudify.nodes.aws.ECS.Service:
+  cloudify.nodes.aws.ecs.Service:
     derived_from: cloudify.nodes.Root
     properties:
       <<: *external_resource
@@ -2753,7 +2753,7 @@ node_types:
           implementation: awssdk.cloudify_awssdk.ecs.resources.service.delete
           inputs: *operation_inputs
 
-  cloudify.nodes.aws.ECS.TaskDefinition:
+  cloudify.nodes.aws.ecs.TaskDefinition:
     derived_from: cloudify.nodes.Root
     properties:
       <<: *external_resource

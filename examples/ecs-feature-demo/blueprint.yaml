@@ -1,10 +1,8 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
-- https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/4.2/resources/rest-service/cloudify/types/types.yaml
-- http://getcloudify.org.s3.amazonaws.com/spec/aws-plugin/1.4.13/plugin.yaml
-# - plugin.yaml
-- https://raw.githubusercontent.com/cloudify-incubator/cloudify-awssdk-plugin/a7683d6eb5967a4003def575e8112aea1c8aed2a/plugin.yaml
+  - http://www.getcloudify.org/spec/cloudify/4.5/types.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-awssdk-plugin/CY-865-remove-references-to-old-aws-plugin-from-example/plugin.yaml
 
 inputs:
 
@@ -20,16 +18,24 @@ inputs:
     type: string
     default: { get_secret: ec2_region_name }
 
-  container_instances_ami:
-    default: ami-eca289fb
+  ecs_cluster_name:
+    type: string
+    default: my_cluster
 
-  container_instances_instance_type:
-    default: t2.micro
+  container_instance_type:
+    type: string
+    default: t2.large
+
+  container_instance_image:
+    type: string
+    default: ami-0a6b7e0cc0b1f464f
 
   container_name:
+    type: string
     default: wordpress
 
   container_port:
+    type: integer
     default: 80
 
 dsl_definitions:
@@ -39,24 +45,18 @@ dsl_definitions:
     aws_secret_access_key: { get_input: aws_secret_access_key }
     region_name: { get_input: aws_region_name }
 
-  aws_config: &aws_config
-    aws_access_key_id: { get_input: aws_access_key_id }
-    aws_secret_access_key: { get_input: aws_secret_access_key }
-    ec2_region_name: { get_input: aws_region_name }
 
 node_templates:
 
   ecs_service:
-    type: cloudify.nodes.aws.ECS.Service
+    type: cloudify.nodes.aws.ecs.Service
     properties:
       client_config: *client_config
     relationships:
     - type: cloudify.relationships.depends_on
       target: ecs_cluster
     - type: cloudify.relationships.depends_on
-      target: elb
-    - type: cloudify.relationships.depends_on
-      target: forward_target_group
+      target: http_listener
     - type: cloudify.relationships.depends_on
       target: task_definition
     interfaces:
@@ -78,9 +78,13 @@ node_templates:
       client_config: *client_config
     relationships:
     - type: cloudify.relationships.depends_on
-      target: container_instances
+      target: container_instance
     - type: cloudify.relationships.depends_on
       target: subnet1
+    - type: cloudify.relationships.depends_on
+      target: subnet2
+    - type: cloudify.relationships.depends_on
+      target: subnet3
     interfaces:
       cloudify.interfaces.lifecycle:
         configure:
@@ -93,36 +97,35 @@ node_templates:
               DefaultCooldown: 20
               AvailabilityZones:
               - { get_property: [ subnet1, resource_config, kwargs, AvailabilityZone ] }
-              VPCZoneIdentifier: { get_attribute: [ subnet1, aws_resource_id ] }
+              VPCZoneIdentifier: { concat: [ { get_attribute: [ subnet1, aws_resource_id ] }, ',' { get_attribute: [ subnet2, aws_resource_id ], ',', { get_attribute: [ subnet3, aws_resource_id ] } } ] }
         delete:
           implementation: awssdk.cloudify_awssdk.autoscaling.resources.autoscaling_group.delete
           inputs:
             resource_config:
               ForceDelete: true
 
-  container_instances:
+  container_instance:
     type: cloudify.nodes.aws.autoscaling.LaunchConfiguration
     properties:
       resource_config:
         kwargs:
-          ImageId: { get_input: container_instances_ami }
-          InstanceType: { get_input: container_instances_instance_type }
-          LaunchConfigurationName: container_instances
+          ImageId: { get_input: container_instance_image }
+          InstanceType: { get_input: container_instance_type }
+          LaunchConfigurationName: container_instance
+          SecurityGroups:
+            - { get_attribute: [ securitygroup1, aws_resource_id ] }
+          BlockDeviceMappings:
+            - DeviceName: /dev/sdh
+              Ebs:
+                VolumeSize: 22
+                VolumeType: standard
+          UserData:
+            concat:
+              - >
+               '#!/bin/bash'
+              - { concat: [ 'echo ECS_CLUSTER=', { get_input: ecs_cluster_name}, ' >> /etc/ecs/ecs.config' ] }
       client_config: *client_config
 
-  ubuntu_trusty_ami:
-    type: cloudify.nodes.aws.ec2.Image
-    properties:
-      resource_config:
-        kwargs:
-          Filters:
-          - Name: name
-            Values:
-            - 'ubuntu/images/hvm-ssd/ubuntu-trusty-14.04-amd64-server-20170727'
-          - Name: owner-id
-            Values:
-            - '099720109477'
-      client_config: *client_config
 
   forward_rule:
     type: cloudify.nodes.aws.elb.Rule
@@ -351,7 +354,7 @@ node_templates:
       client_config: *client_config
 
   task_definition:
-    type: cloudify.nodes.aws.ECS.TaskDefinition
+    type: cloudify.nodes.aws.ecs.TaskDefinition
     properties:
       resource_config:
         kwargs:
@@ -410,9 +413,14 @@ node_templates:
       target: ecs_cluster
 
   ecs_cluster:
-    type: cloudify.nodes.aws.ECS.Cluster
+    type: cloudify.nodes.aws.ecs.Cluster
     properties:
       resource_config:
         kwargs:
-          clusterName: 'my_cluster'
+          clusterName: { get_input: ecs_cluster_name }
+          UserData:
+            concat:
+              - >
+                 '#!/bin/bash'
+              - { concat: [ 'echo ECS_CLUSTER=', { get_input: ecs_cluster_name}, ' >> /etc/ecs/ecs.config' ] }
       client_config: *client_config
