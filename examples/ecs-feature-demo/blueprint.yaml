@@ -48,17 +48,125 @@ dsl_definitions:
 
 node_templates:
 
+  ecs_instance_iam_role:
+    type: cloudify.nodes.aws.iam.Role
+    properties:
+      resource_id: ecs_instance_iam_role
+      client_config: *client_config
+      resource_config:
+        kwargs:
+          Path: !!str /ecs-instance-role/
+          AssumeRolePolicyDocument:
+            Version: !!str 2012-10-17
+            Statement:
+            - Effect: Allow
+              Principal:
+                Service: !!str ec2.amazonaws.com
+              Action: !!str sts:AssumeRole
+    relationships:
+      - type: cloudify.relationships.aws.iam.role.connected_to
+        target: ecs_instance_access
+
+  ecs_instance_access:
+    type: cloudify.nodes.aws.iam.Policy
+    properties:
+      resource_id: ecs_instance_access_policy
+      client_config: *client_config
+      resource_config:
+        kwargs:
+          Description: >-
+            Grants access for ECS agent to Amazon ECS API
+          Path: !!str /ecs-instance-access/
+          PolicyDocument:
+            Version: !!str 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - !!str ecs:CreateCluster
+                  - !!str ecs:DeregisterContainerInstance
+                  - !!str ecs:DiscoverPollEndpoint
+                  - !!str ecs:Poll
+                  - !!str ecs:RegisterContainerInstance
+                  - !!str ecs:StartTelemetrySession
+                  - !!str ecs:UpdateContainerInstancesState
+                  - !!str ecs:Submit*
+                  - !!str ecr:GetAuthorizationToken
+                  - !!str ecr:BatchCheckLayerAvailability
+                  - !!str ecr:GetDownloadUrlForLayer
+                  - !!str ecr:BatchGetImage
+                  - !!str logs:CreateLogStream
+                  - !!str logs:PutLogEvents
+                Resource: '*'
+
+  ecs_instance_iam_role_instance_profile:
+    type: cloudify.nodes.aws.iam.InstanceProfile
+    properties:
+      client_config: *client_config
+      resource_id: ecs_cfy_instance_profile
+      resource_config:
+        kwargs:
+          InstanceProfileName: ecs_cfy_instance_profile
+          Path: '/ecs_cfy_instance_profile/'
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: ecs_instance_iam_role
+
+  ecs_service_iam_role:
+    type: cloudify.nodes.aws.iam.Role
+    properties:
+      resource_id: ecs_service_iam_role
+      client_config: *client_config
+      resource_config:
+        kwargs:
+          Path: !!str /ecs-service-role/
+          AssumeRolePolicyDocument:
+            Version: !!str 2012-10-17
+            Statement:
+            - Effect: Allow
+              Principal:
+                Service: !!str ecs.amazonaws.com
+              Action: !!str sts:AssumeRole
+    relationships:
+      - type: cloudify.relationships.aws.iam.role.connected_to
+        target: ecs_service_access
+
+  ecs_service_access:
+    type: cloudify.nodes.aws.iam.Policy
+    properties:
+      resource_id: ecs_service_access_policy
+      client_config: *client_config
+      resource_config:
+        kwargs:
+          Description: >-
+            Grants access for ECS service to the Amazon EC2 and Elastic Load Balancing APIs
+          Path: !!str /ecs-service-access/
+          PolicyDocument:
+            Version: !!str 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - !!str ec2:AuthorizeSecurityGroupIngress
+                  - !!str ec2:Describe*
+                  - !!str elasticloadbalancing:DeregisterInstancesFromLoadBalancer
+                  - !!str elasticloadbalancing:DeregisterTargets
+                  - !!str elasticloadbalancing:Describe*
+                  - !!str elasticloadbalancing:RegisterInstancesWithLoadBalancer
+                  - !!str elasticloadbalancing:RegisterTargets
+                Resource: '*'
+
   ecs_service:
     type: cloudify.nodes.aws.ecs.Service
     properties:
       client_config: *client_config
     relationships:
-    - type: cloudify.relationships.depends_on
-      target: ecs_cluster
-    - type: cloudify.relationships.depends_on
-      target: http_listener
-    - type: cloudify.relationships.depends_on
-      target: task_definition
+      - type: cloudify.relationships.depends_on
+        target: ecs_cluster
+      - type: cloudify.relationships.depends_on
+        target: http_listener
+      - type: cloudify.relationships.depends_on
+        target: task_definition
+      - type: cloudify.relationships.depends_on
+        target: ecs_service_iam_role
     interfaces:
       cloudify.interfaces.lifecycle:
         configure:
@@ -67,6 +175,7 @@ node_templates:
               serviceName: 'service_name_1'
               taskDefinition: { get_property: [ task_definition, resource_config, kwargs, family ] }
               desiredCount: 1
+              role: { get_attribute: [ ecs_service_iam_role, aws_resource_arn ] }
               loadBalancers:
               - targetGroupArn: { get_attribute: [ forward_target_group, aws_resource_arn ] }
                 containerName: { get_input: container_name }
@@ -85,19 +194,13 @@ node_templates:
           DefaultCooldown: 20
           AvailabilityZones:
             - { get_property: [ subnet1, resource_config, kwargs, AvailabilityZone ] }
-            - { get_property: [ subnet2, resource_config, kwargs, AvailabilityZone ] }
-            - { get_property: [ subnet3, resource_config, kwargs, AvailabilityZone ] }
-          VPCZoneIdentifier: { concat: [ { get_attribute: [ subnet1, aws_resource_id ] }, ',', { get_attribute: [ subnet2, aws_resource_id ]}, ',', { get_attribute: [ subnet3, aws_resource_id ] }  ] }
+          VPCZoneIdentifier: { concat: [ { get_attribute: [ subnet1, aws_resource_id ] }  ] }
 
     relationships:
-    - type: cloudify.relationships.depends_on
-      target: container_instance
-    - type: cloudify.relationships.depends_on
-      target: subnet1
-    - type: cloudify.relationships.depends_on
-      target: subnet2
-    - type: cloudify.relationships.depends_on
-      target: subnet3
+      - type: cloudify.relationships.depends_on
+        target: container_instance
+      - type: cloudify.relationships.depends_on
+        target: subnet1
     interfaces:
       cloudify.interfaces.lifecycle:
         delete:
@@ -114,6 +217,9 @@ node_templates:
           ImageId: { get_input: container_instance_image }
           InstanceType: { get_input: container_instance_type }
           LaunchConfigurationName: container_instance
+          IamInstanceProfile: { get_attribute: [ ecs_instance_iam_role_instance_profile, aws_resource_arn ] }
+          KeyName: { get_property: [ key, resource_config,  KeyName] }
+          AssociatePublicIpAddress: True
           SecurityGroups:
             - { get_attribute: [ securitygroup1, aws_resource_id ] }
           BlockDeviceMappings:
@@ -124,13 +230,16 @@ node_templates:
           UserData:
             concat:
               - >
-               '#!/bin/bash'
+                #!/bin/bash
               - { concat: [ 'echo ECS_CLUSTER=', { get_input: ecs_cluster_name}, ' >> /etc/ecs/ecs.config' ] }
       client_config: *client_config
     relationships:
       - type: cloudify.relationships.depends_on
         target: securitygroup1
-
+      - type: cloudify.relationships.depends_on
+        target: ecs_instance_iam_role_instance_profile
+      - type: cloudify.relationships.depends_on
+        target: key
 
   forward_rule:
     type: cloudify.nodes.aws.elb.Rule
@@ -150,12 +259,12 @@ node_templates:
                 - Type: forward
                   TargetGroupArn: { get_attribute: [ forward_target_group, aws_resource_arn ] }
     relationships:
-    - type: cloudify.relationships.depends_on
-      target: vpc
-    - type: cloudify.relationships.depends_on
-      target: http_listener
-    - type: cloudify.relationships.depends_on
-      target: forward_target_group
+      - type: cloudify.relationships.depends_on
+        target: vpc
+      - type: cloudify.relationships.depends_on
+        target: http_listener
+      - type: cloudify.relationships.depends_on
+        target: forward_target_group
 
   http_listener:
     type: cloudify.nodes.aws.elb.Listener
@@ -167,15 +276,15 @@ node_templates:
           inputs:
             resource_config:
               Protocol: HTTP
-              Port: 8080
+              Port: 80
               DefaultActions:
                 - Type: forward
                   TargetGroupArn: { get_attribute: [ forward_target_group, aws_resource_arn ] }
     relationships:
-    - type: cloudify.relationships.depends_on
-      target: elb
-    - type: cloudify.relationships.depends_on
-      target: forward_target_group
+      - type: cloudify.relationships.depends_on
+        target: elb
+      - type: cloudify.relationships.depends_on
+        target: forward_target_group
 
   forward_target_group:
     type: cloudify.nodes.aws.elb.TargetGroup
@@ -184,12 +293,14 @@ node_templates:
         kwargs:
           Name: test-elb-target-group
           Protocol: HTTP
-          Port: 8080
+          Port: 80
           HealthCheckProtocol: HTTP
           HealthCheckPort: '80'
+          HealthCheckPath: '/wp-admin'
           HealthCheckIntervalSeconds: 30
-          HealthCheckTimeoutSeconds: 5
-          UnhealthyThresholdCount: 3
+          HealthCheckTimeoutSeconds: 20
+          HealthyThresholdCount: 7
+          UnhealthyThresholdCount: 7
           Matcher:
             HttpCode: '404'
           Attributes:
@@ -197,8 +308,8 @@ node_templates:
               Value: 'true'
       client_config: *client_config
     relationships:
-    - type: cloudify.relationships.depends_on
-      target: vpc
+      - type: cloudify.relationships.depends_on
+        target: vpc
 
   elb:
     type: cloudify.nodes.aws.elb.LoadBalancer
@@ -212,14 +323,14 @@ node_templates:
               Value: '30'
       client_config: *client_config
     relationships:
-    - type: cloudify.relationships.depends_on
-      target: subnet1
-    - type: cloudify.relationships.depends_on
-      target: subnet2
-    - type: cloudify.relationships.depends_on
-      target: subnet3
-    - type: cloudify.relationships.depends_on
-      target: securitygroup1
+      - type: cloudify.relationships.depends_on
+        target: subnet1
+      - type: cloudify.relationships.depends_on
+        target: subnet2
+      - type: cloudify.relationships.depends_on
+        target: subnet3
+      - type: cloudify.relationships.depends_on
+        target: securitygroup1
 
   securitygroup1_ingress:
     type: cloudify.nodes.aws.ec2.SecurityGroupRuleIngress
@@ -232,44 +343,44 @@ node_templates:
             aws_resource_id: { get_attribute: [ securitygroup1, aws_resource_id ]}
             resource_config:
               IpPermissions:
-              - FromPort: 22
-                ToPort: 22
-                IpProtocol: tcp
-                IpRanges:
-                - CidrIp: 0.0.0.0/0
-              - FromPort: { get_input: container_port }
-                ToPort: { get_input: container_port }
-                IpProtocol: tcp
-                IpRanges:
-                - CidrIp: 0.0.0.0/0
-              - FromPort: 31000
-                ToPort: 61000
-                IpProtocol: tcp
-                IpRanges:
-                - CidrIp: 0.0.0.0/0
+                - FromPort: 22
+                  ToPort: 22
+                  IpProtocol: tcp
+                  IpRanges:
+                    - CidrIp: 0.0.0.0/0
+                - FromPort: { get_input: container_port }
+                  ToPort: { get_input: container_port }
+                  IpProtocol: tcp
+                  IpRanges:
+                    - CidrIp: 0.0.0.0/0
+                - FromPort: 31000
+                  ToPort: 61000
+                  IpProtocol: tcp
+                  IpRanges:
+                    - CidrIp: 0.0.0.0/0
         stop:
           inputs:
             aws_resource_id: { get_attribute: [ securitygroup1, aws_resource_id ]}
             resource_config:
               IpPermissions:
-              - FromPort: 22
-                ToPort: 22
-                IpProtocol: tcp
-                IpRanges:
-                - CidrIp: 0.0.0.0/0
-              - FromPort: { get_input: container_port }
-                ToPort: { get_input: container_port }
-                IpProtocol: tcp
-                IpRanges:
-                - CidrIp: 0.0.0.0/0
-              - FromPort: 31000
-                ToPort: 61000
-                IpProtocol: tcp
-                IpRanges:
-                - CidrIp: 0.0.0.0/0
+                - FromPort: 22
+                  ToPort: 22
+                  IpProtocol: tcp
+                  IpRanges:
+                    - CidrIp: 0.0.0.0/0
+                - FromPort: { get_input: container_port }
+                  ToPort: { get_input: container_port }
+                  IpProtocol: tcp
+                  IpRanges:
+                    - CidrIp: 0.0.0.0/0
+                - FromPort: 31000
+                  ToPort: 61000
+                  IpProtocol: tcp
+                  IpRanges:
+                    - CidrIp: 0.0.0.0/0
     relationships:
-    - type: cloudify.relationships.contained_in
-      target: securitygroup1
+      - type: cloudify.relationships.contained_in
+        target: securitygroup1
 
   securitygroup1:
     type: cloudify.nodes.aws.ec2.SecurityGroup
@@ -279,36 +390,6 @@ node_templates:
           GroupName: SecurityGroup1
           Description: Example Security Group 1
       client_config: *client_config
-    relationships:
-    - type: cloudify.relationships.depends_on
-      target: vpc
-
-  subnet3:
-    type: cloudify.nodes.aws.ec2.Subnet
-    properties:
-      resource_config:
-        kwargs:
-          CidrBlock: '10.0.2.0/24'
-          AvailabilityZone: { concat: [ { get_input: aws_region_name}, 'c' ] }
-      client_config: *client_config
-      Tags:
-        - Key: Name
-          Value: Subnet3
-    relationships:
-      - type: cloudify.relationships.depends_on
-        target: vpc
-
-  subnet2:
-    type: cloudify.nodes.aws.ec2.Subnet
-    properties:
-      resource_config:
-        kwargs:
-          CidrBlock: '10.0.1.0/24'
-          AvailabilityZone: { concat: [ { get_input: aws_region_name}, 'b' ] }
-      client_config: *client_config
-      Tags:
-        - Key: Name
-          Value: Subnet2
     relationships:
       - type: cloudify.relationships.depends_on
         target: vpc
@@ -362,6 +443,37 @@ node_templates:
     relationships:
       - type: cloudify.relationships.depends_on
         target: vpc
+      - type: cloudify.relationships.depends_on
+        target: igw
+
+  subnet3:
+    type: cloudify.nodes.aws.ec2.Subnet
+    properties:
+      resource_config:
+        kwargs:
+          CidrBlock: '10.0.2.0/24'
+          AvailabilityZone: { concat: [ { get_input: aws_region_name}, 'c' ] }
+      client_config: *client_config
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: vpc
+      - type: cloudify.relationships.depends_on
+        target: igw
+
+
+  subnet2:
+    type: cloudify.nodes.aws.ec2.Subnet
+    properties:
+      resource_config:
+        kwargs:
+          CidrBlock: '10.0.1.0/24'
+          AvailabilityZone: { concat: [ { get_input: aws_region_name}, 'b' ] }
+      client_config: *client_config
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: vpc
+      - type: cloudify.relationships.depends_on
+        target: igw
 
   vpc:
     type: cloudify.nodes.aws.ec2.Vpc
@@ -373,6 +485,14 @@ node_templates:
       Tags:
         - Key: Name
           Value: VPC
+
+  key:
+    type: cloudify.nodes.aws.ec2.Keypair
+    properties:
+      resource_config:
+        KeyName: ecs-demo
+      store_in_runtime_properties: true
+      client_config: *client_config
 
   task_definition:
     type: cloudify.nodes.aws.ecs.TaskDefinition
@@ -430,8 +550,8 @@ node_templates:
           #     value: password
       client_config: *client_config
     relationships:
-    - type: cloudify.relationships.depends_on
-      target: ecs_cluster
+      - type: cloudify.relationships.depends_on
+        target: ecs_cluster
 
   ecs_cluster:
     type: cloudify.nodes.aws.ecs.Cluster

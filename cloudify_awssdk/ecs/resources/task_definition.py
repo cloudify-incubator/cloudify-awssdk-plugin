@@ -29,9 +29,12 @@ from botocore.exceptions import ClientError
 from cloudify_awssdk.common import decorators, utils
 from cloudify_awssdk.ecs import ECSBase
 
+from cloudify_awssdk.common import constants
+
 RESOURCE_TYPE = 'ECS Task Definition'
 TASK_DEFINITION_FAMILY = 'family'
 TASK_DEFINITION = 'taskDefinition'
+TASK_DEFINITION_ARN = 'taskDefinitionArn'
 TASK_CONTAINER_DEFINITION = 'containerDefinitions'
 TASK_DEFINITION_RESOURCE = 'task_definition'
 
@@ -115,13 +118,16 @@ def create(ctx, iface, resource_config, **_):
     iface = prepare_describe_task_definition_filter(
         resource_config.copy(), iface
     )
-    iface.create(params)[TASK_DEFINITION]
+    response = iface.create(params)
+    if response and response.get(TASK_DEFINITION):
+        resource_arn = response[TASK_DEFINITION].get(TASK_DEFINITION_ARN)
+        utils.update_resource_arn(ctx.instance, resource_arn)
 
 
 @decorators.aws_resource(ECSTaskDefinition, RESOURCE_TYPE)
 def delete(ctx, iface, resource_config, **_):
     """Deletes an AWS ECS Task Definition"""
     task_definition_name = \
-        ctx.instance.runtime_properties.get(TASK_DEFINITION_RESOURCE)
+        ctx.instance.runtime_properties.get(constants.EXTERNAL_RESOURCE_ARN)
     params = {TASK_DEFINITION: task_definition_name}
     iface.delete(params)

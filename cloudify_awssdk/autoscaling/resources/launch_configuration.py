@@ -27,6 +27,7 @@ RESOURCE_TYPE = 'Autoscaling Launch Configuration'
 LCS = 'LaunchConfigurations'
 RESOURCE_NAMES = 'LaunchConfigurationNames'
 RESOURCE_NAME = 'LaunchConfigurationName'
+IAM_INSTANCE_PROFILE = 'IamInstanceProfile'
 LC_ARN = 'LaunchConfigurationARN'
 IMAGEID = 'ImageId'
 INSTANCEID = 'InstanceId'
@@ -105,6 +106,12 @@ def create(ctx, iface, resource_config, **_):
             use_instance_id=True)
     params[RESOURCE_NAME] = resource_id
     utils.update_resource_id(ctx.instance, resource_id)
+
+    # Check if the "IamInstanceProfile" is passed or not and then update it
+    iam_instance_profile = params.get(IAM_INSTANCE_PROFILE)
+    if iam_instance_profile and isinstance(iam_instance_profile, basestring):
+        iam_instance_profile = iam_instance_profile.strip()
+        params[IAM_INSTANCE_PROFILE] = str(iam_instance_profile)
 
     # Add Security Groups
     secgroups_list = params.get(SECGROUPS, [])
