@@ -81,14 +81,14 @@ class EC2Subnet(EC2Base):
         self.logger.debug('Response: %s' % res)
         return res
 
-    def modify_instance_attribute(self, params=None):
+    def modify_subnet_attribute(self, params=None):
         '''
             Modifies an existing AWS EC2 Subnet Attribute.
         '''
         self.logger.debug(
             'Modifying {0} attribute with parameters: {1}'.format(
                 self.type_name, params))
-        res = self.client.modify_instance_attribute(**params)
+        res = self.client.modify_subnet_attribute(**params)
         self.logger.debug('Response: %s' % res)
         return res
 

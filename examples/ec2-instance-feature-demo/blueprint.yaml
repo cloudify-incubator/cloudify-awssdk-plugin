@@ -1,8 +1,8 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
-  - http://www.getcloudify.org/spec/cloudify/4.2/types.yaml
-  - ../../plugin.yaml
+  - http://www.getcloudify.org/spec/cloudify/4.5/types.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-awssdk-plugin/CY-865-remove-references-to-old-aws-plugin-from-example/plugin.yaml
 
 inputs:
 
@@ -52,23 +52,25 @@ node_templates:
           CidrBlock: { get_input: vpc_cidr }
       client_config: *client_config
       Tags:
-      - Key: Name
-        Value: MyVPC
+        - Key: Name
+          Value: MyVPC
     interfaces:
       cloudify.interfaces.lifecycle:
         configure:
           implementation: awssdk.cloudify_awssdk.ec2.resources.vpc.create
           inputs:
             modify_vpc_attribute_args:
-              EnableDnsHostnames: true
+              EnableDnsHostnames:
+                Value: True
+
 
   internet_gateway:
     type: cloudify.nodes.aws.ec2.InternetGateway
     properties:
       client_config: *client_config
     relationships:
-    - type: cloudify.relationships.connected_to
-      target: vpc
+      - type: cloudify.relationships.connected_to
+        target: vpc
 
   public_subnet:
     type: cloudify.nodes.aws.ec2.Subnet
@@ -79,20 +81,21 @@ node_templates:
           AvailabilityZone: { get_input: availability_zone }
       client_config: *client_config
       Tags:
-      - Key: Name
-        Value: MySubnet1
+        - Key: Name
+          Value: MySubnet1
     relationships:
-    - type: cloudify.relationships.depends_on
-      target: vpc
-    - type: cloudify.relationships.depends_on
-      target: internet_gateway
+      - type: cloudify.relationships.depends_on
+        target: vpc
+      - type: cloudify.relationships.depends_on
+        target: internet_gateway
     interfaces:
       cloudify.interfaces.lifecycle:
         configure:
           implementation: awssdk.cloudify_awssdk.ec2.resources.subnet.create
           inputs:
             modify_subnet_attribute_args:
-              AssignIpv6AddressOnCreation: true
+              AssignIpv6AddressOnCreation:
+                Value: True
 
   private_subnet:
     type: cloudify.nodes.aws.ec2.Subnet
@@ -103,39 +106,39 @@ node_templates:
           AvailabilityZone: { get_input: availability_zone }
       client_config: *client_config
       Tags:
-      - Key: Name
-        Value: MySubnet2
+        - Key: Name
+          Value: MySubnet2
     relationships:
-    - type: cloudify.relationships.depends_on
-      target: vpc
-    - type: cloudify.relationships.depends_on
-      target: internet_gateway
+      - type: cloudify.relationships.depends_on
+        target: vpc
+      - type: cloudify.relationships.depends_on
+        target: internet_gateway
 
   public_subnet_routetable:
     type: cloudify.nodes.aws.ec2.RouteTable
     properties:
       client_config: *client_config
       Tags:
-      - Key: Name
-        Value: MyRouteTable1
+        - Key: Name
+          Value: MyRouteTable1
     relationships:
-    - type: cloudify.relationships.contained_in
-      target: vpc
-    - type: cloudify.relationships.connected_to
-      target: public_subnet
+      - type: cloudify.relationships.contained_in
+        target: vpc
+      - type: cloudify.relationships.connected_to
+        target: public_subnet
 
   private_subnet_routetable:
     type: cloudify.nodes.aws.ec2.RouteTable
     properties:
       client_config: *client_config
       Tags:
-      - Key: Name
-        Value: MyRouteTable2
+        - Key: Name
+          Value: MyRouteTable2
     relationships:
-    - type: cloudify.relationships.contained_in
-      target: vpc
-    - type: cloudify.relationships.connected_to
-      target: private_subnet
+      - type: cloudify.relationships.contained_in
+        target: vpc
+      - type: cloudify.relationships.connected_to
+        target: private_subnet
 
   route_public_subnet_internet_gateway:
     type: cloudify.nodes.aws.ec2.Route
@@ -145,10 +148,10 @@ node_templates:
           DestinationCidrBlock: '0.0.0.0/0'
       client_config: *client_config
     relationships:
-    - type: cloudify.relationships.contained_in
-      target: public_subnet_routetable
-    - type: cloudify.relationships.connected_to
-      target: internet_gateway
+      - type: cloudify.relationships.contained_in
+        target: public_subnet_routetable
+      - type: cloudify.relationships.connected_to
+        target: internet_gateway
     interfaces:
       cloudify.interfaces.lifecycle:
         stop: {}
@@ -169,13 +172,13 @@ node_templates:
     properties:
       client_config: *client_config
       Tags:
-      - Key: Name
-        Value: MyNAT
+        - Key: Name
+          Value: MyNAT
     relationships:
-    - type: cloudify.relationships.depends_on
-      target: public_subnet
-    - type: cloudify.relationships.depends_on
-      target: nat_gateway_ip
+      - type: cloudify.relationships.depends_on
+        target: public_subnet
+      - type: cloudify.relationships.depends_on
+        target: nat_gateway_ip
 
   route_private_subnet_nat_gateway:
     type: cloudify.nodes.aws.ec2.Route
@@ -185,10 +188,10 @@ node_templates:
           DestinationCidrBlock: '0.0.0.0/0'
       client_config: *client_config
     relationships:
-    - type: cloudify.relationships.contained_in
-      target: private_subnet_routetable
-    - type: cloudify.relationships.connected_to
-      target: nat_gateway
+      - type: cloudify.relationships.contained_in
+        target: private_subnet_routetable
+      - type: cloudify.relationships.connected_to
+        target: nat_gateway
     interfaces:
       cloudify.interfaces.lifecycle:
         stop: {}
@@ -203,11 +206,11 @@ node_templates:
           VpcId: { get_attribute: [ vpc, aws_resource_id] }
       client_config: *client_config
       Tags:
-      - Key: Name
-        Value: MyGroup
+        - Key: Name
+          Value: MyGroup
     relationships:
-    - type: cloudify.relationships.depends_on
-      target: vpc
+      - type: cloudify.relationships.depends_on
+        target: vpc
     interfaces:
       cloudify.interfaces.lifecycle:
         configure:
@@ -227,8 +230,8 @@ node_templates:
             IpRanges:
             - CidrIp: 0.0.0.0/0
     relationships:
-    - type: cloudify.relationships.contained_in
-      target: security_group
+      - type: cloudify.relationships.contained_in
+        target: security_group
 
   nic:
     type: cloudify.nodes.aws.ec2.Interface
@@ -239,15 +242,15 @@ node_templates:
           Description: Created by awssdk-instances-example blueprint.yaml.
           SubnetId: { get_attribute: [ public_subnet, aws_resource_id] }
           Groups:
-          - { get_attribute: [ security_group, aws_resource_id ] }
+            - { get_attribute: [ security_group, aws_resource_id ] }
       Tags:
-      - Key: Name
-        Value: MyNIC
+        - Key: Name
+          Value: MyNIC
     relationships:
-    - type: cloudify.relationships.depends_on
-      target: public_subnet
-    - type: cloudify.relationships.depends_on
-      target: security_group
+      - type: cloudify.relationships.depends_on
+        target: public_subnet
+      - type: cloudify.relationships.depends_on
+        target: security_group
     interfaces:
       cloudify.interfaces.lifecycle:
         configure:
@@ -265,12 +268,9 @@ node_templates:
         kwargs:
           Domain: 'vpc'
       client_config: *client_config
-      Tags:
-      - Key: Name
-        Value: MyIP
     relationships:
-    - type: cloudify.relationships.depends_on
-      target: nic
+      - type: cloudify.relationships.depends_on
+        target: nic
 
   cloudify_manager_ami:
     type: cloudify.nodes.aws.ec2.Image
@@ -278,12 +278,9 @@ node_templates:
       resource_config:
         kwargs:
           Filters:
-          - Name: name
-            Values:
-            - Cloudify-Manager-4.2ga
-          - Name: owner-id
-            Values:
-            - '263721492972'
+            - Name: image-id
+              Values:
+                - ami-0120b2cc79038bf90
       client_config: *client_config
 
   cloudify_manager:
@@ -296,15 +293,15 @@ node_templates:
         InstanceType: m4.large
       client_config: *client_config
       Tags:
-      - Key: Name
-        Value: MyVM
+        - Key: Name
+          Value: MyVM
     relationships:
-    - type: cloudify.relationships.depends_on
-      target: nic
-    - type: cloudify.relationships.depends_on
-      target: ip
-    - type: cloudify.relationships.depends_on
-      target: cloudify_manager_ami
+      - type: cloudify.relationships.depends_on
+        target: nic
+      - type: cloudify.relationships.depends_on
+        target: ip
+      - type: cloudify.relationships.depends_on
+        target: cloudify_manager_ami
     interfaces:
       cloudify.interfaces.lifecycle:
         configure:
@@ -326,12 +323,12 @@ node_templates:
           AvailabilityZone: { get_input: availability_zone }
           Size: 6
           TagSpecifications:
-          - ResourceType: volume
-            Tags:
-            - Key: First
-              Value: First Volume
-            - Key: Second
-              Value: Second Volume
+            - ResourceType: volume
+              Tags:
+                - Key: First
+                  Value: First Volume
+                - Key: Second
+                  Value: Second Volume
       client_config: *client_config
 
   ebs_volume_attachment:
@@ -344,7 +341,7 @@ node_templates:
           VolumeId: { get_attribute: [ ebs_volume, aws_resource_id ] }
       client_config: *client_config
     relationships:
-    - type: cloudify.relationships.depends_on
-      target: ebs_volume
-    - type: cloudify.relationships.depends_on
-      target: cloudify_manager
+      - type: cloudify.relationships.depends_on
+        target: ebs_volume
+      - type: cloudify.relationships.depends_on
+        target: cloudify_manager

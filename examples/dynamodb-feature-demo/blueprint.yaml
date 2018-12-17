@@ -4,9 +4,8 @@ description: >
   Example blueprint showing AWS DynamoDB functionality.
 
 imports:
-- https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/4.1/resources/rest-service/cloudify/types/types.yaml
-- http://getcloudify.org.s3.amazonaws.com/spec/aws-plugin/1.4.13/plugin.yaml
-- plugin.yaml
+  - http://www.getcloudify.org/spec/cloudify/4.5/types.yaml
+  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-awssdk-plugin/CY-865-remove-references-to-old-aws-plugin-from-example/plugin.yaml
 
 inputs:
 
@@ -42,11 +41,11 @@ node_templates:
           inputs:
             resource_config:
               AttributeDefinitions:
-              - AttributeName: RandomKeyUUID
-                AttributeType: S
+                - AttributeName: RandomKeyUUID
+                  AttributeType: S
               KeySchema:
-              - AttributeName: RandomKeyUUID
-                KeyType: HASH
+                - AttributeName: RandomKeyUUID
+                  KeyType: HASH
               ProvisionedThroughput:
                 ReadCapacityUnits: 5
                 WriteCapacityUnits: 5
