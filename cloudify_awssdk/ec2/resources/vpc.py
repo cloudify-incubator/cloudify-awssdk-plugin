@@ -109,6 +109,7 @@ def create(ctx, iface, resource_config, **_):
     create_response = iface.create(params)[VPC]
     ctx.instance.runtime_properties['create_response'] = \
         utils.JsonCleanuper(create_response).to_dict()
+
     vpc_id = create_response.get(VPC_ID, '')
     iface.update_resource_id(vpc_id)
     utils.update_resource_id(

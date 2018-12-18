@@ -50,6 +50,7 @@ node_templates:
       resource_config:
         kwargs:
           CidrBlock: { get_input: vpc_cidr }
+          AmazonProvidedIpv6CidrBlock: True
       client_config: *client_config
       Tags:
         - Key: Name
@@ -62,7 +63,6 @@ node_templates:
             modify_vpc_attribute_args:
               EnableDnsHostnames:
                 Value: True
-
 
   internet_gateway:
     type: cloudify.nodes.aws.ec2.InternetGateway
@@ -79,6 +79,7 @@ node_templates:
         kwargs:
           CidrBlock: { get_input: public_subnet_cidr }
           AvailabilityZone: { get_input: availability_zone }
+          Ipv6CidrBlock: { get_attribute: [ vpc, create_response, Ipv6CidrBlockAssociationSet, 0, Ipv6CidrBlock ] }
       client_config: *client_config
       Tags:
         - Key: Name
@@ -220,15 +221,70 @@ node_templates:
   security_group_rules:
     type: cloudify.nodes.aws.ec2.SecurityGroupRuleIngress
     properties:
-      client_config: *client_config
-      resource_config:
-        kwargs:
-          IpPermissions:
-          - IpProtocol: tcp
-            FromPort: 22
-            ToPort: 22
-            IpRanges:
-            - CidrIp: 0.0.0.0/0
+     client_config: *client_config
+     resource_config:
+      kwargs:
+        IpPermissions:
+        - IpProtocol: icmp
+          FromPort: -1
+          ToPort: -1
+          IpRanges:
+          - CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          IpRanges:
+          - CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          IpRanges:
+          - CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          IpRanges:
+          - CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 5671
+          ToPort: 5672
+          IpRanges:
+          - CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 8101
+          ToPort: 8101
+          IpRanges:
+          - CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 53333
+          ToPort: 53333
+          IpRanges:
+          - CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 8300
+          ToPort: 8300
+          IpRanges:
+          - CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 8301
+          ToPort: 8301
+          IpRanges:
+          - CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 8500
+          ToPort: 8500
+          IpRanges:
+          - CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22000
+          ToPort: 22000
+          IpRanges:
+          - CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 15432
+          ToPort: 15432
+          IpRanges:
+          - CidrIp: 0.0.0.0/0
     relationships:
       - type: cloudify.relationships.contained_in
         target: security_group
@@ -260,7 +316,6 @@ node_templates:
               SourceDestCheck:
                 Value: false
 
-
   ip:
     type: cloudify.nodes.aws.ec2.ElasticIP
     properties:
@@ -288,9 +343,10 @@ node_templates:
     properties:
       agent_config:
         install_method: none
+      use_ipv6_ip: True
       resource_config:
         ImageId: { get_attribute: [ cloudify_manager_ami, aws_resource_id ] }
-        InstanceType: m4.large
+        InstanceType: t2.large
       client_config: *client_config
       Tags:
         - Key: Name
@@ -310,7 +366,7 @@ node_templates:
               MaxCount: 1
               MinCount: 1
               ImageId: { get_attribute: [ cloudify_manager_ami, aws_resource_id ] }
-              InstanceType: m3.large
+              InstanceType: t2.large
             modify_instance_attribute_args:
               SourceDestCheck:
                 Value: false

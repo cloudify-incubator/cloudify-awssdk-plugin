@@ -142,6 +142,14 @@ class TestRDSSubnetGroup(TestBase):
                                     'MySQL5.7 Subnet Group',
                     'DBSubnetGroupName': 'zzzzzz-subnet-group',
                     'SubnetIds': SUBNET_IDS
+                },
+                'create_response': {
+                    'SubnetGroupStatus': 'Complete',
+                    'DBSubnetGroup': {
+                        'DBSubnetGroupName': 'zzzzzz-subnet-group',
+                        'DBSubnetGroupArn': 'DBSubnetGroupArn',
+                        'SubnetIds': ['subnet-xxxxxxxx', 'subnet-yyyyyyyy']
+                    }
                 }
             }
         )

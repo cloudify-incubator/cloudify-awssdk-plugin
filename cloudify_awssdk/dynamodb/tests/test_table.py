@@ -14,6 +14,7 @@
 
 from mock import patch, MagicMock
 import unittest
+import copy
 from cloudify.state import current_ctx
 from cloudify_awssdk.common.tests.test_base import TestBase, CLIENT_CONFIG
 from cloudify_awssdk.common.tests.test_base import DELETE_RESPONSE
@@ -123,10 +124,11 @@ class TestDynamoDBTable(TestBase):
             TableName='aws_table_name'
         )
 
-        self.assertEqual(
-            _ctx.instance.runtime_properties,
-            RUNTIME_PROPERTIES_AFTER_CREATE
-        )
+        updated_runtime_prop = copy.deepcopy(RUNTIME_PROPERTIES_AFTER_CREATE)
+        updated_runtime_prop['create_response'] = {'TableStatus': 'ACTIVE'}
+
+        self.assertEqual(_ctx.instance.runtime_properties,
+                         updated_runtime_prop)
 
     def test_delete(self):
         _ctx = self.get_mock_ctx(

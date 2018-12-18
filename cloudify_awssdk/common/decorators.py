@@ -251,6 +251,11 @@ def wait_for_status(status_good=None,
                 raise OperationRetry(
                     '%s ID# "%s" is still in a pending state.'
                     % (resource_type, iface.resource_id))
+
+            elif status_good and status in status_good:
+                ctx.instance.runtime_properties['create_response'] = \
+                    utils.JsonCleanuper(iface.properties).to_dict()
+
             elif not status and fail_on_missing:
                 raise NonRecoverableError(
                     '%s ID# "%s" no longer exists but "fail_on_missing" set'

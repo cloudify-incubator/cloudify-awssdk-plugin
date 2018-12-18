@@ -31,6 +31,7 @@ SUBNETS = 'Subnets'
 SUBNET_ID = 'SubnetId'
 SUBNET_IDS = 'SubnetIds'
 CIDR_BLOCK = 'CidrBlock'
+IPV6_CIDR_BLOCK = 'Ipv6CidrBlock'
 VPC_ID = 'VpcId'
 VPC_TYPE = 'cloudify.nodes.aws.ec2.Vpc'
 VPC_TYPE_DEPRECATED = 'cloudify.aws.nodes.Vpc'
@@ -110,6 +111,7 @@ def create(ctx, iface, resource_config, **_):
 
     vpc_id = params.get(VPC_ID)
     cidr_block = params.get(CIDR_BLOCK)
+    ipv6_cidr_block = params.get(IPV6_CIDR_BLOCK)
 
     # If either of these values is missing,
     # they must be filled from a connected VPC.
@@ -133,6 +135,12 @@ def create(ctx, iface, resource_config, **_):
             cidr_block or \
             targ.instance.runtime_properties.get(
                 'resource_config', {}).get(CIDR_BLOCK)
+
+    # If ipv6 cidr block is provided by user, then we need to make sure that
+    # The subnet size must use a /64 prefix length
+    if ipv6_cidr_block:
+        ipv6_cidr_block = ipv6_cidr_block[:-2] + '64'
+        params[IPV6_CIDR_BLOCK] = ipv6_cidr_block
 
     # Actually create the resource
     create_response = iface.create(params)[SUBNET]
