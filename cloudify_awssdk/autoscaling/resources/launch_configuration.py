@@ -20,6 +20,7 @@
 # Cloudify
 from cloudify_awssdk.common import decorators, utils
 from cloudify_awssdk.autoscaling import AutoscalingBase
+from cloudify.exceptions import NonRecoverableError
 # Boto
 from botocore.exceptions import ClientError
 
@@ -109,9 +110,14 @@ def create(ctx, iface, resource_config, **_):
 
     # Check if the "IamInstanceProfile" is passed or not and then update it
     iam_instance_profile = params.get(IAM_INSTANCE_PROFILE)
-    if iam_instance_profile and isinstance(iam_instance_profile, basestring):
-        iam_instance_profile = iam_instance_profile.strip()
-        params[IAM_INSTANCE_PROFILE] = str(iam_instance_profile)
+    if iam_instance_profile:
+        if isinstance(iam_instance_profile, basestring):
+            iam_instance_profile = iam_instance_profile.strip()
+            params[IAM_INSTANCE_PROFILE] = str(iam_instance_profile)
+        else:
+            raise NonRecoverableError(
+                'Invalid {0} data type for {1}'
+                ''.format(type(iam_instance_profile), IAM_INSTANCE_PROFILE))
 
     # Add Security Groups
     secgroups_list = params.get(SECGROUPS, [])

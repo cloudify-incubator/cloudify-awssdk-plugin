@@ -217,6 +217,7 @@ def wait_for_status(status_good=None,
         def wrapper_inner(**kwargs):
             '''Inner, worker function'''
             ctx = kwargs['ctx']
+            _, _, _, operation_name = ctx.operation.name.split('.')
             resource_type = kwargs.get('resource_type', 'AWS Resource')
             iface = kwargs['iface']
             # Run the operation if this is the first pass
@@ -253,8 +254,9 @@ def wait_for_status(status_good=None,
                     % (resource_type, iface.resource_id))
 
             elif status_good and status in status_good:
-                ctx.instance.runtime_properties['create_response'] = \
-                    utils.JsonCleanuper(iface.properties).to_dict()
+                if operation_name in ['create', 'configure']:
+                    ctx.instance.runtime_properties['create_response'] = \
+                        utils.JsonCleanuper(iface.properties).to_dict()
 
             elif not status and fail_on_missing:
                 raise NonRecoverableError(

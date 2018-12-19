@@ -122,12 +122,36 @@ def create(ctx, iface, resource_config, **_):
     utils.update_resource_arn(
         ctx.instance, create_response['Role']['Arn'])
 
+    # attach policy role
+    policies_arn = []
+    policies = _.get('modify_role_attribute_args', [])
+    for policy in policies:
+        payload = dict()
+        payload['RoleName'] = resource_id
+        payload['PolicyArn'] = policy['PolicyArn']
+        policies_arn.append(payload['PolicyArn'])
+        iface.attach_policy(payload)
+
+    # If there are policies added attached to role, then we need to make
+    # sure that when uninstall triggers, all the attached policies arn are
+    # available to detach
+    if policies_arn:
+        ctx.instance.runtime_properties['policies'] = policies_arn
+
 
 @decorators.aws_resource(IAMRole, RESOURCE_TYPE,
                          ignore_properties=True)
 @decorators.wait_for_delete()
-def delete(iface, resource_config, **_):
+def delete(ctx, iface, resource_config, **_):
     '''Deletes an AWS IAM Role'''
+
+    # If the current role associated
+    if 'policies' in ctx.instance.runtime_properties:
+        for policy in ctx.instance.runtime_properties['policies']:
+            payload = dict()
+            payload['PolicyArn'] = policy
+            iface.attach_policy(payload)
+
     iface.delete(resource_config)
 
 

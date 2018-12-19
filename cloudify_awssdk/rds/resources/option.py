@@ -22,6 +22,8 @@ from cloudify_awssdk.common import decorators, utils
 from cloudify_awssdk.rds.resources.option_group import OptionGroup
 
 RESOURCE_TYPE = 'RDS Option'
+SECGROUP_TYPE = 'cloudify.nodes.aws.ec2.SecurityGroup'
+SECGROUP_TYPE_DEPRECATED = 'cloudify.aws.nodes.SecurityGroup'
 
 
 @decorators.aws_resource(resource_type=RESOURCE_TYPE)
@@ -51,8 +53,8 @@ def attach_to(ctx, resource_config, **_):
                 node=ctx.target.node,
                 instance=ctx.target.instance,
                 raise_on_missing=True)).include_option(params)
-    elif utils.is_node_type(ctx.target.node,
-                            'cloudify.nodes.aws.ec2.SecurityGroup'):
+    elif utils.is_node_type(ctx.target.node, SECGROUP_TYPE) or \
+            utils.is_node_type(ctx.target.node, SECGROUP_TYPE_DEPRECATED):
         security_groups = rtprops.get('resource_config').get(
             'VpcSecurityGroupMemberships', list())
         security_groups.append(

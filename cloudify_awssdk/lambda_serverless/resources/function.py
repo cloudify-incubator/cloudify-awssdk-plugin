@@ -26,6 +26,10 @@ from cloudify_awssdk.lambda_serverless import LambdaBase
 from botocore.exceptions import ClientError
 
 RESOURCE_TYPE = 'Lambda Function'
+SUBNET_TYPE = 'cloudify.nodes.aws.ec2.Subnet'
+SUBNET_TYPE_DEPRECATED = 'cloudify.aws.nodes.Subnet'
+SECGROUP_TYPE = 'cloudify.nodes.aws.ec2.SecurityGroup'
+SECGROUP_TYPE_DEPRECATED = 'cloudify.aws.nodes.SecurityGroup'
 
 
 class LambdaFunction(LambdaBase):
@@ -95,8 +99,14 @@ def create(ctx, iface, resource_config, **_):
     vpc_config = params.get('VpcConfig', dict())
     # Attach a Subnet Group if it exists
     subnet_ids = vpc_config.get('SubnetIds', list())
-    for rel in utils.find_rels_by_node_type(
-            ctx.instance, 'cloudify.nodes.aws.ec2.Subnet'):
+
+    subnet_rels = \
+        utils.find_rels_by_node_type(
+            ctx.instance, SUBNET_TYPE) or \
+        utils.find_rels_by_node_type(
+            ctx.instance, SUBNET_TYPE)
+
+    for rel in subnet_rels:
         subnet_ids.append(utils.get_resource_id(
             node=rel.target.node,
             instance=rel.target.instance,
@@ -104,8 +114,14 @@ def create(ctx, iface, resource_config, **_):
     vpc_config['SubnetIds'] = subnet_ids
     # Attach any security groups if they exist
     security_groups = vpc_config.get('SecurityGroupIds', list())
-    for rel in utils.find_rels_by_node_type(
-            ctx.instance, 'cloudify.nodes.aws.ec2.SecurityGroup'):
+
+    sg_rels = \
+        utils.find_rels_by_node_type(
+            ctx.instance, SECGROUP_TYPE) or \
+        utils.find_rels_by_node_type(
+            ctx.instance, SECGROUP_TYPE_DEPRECATED)
+
+    for rel in sg_rels:
         security_groups.append(
             utils.get_resource_id(
                 node=rel.target.node,

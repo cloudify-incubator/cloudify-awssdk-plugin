@@ -38,6 +38,7 @@ LB_ATTR = 'Attributes'
 SUBNET_TYPE = 'cloudify.nodes.aws.ec2.Subnet'
 SUBNET_TYPE_DEPRECATED = 'cloudify.aws.nodes.Subnet'
 SECGROUP_TYPE = 'cloudify.nodes.aws.ec2.SecurityGroup'
+SECGROUP_TYPE_DEPRECATED = 'cloudify.aws.nodes.SecurityGroup'
 SUBNETS = 'Subnets'
 SECGROUPS = 'SecurityGroups'
 
@@ -154,7 +155,11 @@ def create(ctx, iface, resource_config, **_):
     secgroups = \
         utils.find_rels_by_node_type(
             ctx.instance,
-            SECGROUP_TYPE)
+            SECGROUP_TYPE) or \
+        utils.find_rels_by_node_type(
+            ctx.instance,
+            SECGROUP_TYPE_DEPRECATED)
+
     for secgroup in secgroups:
         secgroup_id = \
             secgroup.target.instance.runtime_properties[EXTERNAL_RESOURCE_ID]

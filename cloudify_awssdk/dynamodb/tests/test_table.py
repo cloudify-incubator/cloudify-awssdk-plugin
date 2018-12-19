@@ -68,7 +68,8 @@ class TestDynamoDBTable(TestBase):
             'test_create',
             test_properties=NODE_PROPERTIES,
             test_runtime_properties=DEFAULT_RUNTIME_PROPERTIES,
-            type_hierarchy=TABLE_TH
+            type_hierarchy=TABLE_TH,
+            ctx_operation_name='cloudify.interfaces.lifecycle.create',
         )
 
         current_ctx.set(_ctx)

@@ -74,10 +74,11 @@ class TestCloudFormationStack(TestBase):
                             type_class=stack)
 
     def test_create(self):
-        _ctx = self.get_mock_ctx('test_create',
-                                 test_properties=NODE_PROPERTIES,
-                                 test_runtime_properties=RUNTIME_PROPERTIES,
-                                 type_hierarchy=STACK_TH)
+        _ctx = self.get_mock_ctx(
+            'test_create', test_properties=NODE_PROPERTIES,
+            test_runtime_properties=RUNTIME_PROPERTIES,
+            type_hierarchy=STACK_TH,
+            ctx_operation_name='cloudify.interfaces.lifecycle.configure')
 
         current_ctx.set(_ctx)
         self.fake_client.describe_stacks = MagicMock(return_value={

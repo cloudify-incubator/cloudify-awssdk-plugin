@@ -77,7 +77,9 @@ class TestDecorators(TestBase):
 
     def test_wait_for_status(self):
 
-        _ctx = self._gen_decorators_context('test_wait_for_status')
+        _ctx = self._gen_decorators_context(
+            'test_wait_for_status',
+            op_name='cloudify.interfaces.lifecycle.create')
 
         @decorators.wait_for_status(status_good=['ok'],
                                     status_pending=['pending'])

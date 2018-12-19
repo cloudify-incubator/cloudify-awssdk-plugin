@@ -16,7 +16,11 @@
     Autoscaling.Group
     ~~~~~~~~~~~~~~
     AWS Autoscaling Group interface
+
 """
+# Standard imports
+from re import sub
+
 # Cloudify
 from cloudify.exceptions import OperationRetry
 from cloudify_awssdk.common import decorators, utils
@@ -155,7 +159,7 @@ def create(ctx, iface, resource_config, **_):
 
     subnet_list_string = params.get(SUBNET_LIST)
     subnet_list = \
-        subnet_list_string.split(',') if \
+        sub("[^\w]", " ", subnet_list_string).split() if \
         subnet_list_string else []
 
     subnet_list = \

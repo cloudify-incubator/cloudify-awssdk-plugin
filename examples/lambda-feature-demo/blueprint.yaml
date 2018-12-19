@@ -23,7 +23,15 @@ inputs:
 
   aws_cloudwatch_log_arn:
     type: string
-    default: arn:aws:logs:us-east-1:243751492372:*
+    default: arn:aws:logs:us-east-1:263721492972:*
+
+  aws_lambda_vpc_access_role_arn:
+    type: string
+    default: arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+
+  aws_lambda_basic_execution_role_arn:
+    type: string
+    default: arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
 
 
 dsl_definitions:
@@ -50,7 +58,7 @@ node_templates:
       resource_config:
         kwargs:
           FunctionName: { get_attribute: [ lambda_function, aws_resource_arn ] }
-          StatementId: apigateway-id-1
+          StatementId: apigateway-id-2
           Action: !!str lambda:*
           Principal: !!str apigateway.amazonaws.com
       client_config: *client_config
@@ -71,12 +79,12 @@ node_templates:
             ZipFile: function/main.zip
       client_config: *client_config
     relationships:
-#      - type: cloudify.relationships.connected_to
-#        target: subnet_1
-#      - type: cloudify.relationships.connected_to
-#        target: subnet_2
-#      - type: cloudify.relationships.connected_to
-#        target: security_group
+      - type: cloudify.relationships.connected_to
+        target: subnet_1
+      - type: cloudify.relationships.connected_to
+        target: subnet_2
+      - type: cloudify.relationships.connected_to
+        target: security_group
       - type: cloudify.relationships.connected_to
         target: iam_role_lambda_function
 
@@ -95,54 +103,14 @@ node_templates:
               Principal:
                 Service: lambda.amazonaws.com
               Action: 'sts:AssumeRole'
-    relationships:
-      - type: cloudify.relationships.aws.iam.role.connected_to
-        target: iam_policy_vpc_access
-      - type: cloudify.relationships.aws.iam.role.connected_to
-        target: iam_policy_cloudwatch_access
-
-  iam_policy_vpc_access:
-    type: cloudify.nodes.aws.iam.Policy
-    properties:
-      resource_id: CustomAWSLambdaVPCAccessExecutionRole
-      client_config: *client_config
-      resource_config:
-        kwargs:
-          Description: >-
-            Grants access to EC2 network components
-          Path: /service-vpc-access/
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - 'ec2:CreateNetworkInterface'
-                  - 'ec2:DescribeNetworkInterfaces'
-                  - 'ec2:DeleteNetworkInterface'
-                Resource: '*'
-
-  iam_policy_cloudwatch_access:
-    type: cloudify.nodes.aws.iam.Policy
-    properties:
-      resource_id: CustomAWSLambdaBasicExecutionRole
-      client_config: *client_config
-      resource_config:
-        kwargs:
-          Description: >-
-            Grants access to CloudWatch logs
-          Path: /service-cloudwatch-access/
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action: 'logs:CreateLogGroup'
-                Resource: '*'
-              - Effect: Allow
-                Action:
-                  - 'logs:CreateLogStream'
-                  - 'logs:PutLogEvents'
-                Resource:
-                  - { get_input: aws_cloudwatch_log_arn }
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: awssdk.cloudify_awssdk.iam.resources.role.create
+          inputs:
+            modify_role_attribute_args:
+              - PolicyArn: { get_input: aws_lambda_vpc_access_role_arn }
+              - PolicyArn: { get_input: aws_lambda_basic_execution_role_arn }
 
   subnet_1:
     type: cloudify.nodes.aws.ec2.Subnet
