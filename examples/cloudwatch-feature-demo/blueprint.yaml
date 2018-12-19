@@ -2,7 +2,7 @@ tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
   - http://www.getcloudify.org/spec/cloudify/4.5/types.yaml
-  - https://raw.githubusercontent.com/cloudify-incubator/cloudify-awssdk-plugin/CY-865-remove-references-to-old-aws-plugin-from-example/plugin.yaml
+  - plugin:cloudify-awssdk-plugin
 
 inputs:
 
@@ -33,14 +33,14 @@ node_templates:
       resource_config:
         kwargs:
           Targets:
-          - Id : topic1
-            Arn: topic1 # Operation gets the arn from the target node type.
+            - Id : topic1
+              Arn: { get_attribute: [ topic1, aws_resource_arn ] }
       client_config: *client_config
     relationships:
-    - type: cloudify.relationships.depends_on
-      target: cloudwatch_rule1
-    - type: cloudify.relationships.depends_on
-      target: topic1
+      - type: cloudify.relationships.depends_on
+        target: cloudwatch_rule1
+      - type: cloudify.relationships.depends_on
+        target: topic1
 
   topic1:
     type: cloudify.nodes.aws.SNS.Topic
@@ -57,16 +57,19 @@ node_templates:
       resource_config:
         kwargs:
           Entries:
-          - Source: autoscaling.amazonaws.com
-            Resources:
-            - { concat: [ 'arn:aws:automate:', { get_input: aws_region_name }, ':ec2:terminate'] }
-            DetailType: Cloudwatch Event Demo
-            Detail: |
-              {
-                "instance-id": "i-12345678",
-                "state": "terminated"
-              }
+            - Source: autoscaling.amazonaws.com
+              Resources:
+               - { concat: [ 'arn:aws:automate:', { get_input: aws_region_name }, ':ec2:terminate'] }
+              DetailType: Cloudwatch Event Demo
+              Detail: |
+                {
+                  "instance-id": "i-12345678",
+                  "state": "terminated"
+                }
       client_config: *client_config
+    relationships:
+      - type: cloudify.relationships.depends_on
+        target: cloudwatch_target1
 
   cloudwatch_rule1:
     type: cloudify.nodes.aws.cloudwatch.Rule
@@ -98,7 +101,7 @@ node_templates:
           AlarmName: cwa
           ActionsEnabled: true
           AlarmActions:
-          - { concat: [ 'arn:aws:automate:', { get_input: aws_region_name }, ':ec2:terminate'] }
+            - { concat: [ 'arn:aws:automate:', { get_input: aws_region_name }, ':ec2:terminate'] }
           ComparisonOperator: 'LessThanThreshold'
           Statistic: Minimum
           MetricName: CPUUtilization

@@ -26,7 +26,6 @@ inputs:
     default: arn:aws:logs:us-east-1:243751492372:*
 
 
-
 dsl_definitions:
 
   client_config: &client_config
