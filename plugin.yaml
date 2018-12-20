@@ -2,9 +2,9 @@ plugins:
 
   awssdk:
     executor: central_deployment_agent
-    source: https://github.com/cloudify-incubator/cloudify-awssdk-plugin/archive/CY-865-remove-references-to-old-aws-plugin-from-example.zip
+    source: https://github.com/cloudify-incubator/cloudify-awssdk-plugin/archive/CY-892-update-integration-tests.zip
     package_name: cloudify-awssdk-plugin
-    package_version: '2.7.1'
+    package_version: '2.8.0'
 
 data_types:
 
