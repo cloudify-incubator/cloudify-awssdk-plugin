@@ -164,7 +164,7 @@ node_templates:
       resource_config:
         kwargs:
           IpPermissions:
-           - IpProtocol: '-1'
+           - IpProtocol: "-1"
              FromPort: -1
              ToPort: -1
              IpRanges:

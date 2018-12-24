@@ -21,6 +21,10 @@ inputs:
   availability_zone:
     default: { get_secret: availability_zone }
 
+  rds_db_instance_class:
+    default: db.t2.large
+
+
 dsl_definitions:
 
   client_config: &client_config
@@ -61,7 +65,7 @@ node_templates:
                     Type: "AWS::RDS::DBInstance"
                     Properties:
                       AllocatedStorage: "100"
-                      DBInstanceClass: "db.m1.small"
+                      DBInstanceClass: { get_input: rds_db_instance_class }
                       Engine: "MySQL"
                       EngineVersion: "5.5"
                       Iops: "1000"
@@ -71,7 +75,6 @@ node_templates:
                        - { get_attribute: [ rds_security_group, aws_resource_id ] }
                       DBParameterGroupName: { get_property: [ rds_parameter_group, resource_id ] }
                       DBSubnetGroupName: { get_property: [ rds_subnet_group, resource_id ] }
-                      OptionGroupName: { get_property: [ rds_option_group, resource_id ] }
                     DeletionPolicy: "Snapshot"
     relationships:
       - type: cloudify.relationships.depends_on
@@ -80,8 +83,6 @@ node_templates:
         target: rds_parameter_group
       - type: cloudify.relationships.depends_on
         target: rds_subnet_group
-      - type: cloudify.relationships.depends_on
-        target: rds_option_group
 
   rds_parameter_group:
     type: cloudify.nodes.aws.rds.ParameterGroup
@@ -105,16 +106,6 @@ node_templates:
                   ParameterValue: en_US
                   ApplyMethod: immediate
 
-  rds_option_group:
-    type: cloudify.nodes.aws.rds.OptionGroup
-    properties:
-      resource_id: dev-rds-option-group
-      resource_config:
-        kwargs:
-          EngineName: mysql
-          MajorEngineVersion: '5.5'
-          OptionGroupDescription: MySQL5.5 Option Group for Dev
-      client_config: *client_config
 
   rds_subnet_group:
     type: cloudify.nodes.aws.rds.SubnetGroup
@@ -174,7 +165,7 @@ node_templates:
       resource_config:
         kwargs:
           IpPermissions:
-           - IpProtocol: -1
+           - IpProtocol: "-1"
              FromPort: -1
              ToPort: -1
              IpRanges:
