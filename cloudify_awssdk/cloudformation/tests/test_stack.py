@@ -12,6 +12,7 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 import unittest
+import copy
 from mock import patch, MagicMock
 
 from cloudify.state import current_ctx
@@ -73,10 +74,11 @@ class TestCloudFormationStack(TestBase):
                             type_class=stack)
 
     def test_create(self):
-        _ctx = self.get_mock_ctx('test_create',
-                                 test_properties=NODE_PROPERTIES,
-                                 test_runtime_properties=RUNTIME_PROPERTIES,
-                                 type_hierarchy=STACK_TH)
+        _ctx = self.get_mock_ctx(
+            'test_create', test_properties=NODE_PROPERTIES,
+            test_runtime_properties=RUNTIME_PROPERTIES,
+            type_hierarchy=STACK_TH,
+            ctx_operation_name='cloudify.interfaces.lifecycle.configure')
 
         current_ctx.set(_ctx)
         self.fake_client.describe_stacks = MagicMock(return_value={
@@ -106,8 +108,13 @@ class TestCloudFormationStack(TestBase):
             except AssertionError as e:
                 raise e
 
+        updated_runtime_prop = copy.deepcopy(RUNTIMEPROP_AFTER_CREATE)
+        updated_runtime_prop['create_response'] = {
+            'StackName': 'Stack',
+            'StackStatus': 'CREATE_COMPLETE'
+        }
         self.assertEqual(_ctx.instance.runtime_properties,
-                         RUNTIMEPROP_AFTER_CREATE)
+                         updated_runtime_prop)
 
     def test_delete(self):
         _ctx = \

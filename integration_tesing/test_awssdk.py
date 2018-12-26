@@ -6,6 +6,24 @@ import tempfile
 
 # Cloudify Imports
 from ecosystem_tests import EcosystemTestBase, utils, IP_ADDRESS_REGEX
+from ecosystem_tests.utils import (
+    execute_command,
+    get_deployment_resources_by_node_type_substring
+)
+
+NC_AWS_NODES = [
+    'security_group',
+    'haproxy_nic',
+    'nodejs_nic',
+    'mongo_nic',
+    'nodecellar_ip',
+]
+
+NC_MONITOTED_NODES = [
+    'haproxy_frontend_host',
+    'nodejs_host',
+    'mongod_host'
+]
 
 
 class TestAWSSDK(EcosystemTestBase):
@@ -13,6 +31,30 @@ class TestAWSSDK(EcosystemTestBase):
     def setUp(self):
         os.environ['AWS_DEFAULT_REGION'] = self.inputs.get('ec2_region_name')
         super(TestAWSSDK, self).setUp()
+
+    def remove_deployment(self, deployment_id, nodes_to_check):
+
+        # UnDeploy the application
+        execute_command(
+            'cfy executions start uninstall '
+            '-p ignore_failure=true -d {0}'.format(
+                deployment_id))
+
+        deployment_nodes = \
+            get_deployment_resources_by_node_type_substring(
+                deployment_id, self.node_type_prefix)
+
+        self.check_resources_in_deployment_deleted(
+            deployment_nodes, nodes_to_check
+        )
+
+    @staticmethod
+    def install_blueprint(blueprint_path, blueprint_id):
+        install_command =\
+            'cfy install {0} -b {1}'.format(blueprint_path, blueprint_id)
+        failed = execute_command(install_command)
+        if failed:
+            raise Exception('Install {0} failed.'.format(blueprint_id))
 
     @property
     def node_type_prefix(self):
@@ -201,37 +243,35 @@ class TestAWSSDK(EcosystemTestBase):
                 self.check_resource_method(
                     external_id, node_type, exists=False)
 
+    @staticmethod
+    def get_nc_deployment_nodes():
+        return\
+            utils.get_deployment_resources_by_node_type_substring('nc',
+                                                                  'cloudify')
+
     def check_nodecellar(self):
-        aws_nodes = [
-            'security_group',
-            'haproxy_nic',
-            'nodejs_nic',
-            'mongo_nic',
-            'nodecellar_ip'
-        ]
-        monitored_nodes = [
-            'haproxy_frontend_host',
-            'nodejs_host',
-            'mongod_host'
-        ]
         failed = utils.install_nodecellar(
             blueprint_file_name=self.blueprint_file_name)
+
         if failed:
             raise Exception('Nodecellar install failed.')
         del failed
+
         self.addCleanup(self.cleanup_deployment, 'nc')
-        failed = utils.execute_scale(
-            'nc', scalable_entity_name='nodejs_group')
+
+        failed = utils.execute_scale('nc', scalable_entity_name='nodejs_group')
         if failed:
             raise Exception('Nodecellar scale failed.')
         del failed
-        deployment_nodes = \
-            utils.get_deployment_resources_by_node_type_substring(
-                'nc', 'cloudify')
+
+        deployment_nodes = self.get_nc_deployment_nodes()
+
         self.check_resources_in_deployment_created(
-            deployment_nodes, aws_nodes)
+            deployment_nodes, NC_AWS_NODES)
         self.check_resources_in_deployment_created(
-            deployment_nodes, monitored_nodes)
+            deployment_nodes, NC_MONITOTED_NODES)
+
+    def check_external_nodecellar(self):
         blueprint_dir = tempfile.mkdtemp()
         blueprint_zip = os.path.join(blueprint_dir, 'blueprint.zip')
         blueprint_archive = 'nodecellar-auto-scale-auto-heal-blueprint-master'
@@ -239,6 +279,7 @@ class TestAWSSDK(EcosystemTestBase):
             os.path.join(blueprint_dir, blueprint_archive, 'aws.yaml')
         blueprint_path = utils.create_blueprint(
             utils.NODECELLAR, blueprint_zip, blueprint_dir, download_path)
+
         skip_transform = [
             'aws',
             'vpc',
@@ -246,27 +287,25 @@ class TestAWSSDK(EcosystemTestBase):
             'private_subnet',
             'ubuntu_trusty_ami'
         ]
+
+        deployment_nodes = self.get_nc_deployment_nodes()
         new_blueprint_path = utils.create_external_resource_blueprint(
             blueprint_path,
-            aws_nodes,
+            NC_AWS_NODES,
             deployment_nodes,
             resource_id_attr='aws_resource_id',
             nodes_to_keep_without_transform=skip_transform)
+
+        # Install nc-external
         failed = utils.execute_command(
             'cfy install {0} -b nc-external'.format(new_blueprint_path))
         if failed:
             raise Exception('Nodecellar external install failed.')
+
+        # Un-install nc-external
         failed = utils.execute_uninstall('nc-external')
         if failed:
             raise Exception('Nodecellar external uninstall failed.')
-        failed = utils.execute_uninstall('nc')
-        if failed:
-            raise Exception('Nodecellar uninstall failed.')
-        del failed
-        self.check_resources_in_deployment_deleted(
-            deployment_nodes, aws_nodes)
-        self.check_resources_in_deployment_deleted(
-            deployment_nodes, monitored_nodes)
 
     def test_network_deployment(self):
         # Create a list of node templates to verify.
@@ -280,15 +319,17 @@ class TestAWSSDK(EcosystemTestBase):
             'internet_gateway',
             'vpc'
         ]
-        self.addCleanup(self.cleanup_deployment, 'aws-example-network')
+        # Prepare to call clean up method whenever test pass/fail
+        self.addCleanup(self.remove_deployment,
+                        'aws-example-network',
+                        aws_nodes)
+
         # Create Deployment (Blueprint already uploaded.)
         if utils.create_deployment('aws-example-network'):
-            raise Exception(
-                'Deployment aws-example-network failed.')
+            raise Exception('Deployment aws-example-network failed.')
         # Install Deployment.
         if utils.execute_install('aws-example-network'):
-            raise Exception(
-                'Install aws-example-network failed.')
+            raise Exception('Install aws-example-network failed.')
         # Get list of nodes in the deployment.
         deployment_nodes = \
             utils.get_deployment_resources_by_node_type_substring(
@@ -296,21 +337,21 @@ class TestAWSSDK(EcosystemTestBase):
         # Check that the nodes really exist.
         self.check_resources_in_deployment_created(
             deployment_nodes, aws_nodes)
+
         self.check_nodecellar()
-        # Uninstall this deployment.
-        if utils.execute_uninstall('aws-example-network'):
-            raise Exception('Uninstall aws-example-network failed.')
-        # Check that the nodes no longer exist.
-        self.check_resources_in_deployment_deleted(
-            deployment_nodes,
-            aws_nodes)
+
+        self.check_external_nodecellar()
 
     def test_autoscaling(self):
         blueprint_path = 'examples/autoscaling-feature-demo/test.yaml'
-        blueprint_id = 'autoscaling-{0}'.format(
-            self.application_prefix)
-        self.addCleanup(self.cleanup_deployment, blueprint_id)
+        blueprint_id = 'autoscaling-{0}'.format(self.application_prefix)
         autoscaling_nodes = ['autoscaling_group']
+
+        # Prepare to call clean up method whenever test pass/fail
+        self.addCleanup(self.remove_deployment,
+                        blueprint_id,
+                        autoscaling_nodes)
+
         utils.check_deployment(
             blueprint_path,
             blueprint_id,
@@ -323,8 +364,11 @@ class TestAWSSDK(EcosystemTestBase):
     def test_s3(self):
         blueprint_path = 'examples/s3-feature-demo/blueprint.yaml'
         blueprint_id = 's3-{0}'.format(self.application_prefix)
-        self.addCleanup(self.cleanup_deployment, blueprint_id)
         s3_nodes = ['bucket']
+
+        # Prepare to call clean up method whenever test pass/fail
+        self.addCleanup(self.remove_deployment, blueprint_id, s3_nodes)
+
         utils.check_deployment(
             blueprint_path,
             blueprint_id,
@@ -338,8 +382,11 @@ class TestAWSSDK(EcosystemTestBase):
         blueprint_path = 'examples/sns-feature-demo/blueprint.yaml'
         blueprint_id = 'sqs-{0}'.format(
             self.application_prefix)
-        self.addCleanup(self.cleanup_deployment, blueprint_id)
         sns_nodes = ['queue', 'topic']
+
+        # Prepare to call clean up method whenever test pass/fail
+        self.addCleanup(self.remove_deployment, blueprint_id, sns_nodes)
+
         utils.check_deployment(
             blueprint_path,
             blueprint_id,
@@ -350,12 +397,13 @@ class TestAWSSDK(EcosystemTestBase):
         )
 
     def test_cfn_stack(self):
-        blueprint_path = \
-            'examples/cloudformation-feature-demo/blueprint.yaml'
-        blueprint_id = 'cfn-{0}'.format(
-            self.application_prefix)
-        self.addCleanup(self.cleanup_deployment, blueprint_id)
+        blueprint_path = 'examples/cloudformation-feature-demo/blueprint.yaml'
+        blueprint_id = 'cfn-{0}'.format(self.application_prefix)
         cfn_nodes = ['wordpress_example', 'HelloBucket']
+
+        # Prepare to call clean up method whenever test pass/fail
+        self.addCleanup(self.remove_deployment, blueprint_id, cfn_nodes)
+
         utils.check_deployment(
             blueprint_path,
             blueprint_id,

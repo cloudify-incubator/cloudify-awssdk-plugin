@@ -17,6 +17,7 @@
     ~~~~~~~~~~~~~~~~~
     AWS Lambda Permission interface
 '''
+import json
 from uuid import uuid4
 # Cloudify
 from cloudify_awssdk.common import decorators, utils
@@ -82,9 +83,20 @@ def create(ctx, iface, resource_config, **_):
     if iface.resource_id:
         params.update({'StatementId': iface.resource_id})
     create_response = iface.create(params)
-    iface.update_resource_id(create_response['StatementId'])
-    utils.update_resource_id(ctx.instance, create_response['StatementId'])
-    utils.update_resource_arn(ctx.instance, create_response['StatementId'])
+
+    statement = create_response.get('Statement')
+    # The actual value for key "statement" is not a python dict type,
+    # so it is required to check if it is "unicode" and then convert it back
+    # as python dict type
+
+    if statement:
+        if isinstance(statement, unicode):
+            statement = json.loads(statement)
+
+        resource_id = statement['Sid'] if statement.get('Sid') else None
+        iface.update_resource_id(resource_id)
+        utils.update_resource_id(ctx.instance, resource_id)
+        utils.update_resource_arn(ctx.instance, resource_id)
 
 
 @decorators.aws_resource(LambdaPermission, RESOURCE_TYPE,

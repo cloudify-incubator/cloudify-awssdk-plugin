@@ -89,6 +89,9 @@ node_templates:
           HostedZoneConfig:
             Comment: !!str Cloudify-generated DNS Hosted Zone
             PrivateZone: !!bool true
+          VPC:
+            VPCRegion: { get_input: aws_region_name }
+            VPCId: { get_attribute: [ dns_vpc, aws_resource_id ] }
     #interfaces:
     #  cloudify.interfaces.lifecycle:
     #    delete:

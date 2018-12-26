@@ -34,9 +34,10 @@ from cloudify.exceptions import NonRecoverableError
 
 RESOURCE_TYPE = 'ECS Service'
 CLUSTER = 'cluster'
-CLUSTER_TYPE = 'cloudify.nodes.aws.ECS.Cluster'
+CLUSTER_TYPE = 'cloudify.nodes.aws.ecs.Cluster'
 SERVICES = 'services'
 SERVICE = 'service'
+SERVICE_ARN = 'serviceArn'
 SERVICE_RESOURCE = 'serviceName'
 
 
@@ -145,7 +146,10 @@ def create(ctx, iface, resource_config, **_):
     utils.update_resource_id(ctx.instance, params.get(SERVICE_RESOURCE))
 
     iface = prepare_describe_service_filter(resource_config.copy(), iface)
-    iface.create(params)[SERVICE]
+    response = iface.create(params)
+    if response and response.get(SERVICE):
+        resource_arn = response[SERVICE].get(SERVICE_ARN)
+        utils.update_resource_arn(ctx.instance, resource_arn)
 
 
 @decorators.aws_resource(ECSService, RESOURCE_TYPE)

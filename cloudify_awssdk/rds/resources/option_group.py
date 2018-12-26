@@ -133,6 +133,7 @@ def attach_to(ctx, iface, resource_config, **_):
             node=ctx.target.node,
             instance=ctx.target.instance,
             raise_on_missing=True)
+
         iface.include_option(params)
 
 

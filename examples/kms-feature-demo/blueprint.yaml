@@ -1,9 +1,8 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
-- https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/4.1/resources/rest-service/cloudify/types/types.yaml
-- http://getcloudify.org.s3.amazonaws.com/spec/aws-plugin/1.4.13/plugin.yaml
-- plugin.yaml
+  - http://www.getcloudify.org/spec/cloudify/4.5/types.yaml
+  - plugin:cloudify-awssdk-plugin
 
 inputs:
 
@@ -19,7 +18,7 @@ inputs:
     type: string
     default: { get_secret: ec2_region_name }
 
-  ami_arn:
+  iam_arn:
     type: string
 
 dsl_definitions:
@@ -36,7 +35,7 @@ node_templates:
       resource_config:
         kwargs:
           Name: TestGrant
-          GranteePrincipal: { get_input: ami_arn }
+          GranteePrincipal: { get_input: iam_arn }
           Operations: [Encrypt, Decrypt]
       client_config: *client_config
     relationships:

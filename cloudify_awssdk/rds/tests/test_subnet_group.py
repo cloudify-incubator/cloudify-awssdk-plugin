@@ -33,9 +33,11 @@ NODE_PROPERTIES = {
     'client_config': CLIENT_CONFIG
 }
 
+SUBNET_IDS = ['subnet-xxxxxxxx', 'subnet-yyyyyyyy']
+
 RUNTIME_PROPERTIES = {
     'resource_config': {
-        'SubnetIds': ['subnet-xxxxxxxx', 'subnet-yyyyyyyy'],
+        'SubnetIds': SUBNET_IDS,
         'DBSubnetGroupDescription': 'MySQL5.7 Subnet Group',
         'DBSubnetGroupName': 'zzzzzz-subnet-group'
     }
@@ -74,8 +76,10 @@ class TestRDSSubnetGroup(TestBase):
         )
         current_ctx.set(_ctx)
 
+        resource_config = {'SubnetIds': ['test_subnet_id_1']}
         with self.assertRaises(UnknownServiceError) as error:
-            subnet_group.create(ctx=_ctx, resource_config=None, iface=None)
+            subnet_group.create(ctx=_ctx,
+                                resource_config=resource_config, iface=None)
 
         self.assertEqual(
             str(error.exception),
@@ -89,7 +93,8 @@ class TestRDSSubnetGroup(TestBase):
             'test_create',
             test_properties=NODE_PROPERTIES,
             test_runtime_properties=RUNTIME_PROPERTIES,
-            type_hierarchy=SUBNET_GROUP_TH
+            type_hierarchy=SUBNET_GROUP_TH,
+            ctx_operation_name='cloudify.interfaces.lifecycle.configure',
         )
 
         current_ctx.set(_ctx)
@@ -99,7 +104,8 @@ class TestRDSSubnetGroup(TestBase):
                 'SubnetGroupStatus': 'Complete',
                 'DBSubnetGroup': {
                     'DBSubnetGroupName': 'zzzzzz-subnet-group',
-                    'DBSubnetGroupArn': 'DBSubnetGroupArn'
+                    'DBSubnetGroupArn': 'DBSubnetGroupArn',
+                    'SubnetIds': SUBNET_IDS
                 }
             }]}
         )
@@ -107,11 +113,14 @@ class TestRDSSubnetGroup(TestBase):
         self.fake_client.create_db_subnet_group = MagicMock(
             return_value={'DBSubnetGroup': {
                 'DBSubnetGroupName': 'zzzzzz-subnet-group',
-                'DBSubnetGroupArn': 'DBSubnetGroupArn'}
+                'DBSubnetGroupArn': 'DBSubnetGroupArn',
+                'SubnetIds': SUBNET_IDS}
             }
         )
 
-        subnet_group.create(ctx=_ctx, resource_config=None, iface=None)
+        subnet_group.create(ctx=_ctx,
+                            resource_config=None,
+                            iface=None)
 
         self.fake_boto.assert_called_with(
             'rds', **CLIENT_CONFIG
@@ -119,7 +128,7 @@ class TestRDSSubnetGroup(TestBase):
         self.fake_client.create_db_subnet_group.assert_called_with(
             DBSubnetGroupDescription='MySQL5.7 Subnet Group',
             DBSubnetGroupName='zzzzzz-subnet-group',
-            SubnetIds=['subnet-xxxxxxxx', 'subnet-yyyyyyyy']
+            SubnetIds=SUBNET_IDS
         )
         self.fake_client.describe_db_subnet_groups.assert_called_with(
             DBSubnetGroupName='zzzzzz-subnet-group'
@@ -133,7 +142,15 @@ class TestRDSSubnetGroup(TestBase):
                     'DBSubnetGroupDescription':
                                     'MySQL5.7 Subnet Group',
                     'DBSubnetGroupName': 'zzzzzz-subnet-group',
-                    'SubnetIds': ['subnet-xxxxxxxx', 'subnet-yyyyyyyy']
+                    'SubnetIds': SUBNET_IDS
+                },
+                'create_response': {
+                    'SubnetGroupStatus': 'Complete',
+                    'DBSubnetGroup': {
+                        'DBSubnetGroupName': 'zzzzzz-subnet-group',
+                        'DBSubnetGroupArn': 'DBSubnetGroupArn',
+                        'SubnetIds': ['subnet-xxxxxxxx', 'subnet-yyyyyyyy']
+                    }
                 }
             }
         )
@@ -187,7 +204,7 @@ class TestRDSSubnetGroup(TestBase):
                 '_set_changed': True
             },
             type_hierarchy=['cloudify.nodes.Root',
-                            'cloudify.aws.nodes.Subnet']
+                            'cloudify.nodes.aws.ec2.Subnet']
         )
 
         _ctx = self.get_mock_relationship_ctx(

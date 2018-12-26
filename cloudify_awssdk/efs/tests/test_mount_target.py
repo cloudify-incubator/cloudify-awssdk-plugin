@@ -91,7 +91,7 @@ class TestEFSMountTarget(TestBase):
         }
         mock_group.target.node.type_hierarchy = [
             'cloudify.nodes.Root',
-            'cloudify.aws.nodes.SecurityGroup'
+            'cloudify.nodes.aws.ec2.SecurityGroup'
         ]
 
         mock_file_system = MagicMock()

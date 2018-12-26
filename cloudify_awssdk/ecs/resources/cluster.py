@@ -32,6 +32,7 @@ from cloudify_awssdk.ecs import ECSBase
 RESOURCE_TYPE = 'ECS Cluster'
 CLUSTERS = 'clusters'
 CLUSTER = 'cluster'
+CLUSTER_ARN = 'clusterArn'
 CLUSTER_RESOURCE_NAME = 'clusterName'
 
 
@@ -110,7 +111,10 @@ def create(ctx, iface, resource_config, **_):
 
     utils.update_resource_id(ctx.instance, resource_id)
     iface = prepare_describe_cluster_filter(resource_config.copy(), iface)
-    iface.create(params)[CLUSTER]
+    response = iface.create(params)
+    if response and response.get(CLUSTER):
+        resource_arn = response[CLUSTER].get(CLUSTER_ARN)
+        utils.update_resource_arn(ctx.instance, resource_arn)
 
 
 @decorators.aws_resource(ECSCluster, RESOURCE_TYPE)

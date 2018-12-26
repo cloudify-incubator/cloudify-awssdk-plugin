@@ -149,7 +149,8 @@ class TestLambdaFunction(TestBase):
     def test_create(self):
         subnettarget = MockRelationshipContext(
             target=MockCloudifyContext('subnet'))
-        subnettarget.target.node.type_hierarchy = ['cloudify.aws.nodes.Subnet']
+        subnettarget.target.node.type_hierarchy =\
+            ['cloudify.nodes.aws.ec2.Subnet']
         ctx = MockCloudifyContext("test_create")
         with patch(PATCH_PREFIX + 'LambdaBase'),\
             patch(PATCH_PREFIX + 'utils') as utils,\
@@ -180,7 +181,8 @@ class TestLambdaFunction(TestBase):
     def test_create_with_download(self):
         subnettarget = MockRelationshipContext(
             target=MockCloudifyContext('subnet'))
-        subnettarget.target.node.type_hierarchy = ['cloudify.aws.nodes.Subnet']
+        subnettarget.target.node.type_hierarchy =\
+            ['cloudify.nodes.aws.ec2.Subnet']
         ctx = MockCloudifyContext("test_create")
         ctx.download_resource = MagicMock(return_value='abc')
         with patch(PATCH_PREFIX + 'LambdaBase'),\

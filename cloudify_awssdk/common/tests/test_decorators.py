@@ -77,7 +77,9 @@ class TestDecorators(TestBase):
 
     def test_wait_for_status(self):
 
-        _ctx = self._gen_decorators_context('test_wait_for_status')
+        _ctx = self._gen_decorators_context(
+            'test_wait_for_status',
+            op_name='cloudify.interfaces.lifecycle.create')
 
         @decorators.wait_for_status(status_good=['ok'],
                                     status_pending=['pending'])
@@ -87,23 +89,27 @@ class TestDecorators(TestBase):
         # ok
         mock_interface = MagicMock()
         mock_interface.status = 'ok'
+        mock_interface.properties = {'status': 'ok'}
 
         test_ok(ctx=_ctx, iface=mock_interface)
 
         self.assertEqual(_ctx.instance.runtime_properties, {
-            'resource_config': {}
+            'resource_config': {},
+            'create_response': {'status': 'ok'},
         })
 
         # pending
         mock_interface = MagicMock()
         mock_interface.status = 'pending'
+        mock_interface.properties = {'status': 'pending'}
 
         with self.assertRaises(OperationRetry):
             test_ok(ctx=_ctx, iface=mock_interface)
 
         # unknow
         mock_interface = MagicMock()
-        mock_interface.status = 'unknow'
+        mock_interface.status = 'unknown'
+        mock_interface.properties = {'status': 'unknown'}
 
         with self.assertRaises(NonRecoverableError):
             test_ok(ctx=_ctx, iface=mock_interface)
@@ -111,6 +117,7 @@ class TestDecorators(TestBase):
         # empty status
         mock_interface = MagicMock()
         mock_interface.status = None
+        mock_interface.properties = {'status': None}
 
         with self.assertRaises(NonRecoverableError):
             test_ok(ctx=_ctx, iface=mock_interface)
@@ -118,6 +125,7 @@ class TestDecorators(TestBase):
         # empty status but ignore
         mock_interface = MagicMock()
         mock_interface.status = None
+        mock_interface.properties = {'status': None}
 
         @decorators.wait_for_status(status_pending=['pending'],
                                     fail_on_missing=False)

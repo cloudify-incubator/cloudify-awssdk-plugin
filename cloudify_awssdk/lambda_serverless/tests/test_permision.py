@@ -85,10 +85,10 @@ class TestLambdaPermission(TestBase):
             fun.resource_id = ''
             fake_client = self.make_client_function(
                 'add_permission',
-                return_value={'StatementId': 'test_id'})
+                return_value={'Statement': {'Sid': 'test_id'}})
             fun.client = fake_client
             create_response = fun.create({'StatementId': 'test_id'})
-            self.assertEqual(create_response['StatementId'], 'test_id')
+            self.assertEqual(create_response['Statement']['Sid'], 'test_id')
 
     def test_class_delete(self):
         ctx = self._get_ctx()
@@ -141,7 +141,7 @@ class TestLambdaPermission(TestBase):
         with patch(PATCH_PREFIX + 'utils') as utils:
             iface = MagicMock()
             iface.create = MagicMock(
-                return_value={'StatementId': 'res_id'})
+                return_value={'Statement': {'Sid': 'res_id'}})
             iface.resource_id = 'test_id'
             permission.create(ctx, iface, {})
             self.assertEqual(1, utils.update_resource_id.call_count)
@@ -149,7 +149,8 @@ class TestLambdaPermission(TestBase):
 
         with patch(PATCH_PREFIX + 'utils') as utils:
             iface = MagicMock()
-            iface.create = MagicMock(return_value={'StatementId': 'test_id'})
+            iface.create = MagicMock(
+                return_value={'Statement': {'Sid': 'res_id'}})
             iface.resource_id = None
             ctx.instance.runtime_properties['resource_config'].update(
                 {'StatementId': 'test_id'})

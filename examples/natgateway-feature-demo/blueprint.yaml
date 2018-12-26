@@ -1,9 +1,8 @@
 tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
-- https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/4.1/resources/rest-service/cloudify/types/types.yaml
-- http://getcloudify.org.s3.amazonaws.com/spec/aws-plugin/1.4.13/plugin.yaml
-- plugin.yaml
+  - http://www.getcloudify.org/spec/cloudify/4.5/types.yaml
+  - plugin:cloudify-awssdk-plugin
 
 inputs:
 
@@ -26,11 +25,6 @@ dsl_definitions:
     aws_secret_access_key: { get_input: aws_secret_access_key }
     region_name: { get_input: aws_region_name }
 
-  aws_config: &aws_config
-    aws_access_key_id: { get_input: aws_access_key_id }
-    aws_secret_access_key: { get_input: aws_secret_access_key }
-    ec2_region_name: { get_input: aws_region_name }
-
 node_templates:
 
   natgateway:
@@ -38,28 +32,41 @@ node_templates:
     properties:
       client_config: *client_config
     relationships:
-    - type: cloudify.relationships.depends_on
-      target: subnet
-    - type: cloudify.relationships.depends_on
-      target: elasticip
+      - type: cloudify.relationships.depends_on
+        target: subnet
+      - type: cloudify.relationships.depends_on
+        target: elasticip
 
   elasticip:
-    type: cloudify.aws.nodes.ElasticIP
-    properties:
-      aws_config: *aws_config
-      domain: vpc
+   type: cloudify.nodes.aws.ec2.ElasticIP
+   properties:
+     resource_config:
+       kwargs:
+         Domain: 'vpc'
+     client_config: *client_config
 
   subnet:
-    type: cloudify.aws.nodes.Subnet
+    type: cloudify.nodes.aws.ec2.Subnet
     properties:
-      aws_config: *aws_config
-      cidr_block:  172.30.0.0/24
+      resource_config:
+        kwargs:
+          CidrBlock: '172.30.0.0/24'
+          AvailabilityZone: { concat: [ { get_input: aws_region_name }, 'd' ] }
+      client_config: *client_config
+      Tags:
+        - Key: Name
+          Value: Subnet
     relationships:
-    - type: cloudify.aws.relationships.subnet_contained_in_vpc
-      target: vpc
+      - type: cloudify.relationships.depends_on
+        target: vpc
 
   vpc:
-    type: cloudify.aws.nodes.VPC
+    type: cloudify.nodes.aws.ec2.Vpc
     properties:
-      aws_config: *aws_config
-      cidr_block:  172.30.0.0/16
+      resource_config:
+        kwargs:
+          CidrBlock: '172.30.0.0/16'
+      client_config: *client_config
+      Tags:
+        - Key: Name
+          Value: VPC

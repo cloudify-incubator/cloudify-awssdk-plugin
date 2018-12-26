@@ -2,9 +2,9 @@ plugins:
 
   awssdk:
     executor: central_deployment_agent
-    source: https://github.com/cloudify-incubator/cloudify-awssdk-plugin/archive/2.7.1.zip
+    source: https://github.com/cloudify-incubator/cloudify-awssdk-plugin/archive/2.8.0.zip
     package_name: cloudify-awssdk-plugin
-    package_version: '2.7.1'
+    package_version: '2.8.0'
 
 data_types:
 
@@ -1746,13 +1746,13 @@ node_types:
       cloudify.interfaces.lifecycle:
         create:
           implementation: awssdk.cloudify_awssdk.ec2.resources.securitygroup.prepare
-          inputs: *operation_inputs
+#          inputs: *operation_inputs
         configure:
           implementation: awssdk.cloudify_awssdk.ec2.resources.securitygroup.create
-          inputs: *operation_inputs
+#          inputs: *operation_inputs
         delete:
           implementation: awssdk.cloudify_awssdk.ec2.resources.securitygroup.delete
-          inputs: *operation_inputs
+#          inputs: *operation_inputs
 
   cloudify.nodes.aws.ec2.SecurityGroupRuleIngress:
     derived_from: cloudify.nodes.Root
@@ -1770,10 +1770,10 @@ node_types:
       cloudify.interfaces.lifecycle:
         start:
           implementation: awssdk.cloudify_awssdk.ec2.resources.securitygroup.authorize_ingress_rules
-          inputs: *operation_inputs
+#          inputs: *operation_inputs
         stop:
           implementation: awssdk.cloudify_awssdk.ec2.resources.securitygroup.revoke_ingress_rules
-          inputs: *operation_inputs
+#          inputs: *operation_inputs
 
   cloudify.nodes.aws.ec2.SecurityGroupRuleEgress:
     derived_from: cloudify.nodes.Root
@@ -1943,6 +1943,7 @@ node_types:
       <<: *external_resource
       <<: *client_config
       <<: *resource_id
+      <<: *tags_property
       resource_config:
         description: >
           Configuration key-value data to be passed as-is to the corresponding
@@ -2705,7 +2706,7 @@ node_types:
           implementation: awssdk.cloudify_awssdk.cloudformation.resources.stack.delete
           inputs: *operation_inputs
 
-  cloudify.nodes.aws.ECS.Cluster:
+  cloudify.nodes.aws.ecs.Cluster:
     derived_from: cloudify.nodes.Root
     properties:
       <<: *external_resource
@@ -2729,7 +2730,7 @@ node_types:
           implementation: awssdk.cloudify_awssdk.ecs.resources.cluster.delete
           inputs: *operation_inputs
 
-  cloudify.nodes.aws.ECS.Service:
+  cloudify.nodes.aws.ecs.Service:
     derived_from: cloudify.nodes.Root
     properties:
       <<: *external_resource
@@ -2753,7 +2754,7 @@ node_types:
           implementation: awssdk.cloudify_awssdk.ecs.resources.service.delete
           inputs: *operation_inputs
 
-  cloudify.nodes.aws.ECS.TaskDefinition:
+  cloudify.nodes.aws.ecs.TaskDefinition:
     derived_from: cloudify.nodes.Root
     properties:
       <<: *external_resource
