@@ -20,6 +20,7 @@
 # Cloudify
 from cloudify_awssdk.common import decorators, utils
 from cloudify_awssdk.lambda_serverless.resources.function import LambdaFunction
+from cloudify_awssdk.ec2.resources import eni
 
 RESOURCE_TYPE = 'Lambda Function Invocation'
 
@@ -49,4 +50,52 @@ def attach_to(ctx, resource_config, **_):
 @decorators.aws_relationship(resource_type=RESOURCE_TYPE)
 def detach_from(ctx, resource_config, **_):
     '''Detaches an Lambda Invoke from something else'''
-    pass
+    props = ctx.target.instance.runtime_properties
+    function_name = props.get('aws_resource_id')
+    vpc_config = props.get('vpc_config')
+
+    # Check to see if the invoked function is placed in vpc or not so that we
+    # can remove the eni created by invoke method
+    if vpc_config:
+        eni_instance = eni.EC2NetworkInterface(
+            ctx_node=ctx.target.node,
+            logger=ctx.logger
+        )
+
+        eni_filter = [
+            {
+                'Name': 'vpc-id',
+                'Values': [vpc_config['VpcId']]
+            },
+            {
+                'Name': 'group-id',
+                'Values': [
+                    group_id for group_id in
+                    vpc_config['SecurityGroupIds']
+                ]
+            },
+            {
+                'Name': 'description',
+                'Values': ['AWS Lambda VPC ENI:*']
+            },
+            {
+                'Name': 'requester-id',
+                'Values': ['*:{0}*'.format(function_name)]
+            }
+        ]
+
+        eni_interfaces = eni_instance.list_network_interfaces(eni_filter)
+        if eni_interfaces:
+            eni_interface = eni_interfaces[0]
+            eni_id = eni_interface['NetworkInterfaceId']
+            attachment = eni_interface.get('Attachment')
+            if attachment:
+                eni_attachment_id = attachment.get('AttachmentId')
+                params = {
+                    eni.ATTACHMENT_ID: eni_attachment_id
+                }
+                eni_instance.detach(params)
+
+            params = dict()
+            params[eni.NETWORKINTERFACE_ID] = eni_id
+            eni_instance.delete(params)

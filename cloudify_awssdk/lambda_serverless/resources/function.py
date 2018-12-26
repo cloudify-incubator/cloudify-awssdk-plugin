@@ -158,6 +158,12 @@ def create(ctx, iface, resource_config, **_):
     utils.update_resource_arn(
         ctx.instance, create_response['FunctionArn'])
 
+    # Save vpc_config to be used later on when remove eni created by invoke
+    # function
+    if vpc_config and create_response.get('VpcConfig'):
+        ctx.instance.runtime_properties['vpc_config'] =\
+            create_response['VpcConfig']
+
 
 @decorators.aws_resource(LambdaFunction, RESOURCE_TYPE,
                          ignore_properties=True)

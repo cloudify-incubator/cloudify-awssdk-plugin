@@ -1,3 +1,10 @@
+2.8.1:
+ - Fix issue with removing elastic network interface created by lambda invoke function
+2.8.0:
+  - Upgrade boto3 library version to 1.9.57
+  - Upgrade botocore library version to 1.12.57
+  - Update all plugin examples to use the latest version of the plugin
+  - Fix bugs for plugin
 2.7.1:
   - Remove tagging for EIP as it is not supported.
   - Add use_ipv6_ip property to compute.
