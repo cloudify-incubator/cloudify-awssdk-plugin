@@ -67,6 +67,14 @@ class EC2NetworkInterface(EC2Base):
             return None
         return props['Status']
 
+    def list_network_interfaces(self, filters=None):
+        params = dict()
+        if filters:
+            params['Filters'] = filters
+
+        resources = self.client.describe_network_interfaces(**params)
+        return resources.get(NETWORKINTERFACES) if resources else []
+
     def create(self, params):
         """
             Create a new AWS EC2 NetworkInterface.

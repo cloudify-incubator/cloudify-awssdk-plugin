@@ -150,7 +150,7 @@ def delete(ctx, iface, resource_config, **_):
         for policy in ctx.instance.runtime_properties['policies']:
             payload = dict()
             payload['PolicyArn'] = policy
-            iface.attach_policy(payload)
+            iface.detach_policy(payload)
 
     iface.delete(resource_config)
 
